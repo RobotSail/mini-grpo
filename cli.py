@@ -17,6 +17,7 @@ import torch
 from torch.optim import AdamW
 import os
 from IPython import embed
+from tqdm import tqdm
 
 from instructlab.training.data_process import (
     configure_tokenizer,
@@ -71,15 +72,18 @@ def send_chat_completion(
     return response.json()
 
 
-def extract_answer(response: str) -> int:
-    """Extract the numerical answer from the response using the <answer>...</answer> format."""
-    match = answer_pattern.search(response)
-    if match:
-        try:
-            return int(match.group(1).strip())
-        except ValueError:
-            raise ValueError(f"Could not extract answer from response: {response} (invalid integer)")
-    raise ValueError(f"Could not extract answer from response: {response} (no <answer>...</answer> tags found)")
+def parse_number(text: str) -> int | float:
+    """Try to parse a string into a number which is assumed to been inside of the answer tags using the <answer>...</answer> format."""
+    try:
+        if not any(c.isdigit() for c in text):
+            raise ValueError(f"No digits found in answer tags: {text}.")
+        if "." in text:
+            return float(text)
+        else:
+            return int(text)
+
+    except ValueError as ve:
+        raise ValueError(f"Could not extract answer from field: {text} (invalid integer): {ve}.")
 
 
 @app.command()
@@ -145,12 +149,18 @@ def generate_rollouts(
     batch_size: int,
     group_size: int,
     sampling_params: SamplingParams,
+    show_tqdm=False,
 ) -> list[Sample]:
     model.eval()
     device = next(p.device for p in model.parameters())
     # here we need to create a set of rollouts for each prompt
-    rollouts: list[Sample] = []
-    for i in range(batch_size):
+    groups: list[Sample] = []
+
+    iterator = range(batch_size)
+    if show_tqdm:
+        iterator = tqdm(iterator, desc="Generating rollouts")
+
+    for i in iterator:
         # TODO: optimize this
         # Preview the messages for this batch item
         # if i == 0:  # Only preview the first item to avoid clutter
@@ -192,6 +202,11 @@ def generate_rollouts(
         # we recollect the sample by combining across the column dimension
         seed_sample = {k: v[i] for k, v in batch.items()}
         rollout_data: list[RolloutResult] = []
+        problem = Problem(
+            answer=seed_sample["answer"],
+            operation=seed_sample["operation"],
+            problem=seed_sample["problem"],
+        )
 
         # go through each sequence and grab the respective logprob
         # TODO: optimize this part
@@ -207,10 +222,10 @@ def generate_rollouts(
 
             # next, we just need to select the probs for our specific tokens
             processed_logits = torch.stack([t[seq_idx] for t in outputs.scores[:seq_end]])
-            processed_probs = processed_logits.softmax(dim=-1)
+            ref_logprobs = processed_logits.log_softmax(dim=-1)
             index = torch.tensor(seq[:seq_end], dtype=torch.long, device=processed_logits.device)
             index = index.unsqueeze(-1)  # extend from (T,) into (T, 1)
-            probs = processed_probs.gather(dim=-1, index=index)
+            probs = ref_logprobs.gather(dim=-1, index=index)
             probs = probs.squeeze(-1)  # (T, 1) --> (T,)
             index = index.squeeze(-1)  # (T, 1) --> (T,)
 
@@ -233,70 +248,70 @@ def generate_rollouts(
             )
 
         assert input_ids.ndim > 1
-        rollouts.append(
+        groups.append(
             Sample(
-                problem=Problem(
-                    answer=seed_sample["answer"],
-                    operation=seed_sample["operation"],
-                    problem=seed_sample["problem"],
-                ),
+                problem=problem,
                 rollouts=rollout_data,
                 input_ids=input_ids.tolist()[0],  # record the input ids so we can reuse them later
             )
         )
 
+    for group in groups:
+        grade_groups(group)
+        calculate_advantage(group)
+
     # empty cache
     torch.cuda.empty_cache()
-    return rollouts
+    return groups
 
 
 @torch.no_grad
-def grade_samples(samples: list[Sample]):
+def grade_groups(group: Sample):
     """
     Given a batch of samples, calculates the advantage for each one.
     Modifies objects in place.
     """
-    for sample in samples:
-        for rollout in sample.rollouts:
-            # Defaults; if we cannot parse then it is not correct. If we can parse, it is not necessarily correct.
-            rollout.is_parsable = False
-            rollout.is_correct = False
+    for rollout in group.rollouts:
+        # Defaults; if we cannot parse then it is not correct. If we can parse, it is not necessarily correct.
+        rollout.is_parsable = False
+        rollout.is_correct = False
 
-            # try to parse the response:
+        # reset it here just for good measure
+        rollout.reward = 0
+
+        # check if the response has any answers at all
+        matches = answer_pattern.findall(rollout.response)
+
+        # we only want 1 of these
+        parsed_nums: list[int | float] = []  #
+        for match in matches:  # this is already bad
             try:
-                answer = extract_answer(rollout.response)
-                rollout.is_parsable = True
+                answer = parse_number(match)
             except Exception as e:
-                typer.secho(
-                    f"failed to parse response '{rollout.response}': {e}",
-                    fg=typer.colors.RED,
-                )
+                print(f"failed to parse text from answer tags: {e}")
             else:
-                rollout.is_correct = sample.problem.answer == answer
+                parsed_nums.append(answer)
 
+        if len(parsed_nums) == 1:
+            answer = parsed_nums[0]
+            rollout.is_parsable = True
+            rollout.is_correct = group.problem.answer == answer
+        if len(parsed_nums) > 1:
+            rollout.reward -= 0.1
+        elif rollout.is_parsable:
+            # okay, we WANT the model to produce more answers like this
+            # but we don't want to overweight this or give sparse rewards
+            # so we will assign a reward here of +1
+            rollout.reward += 0.1
 
-@torch.no_grad
-def calculate_reward(samples: list[Sample]):
-    """
-    Function containing reward calculation logic
-    """
-    for sample in samples:
-        for rollout in sample.rollouts:
-            # reset it here just for good measure
-            rollout.reward = 0
-            if rollout.is_parsable:
-                # okay, we WANT the model to produce more answers like this
-                # but we don't want to overweight this or give sparse rewards
-                # so we will assign a reward here of +1
-                rollout.reward += 0.1
-            if rollout.is_correct:
-                rollout.reward += 1  # huge reward for getting it right
+        if rollout.is_correct:
+            rollout.reward += 1  # huge reward for getting it right
 
 
 # i dont think we even have tensors flowing through this function but you
 # can never be too sure.
 @torch.no_grad
-def calculate_advantage(samples: list[Sample]):
+def calculate_advantage(group: Sample):
     r"""
     This is the fun part, we have to implement the GRPO-style
     advantage calculation. Basically we take each set of rollouts as a single
@@ -310,21 +325,20 @@ def calculate_advantage(samples: list[Sample]):
     $$
     """
     eps = 1e-8
-    for sample in samples:
-        avg = sum(r.reward for r in sample.rollouts) / len(sample.rollouts)
-        var = sum((r.reward - avg) ** 2 for r in sample.rollouts) / len(sample.rollouts)
-        std = var**0.5
+    avg = sum(r.reward for r in group.rollouts) / len(group.rollouts)
+    var = sum((r.reward - avg) ** 2 for r in group.rollouts) / len(group.rollouts)
+    std = var**0.5
 
-        # if std < eps (because all rewards are equal) we use the std trick
-        # of setting group advantage to 0
-        enable_std_trick = std < eps
+    # if std < eps (because all rewards are equal) we use the std trick
+    # of setting group advantage to 0
+    enable_std_trick = std < eps
 
-        # GRPO simple advantage
-        for rollout in sample.rollouts:
-            if enable_std_trick:
-                rollout.advantage = 0.0
-            else:
-                rollout.advantage = (rollout.reward - avg) / (std + eps)
+    # GRPO simple advantage
+    for rollout in group.rollouts:
+        if enable_std_trick:
+            rollout.advantage = 0.0
+        else:
+            rollout.advantage = (rollout.reward - avg) / (std + eps)
 
 
 @torch.no_grad
@@ -339,7 +353,6 @@ def eval_model(eval_dataset: datasets.Dataset, comps: TrainingComponents):
     results = []
 
     for npass in pass_at:
-        # generate for each pass @
         samples = generate_rollouts(
             comps.model,
             comps.tokenizer,
@@ -347,6 +360,7 @@ def eval_model(eval_dataset: datasets.Dataset, comps: TrainingComponents):
             batch_size=eval_dataset.num_rows,
             group_size=npass,
             sampling_params=comps.sampling_params,
+            show_tqdm=True,
         )
 
         # now we go and determine the passing rate
@@ -362,9 +376,10 @@ def eval_model(eval_dataset: datasets.Dataset, comps: TrainingComponents):
 
     # Print all results at the end
     typer.secho("\n=== Evaluation Scorecard ===", fg=typer.colors.BRIGHT_MAGENTA)
+    typer.secho(f"Total samples evaluated: {len(samples)}", fg=typer.colors.BRIGHT_BLUE)
     for npass, percent_above_50, percent_at_100 in results:
         typer.secho(
-            f"Pass@{npass}: {percent_above_50:.1f}% above 50% | {percent_at_100:.1f}% at 100%",
+            f"Pass@{npass}: {percent_above_50:.1f}% above 50% | {percent_at_100:.1f}% at 100% (across {len(samples)} samples with {npass} rollout(s) each)",
             fg=typer.colors.CYAN,
         )
 
@@ -414,45 +429,63 @@ def train_policy_on_rollouts(samples: list[Sample], comps: TrainingComponents):
             # send everything to GPU as needed
             input_ids = batch["input_ids"].to(comps.device)
             advantages = batch["advantages"].to(comps.device)
-            ref_logprobs = batch["logprobs"].to(comps.device)
-            ref_logprob_ids = batch["logprob_ids"].to(comps.device)
+            old_logprobs = batch["logprobs"].to(comps.device)
+            old_logprob_ids = batch["logprob_ids"].to(comps.device)
             rollout_lens = batch["rollout_lens"].to(comps.device)
             attn_mask = batch["attention_mask"].to(comps.device)
             grpo_logit_mask = batch["grpo_mask"].to(comps.device)
 
             # we're not calculating cross-entropy against static labels, so no label inputs
             # are needed here
-            outputs = comps.model(input_ids=input_ids, attention_mask=attn_mask)
-            new_logits = outputs.logits
+            new_outputs = comps.model(input_ids=input_ids, attention_mask=attn_mask)
+            new_logits = new_outputs.logits
 
             # account for sampling temperature
             if comps.sampling_params.temperature > 0:
                 new_logits /= comps.sampling_params.temperature
 
+            # now let's get the reference logits, but we really want to make sure that we don't
+            # backprop on this model
+            with torch.no_grad():
+                ref_outputs = comps.ref_model(input_ids, attention_mask=attn_mask)
+                ref_logits = ref_outputs.logits
+                if comps.sampling_params.temperature > 0:
+                    ref_logits /= comps.sampling_params.temperature
+
             # we need the new logprobs
 
             # prepare for GRPO loss calculation, pluck out the logits that we're going to work with
             # 1. create the indices
-            assert comps.tokenizer.pad_token_id is not None and comps.tokenizer.pad_token_id > 0
-            gather_indices = ref_logprob_ids.clone().unsqueeze(
+            gather_indices = old_logprob_ids.clone().unsqueeze(
                 -1
             )  # (B, T) --> (B, T, 1) # add a new dimension to index logits
 
             # 2. Calculate the latest logprobs
-            new_probs: torch.Tensor = new_logits.softmax(dim=-1)
+            # more efficient technique
+            new_gathered_logits = new_logits.gather(dim=-1, index=gather_indices)
+            new_logsumexp = new_logits.logsumexp(dim=-1, keepdim=True)  # (B, T, 1)
+            new_logprobs = (new_gathered_logits - new_logsumexp).squeeze(-1)
 
-            # 3. Extract the probs from the original rollout
-            new_rollout_probs = new_probs.gather(dim=-1, index=gather_indices)
-            # (B, T, V) --> (B, T, 1)
-            new_rollout_probs = new_rollout_probs.squeeze(-1)  # (B, T, 1) --> (B, T)
-            assert len(new_rollout_probs.shape) == 2
+            # new_logprobs: torch.Tensor = new_logits.log_softmax(dim=-1)
+            # # (B, T, V) --> (B, T, 1)
+            # new_logprobs = new_logprobs.gather(dim=-1, index=gather_indices)
+            # # (B, T, 1) --> (B, T)
+            # new_logprobs = new_logprobs.squeeze(-1)
+            assert len(new_logprobs.shape) == 2
+
+            # 3. Calculate the ref logprobs
+            with torch.no_grad():
+                ref_gathered_logits = ref_logits.gather(dim=-1, index=gather_indices)
+                ref_logsumexp = ref_logits.logsumexp(dim=-1, keepdim=True)  # (B, T, 1)
+                ref_logprobs = (ref_gathered_logits - ref_logsumexp).squeeze(-1)
 
             # 4. Compute  te importance ratio
             # here's where we need to actually compute the loss. first thing we need is to calculate
             # the importance ratio:
             # \rho(\theta_0)=\exp(\log p_{\theta_0}-\log p_{\text{old}})
-            assert ref_logprobs.shape == new_rollout_probs.shape
-            importance_ratio: torch.Tensor = (new_rollout_probs.log() - ref_logprobs.log()).exp()
+            assert old_logprobs.shape == new_logprobs.shape
+            importance_ratio: torch.Tensor = (new_logprobs - old_logprobs).exp()
+
             # 5. Next we calculate the clipped surrogate objective
             # adjust advantage so it can broadcast cleanly
             advantages = advantages.unsqueeze(-1)  # (B,) --> (B, 1)
@@ -462,13 +495,9 @@ def train_policy_on_rollouts(samples: list[Sample], comps: TrainingComponents):
             clipped = advantages * importance_ratio.clamp(1 - comps.hyperparams.eps, 1 + comps.hyperparams.eps)
             clipped_surrogate = torch.minimum(unclipped, clipped)
 
-            # 6. Next, we need to calculate the approximate KL penalty to the old policy
-            # KL(policy_new || policy_old) ~= policy_old/policy_new - log(policy_old/policy_new) - 1
-            dkl_approx = (
-                (ref_logprobs.log() - new_rollout_probs.log()).exp()
-                - (ref_logprobs.log() - new_rollout_probs.log())
-                - 1
-            )
+            # 6. Next, we need to calculate the approximate KL penalty to the ref policy
+            # KL(policy_new || policy_ref) ~= policy_ref/policy_new - log(policyref/policy_new) - 1
+            dkl_approx = (ref_logprobs - new_logprobs).exp() - (ref_logprobs - new_logprobs) - 1
 
             # 7. Compute per-token loss L_GRPO = L_clip - L_kl
             # compute the per-sample loss (loss for all samples is independent at this point)
@@ -550,6 +579,9 @@ def train(
     eval_split: float = typer.Option(
         0.0, "--eval-split", help="portion of training samples to use for the eval dataset"
     ),
+    output_dir: str | None = typer.Option(
+        None, "--output-dir", help="Optional directory to use for saving the checkpoints"
+    ),
 ):
     # load the raw dataset
     # train_dataset = JsonlDataset(data_path)
@@ -561,6 +593,11 @@ def train(
         train_dataset = dataset_dict["train"]
         eval_dataset = dataset_dict["test"]
 
+    # Print dataset statistics
+    typer.secho(f"\n✓ Loaded {len(train_dataset)} training samples", fg=typer.colors.GREEN)
+    if eval_dataset:
+        typer.secho(f"✓ Loaded {len(eval_dataset)} evaluation samples", fg=typer.colors.GREEN)
+
     # devices
     train_device = torch.device("cuda", training_gpu)
 
@@ -569,20 +606,29 @@ def train(
         model_name,
         device_map=train_device,  # attn_implementation="flash_attention_2"
     )
+
+    # this is a frozen mdel which we do not update
+    ref_model = AutoModelForCausalLM.from_pretrained(
+        model_name,
+        device_map=train_device,  # attn_implementation="flash_attention_2"
+    )
     tokenizer: Qwen2Tokenizer = AutoTokenizer.from_pretrained(model_name)
 
     # align tokenizer and tokens
-    if tokenizer.pad_token_id and not model.config.pad_token_id:
-        typer.secho(
-            f"model '{model_name}' doesn't have a pad_token_id, setting it to {tokenizer.pad_token_id}",
-            fg=typer.colors.BRIGHT_BLUE,
-        )
+    for m in [model, ref_model]:
+        if tokenizer.pad_token_id and not m.config.pad_token_id:
+            m.config.pad_token_id = tokenizer.pad_token_id
+            typer.secho(
+                f"model '{model_name}' doesn't have a pad_token_id, setting it to {tokenizer.pad_token_id}",
+                fg=typer.colors.BRIGHT_BLUE,
+            )
 
+    # create training components
     optimizer = AdamW(model.parameters(), lr=lr, betas=(beta1, beta2), weight_decay=wd)
-
     training_comps = TrainingComponents(
         optimizer=optimizer,
         model=model,
+        ref_model=ref_model,
         tokenizer=tokenizer,
         device=train_device,
         hyperparams=Hyperparameters(
@@ -606,17 +652,30 @@ def train(
             top_k=0.0,
             repetition_penalty=1.0,
         ),
+        output_dir=output_dir,
     )
 
-    preview_tokenization(train_dataset, tokenizer)
+    # check if we need to write into output dir
+    if output_dir is not None and not training_comps.valid_save_dir():
+        typer.secho(
+            f"Error: Cannot write to output directory '{output_dir}'",
+            fg=typer.colors.RED,
+            err=True,
+        )
+        raise typer.Exit(code=1)
 
+    preview_tokenization(train_dataset, tokenizer)
     if eval_dataset is not None and len(eval_dataset) > 0:
         eval_model(eval_dataset, training_comps)
-
     # now we iterate
     for epoch in range(epochs):
         minibatches: list[Sample] = []
-        for batch in train_dataset.shuffle().iter(batch_size):
+        pbar = tqdm(
+            train_dataset.shuffle().iter(batch_size),
+            desc=f"Epoch {epoch + 1}/{epochs}",
+            total=len(train_dataset) // batch_size,
+        )
+        for batch in pbar:
             # here we need to create a set of rollouts for each prompt
             rollouts = generate_rollouts(
                 model,
@@ -627,10 +686,13 @@ def train(
                 sampling_params=training_comps.sampling_params,
             )
 
-            # now that we have rollouts, we must calculate advantage
-            grade_samples(rollouts)
-            calculate_reward(rollouts)
-            calculate_advantage(rollouts)
+            # Calculate average reward for this batch
+            total_rewards = sum(rollout.reward for sample in rollouts for rollout in sample.rollouts)
+            total_rollouts = sum(len(sample.rollouts) for sample in rollouts)
+            avg_reward = total_rewards / total_rollouts if total_rollouts > 0 else 0.0
+
+            # Update tqdm postfix with average reward
+            pbar.set_postfix({"avg_reward": f"{avg_reward:.4f}"})
 
             # now that we've generated G rollouts for our B groups of prompts,
             # we convert this into a dataset and update the trainable policy on it
@@ -643,8 +705,12 @@ def train(
         # Calculate and display epoch scorecard
         display_scorecard(minibatches, epoch, epochs)
 
+        # evaluate the model
         if eval_dataset is not None and len(eval_dataset) > 0:
             eval_model(eval_dataset, training_comps)
+
+        # save a checkpoint for the current epoch
+        training_comps.save_checkpoint(epoch)
 
 
 if __name__ == "__main__":

@@ -1,6 +1,7 @@
 import pydantic
 import torch
 from transformers import PreTrainedModel, PreTrainedTokenizerBase
+import os
 
 
 class Problem(pydantic.BaseModel):
@@ -93,8 +94,10 @@ class Hyperparameters(pydantic.BaseModel):
 class TrainingComponents(pydantic.BaseModel):
     model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
 
+    output_dir: str | None = None
     optimizer: torch.optim.Optimizer
     model: PreTrainedModel
+    ref_model: PreTrainedModel
     tokenizer: PreTrainedTokenizerBase
     train_tokenizer: PreTrainedTokenizerBase = pydantic.Field(
         metadata={
@@ -104,3 +107,31 @@ class TrainingComponents(pydantic.BaseModel):
     hyperparams: Hyperparameters
     device: torch.device
     sampling_params: SamplingParams
+
+    def valid_save_dir(self) -> bool:
+        if not self.output_dir:
+            return False
+
+        # Check if directory exists
+        if not os.path.exists(self.output_dir):
+            # Check if we can create it by checking parent directory permissions
+            parent_dir = os.path.dirname(self.output_dir) or "."
+            if not os.path.exists(parent_dir) or not os.access(parent_dir, os.W_OK):
+                return False
+
+        # Check if we have write permissions
+        if not os.access(self.output_dir, os.W_OK):
+            return False
+
+        return True
+
+    def save_checkpoint(self, epoch: int):
+        # create root directory
+        save_dir = os.path.join(self.output_dir, f"epoch_{epoch}")
+        if not os.path.exists(save_dir):
+            os.makedirs(self.output_dir, exist_ok=True)
+
+        # write the model there
+        self.model.save_pretrained(save_dir)
+        self.model.config.save_pretrained(save_dir)
+        self.tokenizer.save_pretrained(save_dir)
