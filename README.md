@@ -87,8 +87,73 @@ python cli.py train \
     --clip-eps 0.2 \
     --lr 1e-6  \
     --eval-split 0.1 \
-    --epochs 5
+    --epochs 5 \
+    --output-dir checkpoints
 ```
 
 This will launch GRPO training of qwen/Qwen2-1.5B-Instruct on the math data we just generated.
+
+### Evaluate the model on the test set
+
+If you specified the `--test-split` flag during data generation, a test dataset was written to `generated_data/test.jsonl`.
+
+You can evaluate models on the test dataset with the `eval` command.
+
+
+**Evaluate the base model**
+To evaluate the base model, simply pass `--model qwen/Qwen2-1.5B-Instruct`. 
+
+```bash
+# evaluate the base
+python cli.py eval --eval-path generated_data/test.jsonl --model qwen/Qwen2-1.5B-Instruct
+```
+You should see a result like this:
+
+```bash
+=== Evaluation Results ===
+Model: qwen/Qwen2-1.5B-Instruct
+Samples: 200
+Pass@1: 13.5% above 50% | 13.5% at 100%
+```
+
+**Evaluate the trained model**
+
+To evaluate the trained model, simply pass a path to one of the checkpoints into the script:
+
+```bash
+# evaluate the base
+python cli.py eval --eval-path generated_data/test.jsonl --model checkpoints/epoch_0
+```
+
+Results:
+
+```py
+=== Evaluation Results ===
+Model: grpo-checkpoints/epoch_0/
+Samples: 200
+Pass@1: 91.5% above 50% | 91.5% at 100%
+```
+
+
+## Data Format
+
+The data is formatted so the model learns to perform **addition** and **subtraction**, and always outputs its answers
+using `<answer>...</answer>` tags. 
+
+
+Here's some example messages from each task:
+
+**Subtraction**:
+
+```py
+[system]: You are a helpful math assistant. Always provide your final numerical answer inside of the <answer>...</answer> tags, e.g.: <answer>42</answer>
+[user]: What do you get when you subtract -839 from -642?
+```
+
+**Addition**:
+
+```py
+[system]: You are a helpful math assistant. Always provide your final numerical answer inside of the <answer>...</answer> tags, e.g.: <answer>42</answer>
+[user]: If you have -437 and add -876, what is the total?
+```
 

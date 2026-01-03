@@ -384,6 +384,66 @@ def eval_model(eval_dataset: datasets.Dataset, comps: TrainingComponents):
         )
 
 
+@app.command()
+def eval(
+    eval_path: str = typer.Option(..., "--eval-path", help="Path to the evaluation dataset (jsonl)"),
+    model_name: str = typer.Option(..., "--model", "-m", help="Model name or path"),
+    gpu: int = typer.Option(0, "--gpu", "-g", help="CUDA GPU index to use"),
+    max_new_tokens: int = typer.Option(128, help="Maximum number of new tokens to generate"),
+    max_seq_len: int = typer.Option(8192, "--msl", "--max-seq-len", help="Maximum sequence length"),
+    temperature: float = typer.Option(0.7, "-t", "--temp", help="Sampling temperature"),
+    group_size: int = typer.Option(1, "-G", "--group-size", help="Number of rollouts per prompt (for pass@k)"),
+):
+    """Run evaluation on a dataset without training."""
+    device = torch.device("cuda", gpu)
+
+    eval_dataset = datasets.load_dataset("json", data_files=eval_path, split="train")
+    typer.secho(f"✓ Loaded {len(eval_dataset)} evaluation samples", fg=typer.colors.GREEN)
+
+    model = AutoModelForCausalLM.from_pretrained(model_name, device_map=device)
+    model.eval()
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+
+    if tokenizer.pad_token_id and not model.config.pad_token_id:
+        model.config.pad_token_id = tokenizer.pad_token_id
+
+    sampling_params = SamplingParams(
+        max_new_tokens=max_new_tokens,
+        temperature=temperature,
+        max_tokens=max_seq_len,
+        top_p=1.0,
+        top_k=0.0,
+        repetition_penalty=1.0,
+    )
+
+    eval_data = eval_dataset.batch(eval_dataset.num_rows)
+    samples = generate_rollouts(
+        model,
+        tokenizer,
+        batch=next(iter(eval_data)),
+        batch_size=eval_dataset.num_rows,
+        group_size=group_size,
+        sampling_params=sampling_params,
+        show_tqdm=True,
+    )
+
+    percent_scores = []
+    for sample in samples:
+        passing_rate = sum(1 if r.is_correct else 0 for r in sample.rollouts) / len(sample.rollouts)
+        percent_scores.append(passing_rate)
+
+    percent_above_50 = sum(1 if score > 0.5 else 0 for score in percent_scores) / len(percent_scores) * 100
+    percent_at_100 = sum(1 if score == 1.0 else 0 for score in percent_scores) / len(percent_scores) * 100
+
+    typer.secho("\n=== Evaluation Results ===", fg=typer.colors.BRIGHT_MAGENTA)
+    typer.secho(f"Model: {model_name}", fg=typer.colors.BRIGHT_BLUE)
+    typer.secho(f"Samples: {len(samples)}", fg=typer.colors.BRIGHT_BLUE)
+    typer.secho(
+        f"Pass@{group_size}: {percent_above_50:.1f}% above 50% | {percent_at_100:.1f}% at 100%",
+        fg=typer.colors.CYAN,
+    )
+
+
 def train_policy_on_rollouts(samples: list[Sample], comps: TrainingComponents):
     comps.model.train()
 
@@ -561,8 +621,8 @@ def train(
     beta1: float = typer.Option(0.9, help="Adam beta1 parameter"),
     beta2: float = typer.Option(0.95, help="Adam beta2 parameter"),
     wd: float = typer.Option(0.0, "--wd", help="Weight decay"),
-    # temporary
-    training_gpu: int = typer.Option(1, help="GPU device for training"),
+    # device selection
+    gpu: int = typer.Option(0, "--gpu", "-g", help="CUDA GPU index to use for training"),
     # GRPO params
     inner_epochs: int = typer.Option(1, help="Number of passes on inner generation"),
     inner_batch_size: int = typer.Option(4, "--inner-batch-size", help="Batch size during the GRPO inner loop."),
@@ -598,8 +658,8 @@ def train(
     if eval_dataset:
         typer.secho(f"✓ Loaded {len(eval_dataset)} evaluation samples", fg=typer.colors.GREEN)
 
-    # devices
-    train_device = torch.device("cuda", training_gpu)
+    # device setup
+    train_device = torch.device("cuda", gpu)
 
     # initialize model
     model = AutoModelForCausalLM.from_pretrained(
