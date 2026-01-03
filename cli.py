@@ -16,15 +16,13 @@ from transformers import (
 import torch
 from torch.optim import AdamW
 import os
-import shutil
 from IPython import embed
 
 from instructlab.training.data_process import (
-    process_messages_into_input_ids,
     configure_tokenizer,
 )
 
-from data_utils import generate_dataset, get_unmasked_sample, samples_to_dataset, create_grpo_data_loader
+from data_utils import generate_dataset, dataset_from_groups, create_grpo_data_loader
 from utils import preview_tokenization, display_scorecard
 from type_defs import (
     Problem,
@@ -113,57 +111,30 @@ def generate_data(
         test = None
     os.makedirs(output_dir, exist_ok=True)
 
-    # write out
-    train_raw_path = os.path.join(output_dir, "train_raw.jsonl")
-    train.to_json(train_raw_path)
-
-    if test:
-        test_raw_path = os.path.join(output_dir, "test_raw.jsonl")
-        test.to_json(test_raw_path)
-
-    # here we create a parsed one
-    tmp_dir = "/tmp/parsed_data"
-    process_messages_into_input_ids(
-        data_path=train_raw_path,
-        data_output_path=os.path.join(tmp_dir),
-        max_seq_len=max_seq_len,
-        model_path=model_name,
-        num_cpu_procs=4,
-    )
+    # write out training data
     train_path = os.path.join(output_dir, "train.jsonl")
-    shutil.move(os.path.join(tmp_dir, "data.jsonl"), os.path.abspath(train_path))
+    train.to_json(train_path)
     typer.secho(
-        f"✓ Processed training data, wrote results to {train_path}",
+        f"✓ Generated {len(train)} training examples",
         fg=typer.colors.GREEN,
     )
+    typer.secho(
+        f"✓ Saved training data to '{train_path}'",
+        fg=typer.colors.BLUE,
+    )
 
-    test_path = ""
+    # write out test data if it exists
     if test:
-        # do the same for the test data
-        process_messages_into_input_ids(
-            data_path=train_raw_path,
-            data_output_path=os.path.join(tmp_dir),
-            max_seq_len=max_seq_len,
-            model_path=model_name,
-            num_cpu_procs=4,
-        )
         test_path = os.path.join(output_dir, "test.jsonl")
-        shutil.move(os.path.join(tmp_dir, "data.jsonl"), os.path.abspath(test_path))
+        test.to_json(test_path)
         typer.secho(
-            f"✓ Processed test data, wrote results to {test_path}",
+            f"✓ Generated {len(test)} test examples",
             fg=typer.colors.GREEN,
         )
-
-    typer.secho(f"✓ Generated {len(train)} training examples", fg=typer.colors.GREEN)
-    if test:
-        typer.secho(f"✓ Generated {len(test)} test examples", fg=typer.colors.GREEN)
-
-    typer.secho(f"✓ Saved files to '{output_dir}'", fg=typer.colors.BLUE)
-    typer.secho(f"✓ Tokenized messages data: '{train_path}'", fg=typer.colors.BLUE)
-    typer.secho(f"✓ Raw training data: '{train_raw_path}'", fg=typer.colors.BLUE)
-    if test:
-        typer.secho(f"✓ Tokenized test data: '{test_path}'", fg=typer.colors.BLUE)
-        typer.secho(f"✓ Raw test data: '{test_raw_path}'", fg=typer.colors.BLUE)
+        typer.secho(
+            f"✓ Saved test data to '{test_path}'",
+            fg=typer.colors.BLUE,
+        )
 
 
 @torch.no_grad
@@ -172,7 +143,7 @@ def generate_rollouts(
     tokenizer: AutoTokenizer,
     batch: dict[str, list[any]],
     batch_size: int,
-    num_rollouts: int,
+    group_size: int,
     sampling_params: SamplingParams,
 ) -> list[Sample]:
     model.eval()
@@ -199,7 +170,7 @@ def generate_rollouts(
             input_ids,
             attention_mask=torch.ones_like(input_ids),
             max_new_tokens=sampling_params.max_new_tokens,
-            num_return_sequences=num_rollouts,
+            num_return_sequences=group_size,
             do_sample=True,
             temperature=sampling_params.temperature,
             top_k=sampling_params.top_k,
@@ -251,30 +222,6 @@ def generate_rollouts(
                     )
                 )
 
-            # for rollout_idx in range(num_rollouts):
-            #     logprobs: list[TokenSample] = []
-            #     for token_idx, new_tok in zip(
-            #         range(len(new_tokens[rollout_idx])),
-            #         new_tokens[rollout_idx],
-            #     ):
-            #         # since generation pads out the responses, the padding tokens were not sampled by the policy
-            #         # and therefore they must be skipped
-            #         if new_tok == tokenizer.pad_token_id:
-            #             break
-
-            #         logits = outputs.logits[token_idx][rollout_idx]  # returns the logit distribution for a given rollout
-            #         # we need to collect 2 things:
-            #         # 1. the sampled token
-            #         # 2. the logprob of the sampled token
-            #         logprob = logits.softmax(-1)[new_tok]
-            #         logprobs.append(
-            #             TokenSample(
-            #                 token=new_tok.item(),
-            #                 logprob=logprob.item(),
-            #                 logit=logits[new_tok].item(),
-            #             )
-            #         )
-
             # here we append the rollout data
             policy_response = tokenizer.decode(new_tokens[seq_idx], skip_special_tokens=True)
             rollout_data.append(
@@ -285,6 +232,7 @@ def generate_rollouts(
                 )
             )
 
+        assert input_ids.ndim > 1
         rollouts.append(
             Sample(
                 problem=Problem(
@@ -293,6 +241,7 @@ def generate_rollouts(
                     problem=seed_sample["problem"],
                 ),
                 rollouts=rollout_data,
+                input_ids=input_ids.tolist()[0],  # record the input ids so we can reuse them later
             )
         )
 
@@ -301,6 +250,7 @@ def generate_rollouts(
     return rollouts
 
 
+@torch.no_grad
 def grade_samples(samples: list[Sample]):
     """
     Given a batch of samples, calculates the advantage for each one.
@@ -325,6 +275,7 @@ def grade_samples(samples: list[Sample]):
                 rollout.is_correct = sample.problem.answer == answer
 
 
+@torch.no_grad
 def calculate_reward(samples: list[Sample]):
     """
     Function containing reward calculation logic
@@ -337,9 +288,9 @@ def calculate_reward(samples: list[Sample]):
                 # okay, we WANT the model to produce more answers like this
                 # but we don't want to overweight this or give sparse rewards
                 # so we will assign a reward here of +1
-                rollout.reward += 1
+                rollout.reward += 0.1
             if rollout.is_correct:
-                rollout.reward += 5  # huge reward for getting it right
+                rollout.reward += 1  # huge reward for getting it right
 
 
 # i dont think we even have tensors flowing through this function but you
@@ -376,14 +327,55 @@ def calculate_advantage(samples: list[Sample]):
                 rollout.advantage = (rollout.reward - avg) / (std + eps)
 
 
+@torch.no_grad
+def eval_model(eval_dataset: datasets.Dataset, comps: TrainingComponents):
+    comps.model.eval()
+
+    # we generate all the rollouts
+    eval_data = eval_dataset.batch(eval_dataset.num_rows)
+    pass_at = [
+        1,
+    ]  #  3,#  5, 10]
+    results = []
+
+    for npass in pass_at:
+        # generate for each pass @
+        samples = generate_rollouts(
+            comps.model,
+            comps.tokenizer,
+            batch=next(iter(eval_data)),
+            batch_size=eval_dataset.num_rows,
+            group_size=npass,
+            sampling_params=comps.sampling_params,
+        )
+
+        # now we go and determine the passing rate
+        percent_scores = []
+        for sample in samples:
+            passing_rate = sum(1 if r.is_correct else 0 for r in sample.rollouts) / len(sample.rollouts)
+            percent_scores.append(passing_rate)
+        # Calculate statistics
+        percent_above_50 = sum(1 if score > 0.5 else 0 for score in percent_scores) / len(percent_scores) * 100
+        percent_at_100 = sum(1 if score == 1.0 else 0 for score in percent_scores) / len(percent_scores) * 100
+
+        results.append((npass, percent_above_50, percent_at_100))
+
+    # Print all results at the end
+    typer.secho("\n=== Evaluation Scorecard ===", fg=typer.colors.BRIGHT_MAGENTA)
+    for npass, percent_above_50, percent_at_100 in results:
+        typer.secho(
+            f"Pass@{npass}: {percent_above_50:.1f}% above 50% | {percent_at_100:.1f}% at 100%",
+            fg=typer.colors.CYAN,
+        )
+
+
 def train_policy_on_rollouts(samples: list[Sample], comps: TrainingComponents):
     comps.model.train()
 
     # we need to create a dataset here
     # configure tokenizer first
     # create the 'dataset'
-    dataset = samples_to_dataset(samples, comps.train_tokenizer)
-    data_loader = create_grpo_data_loader(dataset, comps)
+    dataset = dataset_from_groups(samples, comps.train_tokenizer)
 
     # so then we need to create a dataset from the rollouts
     # our dataset needs:
@@ -392,16 +384,14 @@ def train_policy_on_rollouts(samples: list[Sample], comps: TrainingComponents):
     #  3. logprobs
 
     # now we train
-    for _ in range(comps.hyperparams.inner_epochs):
+    for epoch in range(comps.hyperparams.inner_epochs):
         # generate the random set
 
+        data_loader = create_grpo_data_loader(dataset, comps)
         for batch in data_loader:
             """
             minibatch here has columns input_ids, labels, advantage. it is indexed column-first and row-second
             """
-
-            print("start of batch :)")
-            embed()
 
             # next step, do a minibatch of rollouts
 
@@ -463,14 +453,6 @@ def train_policy_on_rollouts(samples: list[Sample], comps: TrainingComponents):
             # \rho(\theta_0)=\exp(\log p_{\theta_0}-\log p_{\text{old}})
             assert ref_logprobs.shape == new_rollout_probs.shape
             importance_ratio: torch.Tensor = (new_rollout_probs.log() - ref_logprobs.log()).exp()
-
-            # For debugging, this should be true on the first time
-            # try:
-            #     assert importance_ratio.allclose(torch.ones_like(importance_ratio), rtol=1e-4)
-            # except AssertionError as e:
-            #     print(f"got assertion error: {e}")
-            #     embed()
-
             # 5. Next we calculate the clipped surrogate objective
             # adjust advantage so it can broadcast cleanly
             advantages = advantages.unsqueeze(-1)  # (B,) --> (B, 1)
@@ -503,27 +485,33 @@ def train_policy_on_rollouts(samples: list[Sample], comps: TrainingComponents):
             # (B,) --> (B, 1)
             grpo_sequence_loss = grpo_token_loss.sum(dim=-1) / rollout_lens.float()
             assert len(grpo_sequence_loss.shape) == 1
-            grpo_loss = grpo_sequence_loss.mean()  # group average
+            grpo_loss = -grpo_sequence_loss.mean()  # group average
+
             # backprop
             grpo_loss.backward()
 
             # we optimize the model
             gradnorm = torch.nn.utils.clip_grad_norm_(comps.model.parameters(), 1.0)
+
+            # take an optimization step
             comps.optimizer.step()
             comps.optimizer.zero_grad()
 
-            print(f"reached the end of the optimize step: {gradnorm=}")
-
-            embed()
-            import sys
-
-            sys.exit(0)
+            # log metrics
+            typer.secho(
+                # f"[Epoch {epoch + 1}/{comps.hyperparams.epochs}] "
+                f"Inner Epoch {epoch + 1}/{comps.hyperparams.inner_epochs} | "
+                f"Loss: {grpo_loss.item():.4f} | "
+                f"Grad Norm: {gradnorm.item():.4f}",
+                fg=typer.colors.YELLOW,
+            )
 
 
 @app.command()
 def train(
     # dataset parameters, we'll eventually move these to a data generation command
-    data_path: str = typer.Option(..., help="Path to the training data"),
+    train_path: str = typer.Option(..., "--train-path", help="Path to the training data"),
+    eval_path: str = typer.Option(None, "--eval-path", help="Path to the training data"),
     seed: int = typer.Option(67, help="Random seed"),
     num_problems: int = typer.Option(20, help="Number of problems"),
     min_num: int = typer.Option(-100, help="Minimum number for problems"),
@@ -549,15 +537,29 @@ def train(
     # GRPO params
     inner_epochs: int = typer.Option(1, help="Number of passes on inner generation"),
     inner_batch_size: int = typer.Option(4, "--inner-batch-size", help="Batch size during the GRPO inner loop."),
-    batch_size: int = typer.Option(1, "-B", "--batch-size", help="Batch size for training"),
-    num_rollouts: int = typer.Option(1, "-G", "--generations", help="Number of rollouts"),
+    batch_size: int = typer.Option(
+        1, "-B", "--batch-size", help="Number of prompts to batch together when generating GRPO rollouts."
+    ),
+    group_size: int = typer.Option(
+        1, "-G", "--group-size", help="Group size / number of rollouts to generate from a single prompt"
+    ),
     temperature: float = typer.Option(0.7, "-t", "--temp", help="sampling temperature"),
-    eps: float = typer.Option(0.1, "--eps", help="epsilon used for GRPO clip"),
+    clip_eps: float = typer.Option(0.1, "--clip-eps", help="epsilon used for GRPO clip"),
     kl_strength: float = typer.Option(1.0, "--kl", help="strength of the kl penalty to the reference policy"),
+    # eval split
+    eval_split: float = typer.Option(
+        0.0, "--eval-split", help="portion of training samples to use for the eval dataset"
+    ),
 ):
     # load the raw dataset
     # train_dataset = JsonlDataset(data_path)
-    train_dataset = datasets.load_dataset("json", data_files=data_path, split="train")
+    train_dataset = datasets.load_dataset("json", data_files=train_path, split="train")
+    eval_dataset = None
+
+    if eval_split > 0:
+        dataset_dict = train_dataset.train_test_split(test_size=eval_split, seed=seed)
+        train_dataset = dataset_dict["train"]
+        eval_dataset = dataset_dict["test"]
 
     # devices
     train_device = torch.device("cuda", training_gpu)
@@ -576,7 +578,7 @@ def train(
             fg=typer.colors.BRIGHT_BLUE,
         )
 
-    optimizer = torch.optim.AdamW(model.parameters(), lr=lr, betas=(beta1, beta2), weight_decay=wd)
+    optimizer = AdamW(model.parameters(), lr=lr, betas=(beta1, beta2), weight_decay=wd)
 
     training_comps = TrainingComponents(
         optimizer=optimizer,
@@ -588,10 +590,12 @@ def train(
             model_name=model_name,
             max_seq_len=max_seq_len,
             batch_size=batch_size,
-            num_rollouts=num_rollouts,
+            group_size=group_size,
             epochs=epochs,
             inner_epochs=inner_epochs,
             inner_batch_size=inner_batch_size,
+            eps=clip_eps,
+            kl_penalty_strength=kl_strength,
         ),
         train_tokenizer=configure_tokenizer(model_name),
         sampling_params=SamplingParams(
@@ -605,22 +609,21 @@ def train(
     )
 
     preview_tokenization(train_dataset, tokenizer)
+
+    if eval_dataset is not None and len(eval_dataset) > 0:
+        eval_model(eval_dataset, training_comps)
+
     # now we iterate
     for epoch in range(epochs):
         minibatches: list[Sample] = []
         for batch in train_dataset.shuffle().iter(batch_size):
-            # for batch in train_loader:
-            #     input_ids = batch["input_ids"].to(device=inference_device)
-            #     attention_mask = batch["attention_mask"].to(device=inference_device)
-            #     from IPython import embed
-
             # here we need to create a set of rollouts for each prompt
             rollouts = generate_rollouts(
                 model,
                 tokenizer,
                 batch,
-                batch_size,
-                num_rollouts,
+                training_comps.hyperparams.batch_size,
+                training_comps.hyperparams.group_size,
                 sampling_params=training_comps.sampling_params,
             )
 
@@ -629,63 +632,19 @@ def train(
             calculate_reward(rollouts)
             calculate_advantage(rollouts)
 
-            # \rho(\theta_0)=\exp(\log p_{\theta_0}-\log p_{\text{old}})
+            # now that we've generated G rollouts for our B groups of prompts,
+            # we convert this into a dataset and update the trainable policy on it
+            train_policy_on_rollouts(
+                rollouts,
+                training_comps,
+            )
             minibatches.extend(rollouts)
-
-        # now that we've generated G rollouts for our B groups of prompts,
-        # we convert this into a dataset and update the trainable policy on it
-        train_policy_on_rollouts(
-            minibatches,
-            training_comps,
-        )
 
         # Calculate and display epoch scorecard
         display_scorecard(minibatches, epoch, epochs)
 
-
-# @app.command()
-# def main(
-#     seed: int = 42,
-#     num_problems: int = 20,
-#     min_num: int = 1,
-#     max_num: int = 100,
-#     num_samples: int = 1,
-# ):
-#     problems = random_problems(seed, num_problems, min_num, max_num)
-#     system_prompt = "You are a helpful math assistant. Always provide your final numerical answer using the format <answer>42</answer>"
-#     samples: list[Sample] = []
-#     for problem in problems:
-#         sample = Sample(problem=problem)
-#         for _ in range(num_samples):
-#             # get model answer
-#             sample.results.append(sample_result(problem, system_prompt))
-#         samples.append(sample)
-
-#     for sample in samples:
-#         typer.echo(f"\nProblem: {sample.problem.problem}")
-#         typer.echo(f"Expected Answer: {sample.problem.answer}")
-
-#         # Count correct and incorrect answers
-#         parsed_results = [r for r in sample.results if r.parsed_answer]
-#         if not parsed_results:
-#             typer.echo("No successfully parsed answers", color=typer.colors.YELLOW)
-#             continue
-
-#         correct_count = sum(1 for r in parsed_results if r.correct)
-#         incorrect_count = len(parsed_results) - correct_count
-#         total = len(parsed_results)
-
-#         correct_pct = (correct_count / total * 100) if total > 0 else 0
-#         incorrect_pct = (incorrect_count / total * 100) if total > 0 else 0
-
-#         typer.echo(f"Correct: {correct_count}/{total} ({correct_pct:.1f}%)")
-#         typer.echo(f"Incorrect: {incorrect_count}/{total} ({incorrect_pct:.1f}%)")
-
-#         # Majority voting
-#         if correct_count > incorrect_count:
-#             typer.secho("Majority Vote: CORRECT", fg=typer.colors.GREEN)
-#         else:
-#             typer.secho("Majority Vote: INCORRECT", fg=typer.colors.RED)
+        if eval_dataset is not None and len(eval_dataset) > 0:
+            eval_model(eval_dataset, training_comps)
 
 
 if __name__ == "__main__":

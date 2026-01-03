@@ -16,6 +16,7 @@ from torch.utils.data import DataLoader, Dataset
 from instructlab.training.data_process import unmask_sample, configure_tokenizer, process_samples
 from instructlab.training.type_definitions import ProcessedMessagesData
 from transformers import PreTrainedTokenizer
+from IPython import embed
 
 
 def random_problems(seed: int = 42, num_problems: int = 20, min_num: int = 1, max_num: int = 100) -> list[Problem]:
@@ -104,14 +105,23 @@ class JsonlDataset(torch.utils.data.Dataset):
         item = self.dataset[idx]
         to_return = {
             "input_ids": torch.tensor(item["input_ids"], dtype=torch.long),
-            "labels": torch.tensor(item["labels"], dtype=torch.long),
-            "len": len(item["input_ids"]),
+            "logprob_ids": torch.tensor(item["logprob_ids"], dtype=torch.long),
+            "logprobs": torch.tensor(item["logprobs"], dtype=torch.float32),
+            "grpo_mask": torch.tensor(item["grpo_mask"], dtype=torch.bool),
+            # debug
+            "full_input_ids": torch.tensor(item["full_input_ids"], dtype=torch.long),
+            "full_logprob_ids": torch.tensor(item["full_logprob_ids"], dtype=torch.long),
+            "advantage": item["advantage"],
+            "prompt_offset": item["prefix_len"],
+            "num_logprobs": len(item["logprobs"]),
+            #            "input_ids": input_ids,
+            # "logprob_ids": logprob_seq,
+            # "grpo_mask": grpo_mask,
+            # # adds all of these for debugging purposes
+            # "full_input_ids": full_input_seq,
+            # "full_logprob_ids": full_logprob_seq,
+            # "logprobs": logprobs,
         }
-        if "advantage" in item:
-            to_return["advantage"] = item["advantage"]
-        if "logprobs" in item:
-            to_return["logprobs"] = torch.tensor([it["logprob"] for it in item["logprobs"]], dtype=torch.float32)
-            to_return["logprob_ids"] = torch.tensor([it["token"] for it in item["logprobs"]], dtype=torch.float32)
         return to_return
 
 
@@ -124,10 +134,8 @@ def collate_fn(batch: list[dict], pad_token_id: int):
     max_len = max(batch, key=lambda x: x["input_ids"].numel())["input_ids"].numel()
     # Pad all sequences to max_len
     input_ids_padded = []
-    labels_padded = []
     attention_mask_padded = []
     num_tokens_in_batch = 0
-    num_loss_tokens_in_batch = 0
     advantages = []
     logprob_ids_padded = []
     logprobs_padded = []
@@ -137,48 +145,43 @@ def collate_fn(batch: list[dict], pad_token_id: int):
     for item in batch:
         seq_len = item["input_ids"].numel()
         num_tokens_in_batch += seq_len
-        num_loss_tokens_in_batch += (item["labels"] != -100).sum().item()
 
         # Pad input_ids (typically with 0 or tokenizer.pad_token_id)
         full_input_seq = torch.full((max_len,), fill_value=pad_token_id, dtype=torch.long)
-        full_labels = torch.full_like(full_input_seq, fill_value=-100, dtype=torch.long)
         full_attn_mask = torch.zeros_like(full_input_seq, dtype=torch.long)
         # full_attn_mask =
 
         # populate padded inputs with values from dataset
         idxs = torch.arange(0, seq_len)
         full_input_seq[idxs] = item["input_ids"]
-        full_labels[idxs] = item["labels"]
-        full_attn_mask[idxs] = 1  # should compute attention here
-        assert full_attn_mask.equal((full_input_seq != pad_token_id).float())  # just verify this for now
-
-        # update the batch items
-        input_ids_padded += [full_input_seq]
-        labels_padded += [full_labels]
-        attention_mask_padded += [full_attn_mask]
-
-        # also add the advantage to be aligned with the rest of the inputs
-        if "advantage" not in item:
-            continue
-
-        # handle the GRPO pieces
-        advantages.append(item["advantage"])
+        full_attn_mask = (full_input_seq != pad_token_id).float()  # should compute attention here
 
         # how far the logprobs (completed sequence) is from the beginning
-        prompt_offset = seq_len - item["logprobs"].numel()
-        completion_length = item["logprobs"].numel()
+        prompt_offset = item["prompt_offset"]
+        completion_length = item["num_logprobs"]
 
         # this should be constructed such that the default value will
         # have no effect on the compute graph
-        full_logprobs = torch.ones_like(full_labels, dtype=torch.float32)
-        # first ensure it's the same size
-        assert full_logprobs[prompt_offset : prompt_offset + completion_length].numel() == item["logprobs"].numel()
-        full_logprobs[prompt_offset : prompt_offset + completion_length] = item["logprobs"]
+        full_logprob_ids = torch.full((max_len,), fill_value=pad_token_id, dtype=torch.long)
+        full_logprob_ids[idxs] = item["logprob_ids"]
 
-        # do the same for the logit ids
-        full_logprob_ids = torch.full_like(full_labels, fill_value=pad_token_id)
-        full_logprob_ids[prompt_offset : prompt_offset + completion_length] = item["logprob_ids"]
-        grpo_mask = (full_logprob_ids.detach() != pad_token_id).detach()
+        # create the logprobs
+        full_logprobs = torch.ones_like(full_input_seq, dtype=torch.float32)
+        try:
+            logprob_offset = prompt_offset - 1
+            full_logprobs[logprob_offset : logprob_offset + completion_length] = item["logprobs"]
+        except Exception as e:
+            print(e)
+            embed()
+
+        # first ensure it's the same size
+        assert full_logprobs[logprob_offset : logprob_offset + completion_length].numel() == item["logprobs"].numel()
+        # # full_logprobs[prompt_offset : prompt_offset + completion_length] = item["logprobs"]
+
+        # # do the same for the logit ids
+        # full_logprob_ids = torch.full_like(full_input_seq, fill_value=pad_token_id)
+        # full_logprob_ids[:] = item["logprob_ids"]
+        grpo_mask = full_logprob_ids != pad_token_id
         batch_grpo_mask += [grpo_mask]
 
         # now make sure to append all of these
@@ -188,108 +191,93 @@ def collate_fn(batch: list[dict], pad_token_id: int):
         # count the number of tokens that we consider ourselves to actually be backproping on
         logprobs_in_batch.append(completion_length)
 
+        # update the batch items
+        input_ids_padded += [full_input_seq]
+        attention_mask_padded += [full_attn_mask]
+        advantages.append(item["advantage"])
+
     final_item = {
         "input_ids": torch.stack(input_ids_padded).detach(),
-        "labels": torch.stack(labels_padded).detach(),
         "attention_mask": torch.stack(attention_mask_padded).detach(),
         "num_tokens": num_tokens_in_batch,
-        "num_loss_tokens": num_loss_tokens_in_batch,
         "num_sequences": len(batch),
+        "advantages": torch.tensor(advantages, dtype=torch.float32),
+        "logprobs": torch.stack(logprobs_padded).detach(),
+        "logprob_ids": torch.stack(logprob_ids_padded).detach(),
+        "rollout_lens": torch.tensor(logprobs_in_batch, dtype=torch.long).detach(),
+        "grpo_mask": torch.stack(batch_grpo_mask).detach(),
     }
-
-    if len(advantages) > 0:
-        assert sum(logprobs_in_batch) == num_loss_tokens_in_batch, (
-            f"number of loss tokens {num_loss_tokens_in_batch} doesn't match num logprobs {sum(logprobs_in_batch)}"
-        )
-        final_item.update(
-            {
-                "advantages": torch.tensor(advantages, dtype=torch.float32),
-                "logprobs": torch.stack(logprobs_padded).detach(),
-                "logprob_ids": torch.stack(logprob_ids_padded).detach(),
-                "rollout_lens": torch.tensor(logprobs_in_batch, dtype=torch.long),
-                "grpo_mask": torch.stack(batch_grpo_mask).detach(),
-            }
-        )
-
     return final_item
 
 
-def samples_to_dataset(samples: list[Sample], tokenizer: PreTrainedTokenizer) -> datasets.Dataset:
-    all_rollouts: list[RolloutResult] = []
-    for s in samples:
-        all_rollouts.extend(s.rollouts)
-    dataset = datasets.Dataset.from_list([r.to_dataset_format() for r in all_rollouts], split="train")
-    dataset = process_samples(dataset, tokenizer=tokenizer, num_cpu_procs=1)
+def dataset_from_groups(groups: list[Sample], tokenizer: PreTrainedTokenizer):
+    """
+    Creates a processed dataset in the format needed for training GRPO
+    """
+    processed_samples = []
+    for group in groups:
+        prefix_input_ids = group.input_ids
+        for rollout in group.rollouts:
+            logprob_ids = [tok.token for tok in rollout.logprobs]
+            # clone input ids
+            full_input_seq = prefix_input_ids[:] + logprob_ids[:]
+            full_logprob_seq = [tokenizer.pad_token_id] * len(prefix_input_ids) + logprob_ids[:]  # still needs shifting
 
-    # HACK: this processing is specific to qwen and assumes a single-turn conversation
-    # for each sample, we need to make sure that we do not include token ids beyond the
-    # final eos_token
+            # now we have to create the shifted & aligned samples
+            try:
+                last_eos_tok_idx = logprob_ids[::-1].index(tokenizer.eos_token_id)
+            except ValueError:
+                # it doesnt have one, only shift <<
+                input_ids = full_input_seq[:-1]
+                logprob_seq = full_logprob_seq[1:]
 
-    def trim_input_ids_to_original_rollout(sample: dict):
-        rollout_has_eos_tok = any(tokenizer.eos_token_id == tok["token"] for tok in sample["logprobs"])
-        if not rollout_has_eos_tok:
-            # do nothing
-            return {
-                # perform the shift here
-                "input_ids": sample["input_ids"][:-1],
-                "labels": sample["labels"][1:],
+            else:
+                # set the indices
+                input_ids_offset_idx = -(last_eos_tok_idx + 1)
+                logprob_ids_offset_idx = -(last_eos_tok_idx)
+
+                # we have to chop the input sequence
+                input_ids = full_input_seq[:input_ids_offset_idx]
+                if len(input_ids) == 0:
+                    raise ValueError("trimming eos token resulted in empty input ids sequence")
+
+                logprob_seq = full_logprob_seq[1:logprob_ids_offset_idx]
+                if logprob_ids_offset_idx == 0:
+                    logprob_seq = full_logprob_seq[1:]
+                else:
+                    logprob_seq = full_logprob_seq[1:logprob_ids_offset_idx]
+
+                if len(logprob_seq) == 0:
+                    raise ValueError("trimming eos token resulted in empty logprob ids sequence")
+
+            # remaining items
+            grpo_mask = [lpi == tokenizer.pad_token_id for lpi in logprob_seq]
+            logprobs = [lp.logprob for lp in rollout.logprobs]
+
+            # these must be equal
+            assert len(input_ids) == len(logprob_seq)
+
+            sample = {
+                "prefix_len": len(prefix_input_ids),
+                "input_ids": input_ids,
+                "logprob_ids": logprob_seq,
+                "grpo_mask": grpo_mask,
+                # adds all of these for debugging purposes
+                "full_input_ids": full_input_seq,
+                "full_logprob_ids": full_logprob_seq,
+                "logprobs": logprobs,
+                "advantage": rollout.advantage,
             }
+            # sample.update(rollout.to_dataset_format())
+            processed_samples.append(sample)
 
-        # otherwise we truncate everything beyond the eos token
-        if (count := sample["input_ids"].count(tokenizer.eos_token_id)) < 3:
-            raise ValueError(f"unexpected amount of eos token ids in input sequence, expected 3+, got {count}")
+    try:
+        ds = datasets.Dataset.from_list(processed_samples, split="train")
+    except Exception as e:
+        print(e)
+        embed()
 
-        # generate offset
-        final_tok_idx = sample["input_ids"][::-1].index(tokenizer.eos_token_id)
-
-        # we chop off the end of the input_ids sequence, so final eos token will no longer be present
-        input_ids_offset_idx = -(final_tok_idx + 1)
-        offset_input_ids = sample["input_ids"][
-            :input_ids_offset_idx
-        ]  # this drops the final eos token from input sequence
-        if len(offset_input_ids) == 0:
-            raise ValueError("tried to offset the final tokenizer index, but result is an empty sequence")
-
-        # we chop off the end of labels
-        if final_tok_idx > 0:
-            offset_labels = sample["labels"][:-final_tok_idx]
-
-        # then we shift labels forward to align with input ids
-        offset_labels = offset_labels[1:]
-        if len(offset_labels) == 0:
-            raise ValueError("tried to offset the final tokenizer index, but result is an empty sequence")
-
-        if len(offset_labels) != len(offset_input_ids):
-            raise ValueError(
-                f"concatentation error, offset labels arent equal to input ids: {len(offset_labels)} != {len(offset_input_ids)}"
-            )
-
-        # return {"trimmed_input_ids": offset_input_ids, "trimmed_labels": offset_labels}
-        return {"input_ids": offset_input_ids, "labels": offset_labels}
-
-    dataset = dataset.map(trim_input_ids_to_original_rollout, num_proc=1, desc="trimming input ids")
-
-    # now we add the masked samples
-    return dataset
-
-
-def get_unmasked_sample(rollout: RolloutResult, tokenizer: PreTrainedTokenizer) -> ProcessedMessagesData:
-    """
-    wrapper around unmask_sample which drops all tokens after the final EOS token id
-    """
-
-    # process the sample
-    result = unmask_sample({"messages": rollout.rollout_trace_to_json_list()}, tokenizer)
-
-    last_idx = result["input_ids"][::-1].index(tokenizer.eos_token_id)
-    truncated_input_ids = result["input_ids"][:-last_idx]
-    truncated_labels = result["labels"][:-last_idx]
-
-    return {
-        "input_ids": truncated_input_ids,
-        "labels": truncated_labels,
-        "len": len(truncated_input_ids),
-    }
+    return ds
 
 
 def create_grpo_data_loader(dataset: datasets.Dataset, comps: TrainingComponents):

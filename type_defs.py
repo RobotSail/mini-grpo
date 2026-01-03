@@ -64,31 +64,30 @@ class RolloutResult(pydantic.BaseModel):
         return self.seed_messages_to_json_list() + [{"role": "assistant", "content": self.response}]
 
 
-# class RolloutData(pydantic.BaseModel):
-#     logprobs: list[TokenSample]
-#     response: str
-#     is_parsable: bool = False
-#     is_correct: bool = False
-
-
 class Sample(pydantic.BaseModel):
     problem: Problem
     # system_prompt: str | None = None
-    # results: list[SampleResult] = pydantic.Field(default_factory=list)
     rollouts: list[RolloutResult] = pydantic.Field(default_factory=list)
+    input_ids: list[int]
 
 
 class Hyperparameters(pydantic.BaseModel):
+    """
+    Hyperparameters for GRPO, defaults are set to small/debug values values
+    """
+
     lr: float
     model_name: str
     max_seq_len: int
-    batch_size: int
-    num_rollouts: int
+    batch_size: int = 1
+    group_size: int = 8
     epochs: int
-    inner_epochs: int
+    inner_epochs: int = 1
+
+    # change this one to a ratio
     inner_batch_size: int
     eps: float = 0.1  # or 0.2 as in deepseek's original paper
-    kl_penalty_strength: float = 1.0
+    kl_penalty_strength: float = 0.01  # start with a lower value
 
 
 class TrainingComponents(pydantic.BaseModel):
