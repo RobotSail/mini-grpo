@@ -36,7 +36,24 @@ def preview_tokenization(dataset, tokenizer):
     typer.secho("\n" + "=" * 60 + "\n", fg=typer.colors.BRIGHT_YELLOW)
 
 
-def display_scorecard(rollouts: list, epoch: int, epochs: int):
+def display_scorecard(
+    rollouts: list,
+    epoch: int,
+    epochs: int,
+    return_metrics: bool = False,
+) -> dict | None:
+    """
+    Display epoch scorecard with training metrics.
+
+    Args:
+        rollouts: List of Sample objects with rollouts
+        epoch: Current epoch number (0-indexed)
+        epochs: Total number of epochs
+        return_metrics: If True, return metrics dict
+
+    Returns:
+        If return_metrics=True, returns dict with parsable_pct, correct_pct, accuracy_pct
+    """
     # Calculate and display epoch scorecard
     total_rollouts = sum(len(sample.rollouts) for sample in rollouts)
     parsable_rollouts = sum(
@@ -79,3 +96,12 @@ def display_scorecard(rollouts: list, epoch: int, epochs: int):
         else typer.colors.BRIGHT_RED,
     )
     typer.secho("=" * 60 + "\n", fg=typer.colors.BRIGHT_CYAN)
+
+    if return_metrics:
+        return {
+            "parsable_pct": parsable_pct,
+            "correct_pct": correct_pct,
+            "accuracy_pct": accuracy_pct,
+            "total_rollouts": total_rollouts,
+        }
+    return None

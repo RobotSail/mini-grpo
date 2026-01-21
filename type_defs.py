@@ -6,7 +6,7 @@ import os
 
 class Problem(pydantic.BaseModel):
     problem: str
-    answer: int
+    answer: int | float
     operation: str
 
 
@@ -91,11 +91,13 @@ class Hyperparameters(pydantic.BaseModel):
     kl_penalty_strength: float = 0.01  # start with a lower value
 
 
+from typing import Any
+
 class TrainingComponents(pydantic.BaseModel):
     model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
 
     output_dir: str | None = None
-    optimizer: torch.optim.Optimizer
+    optimizer: Any  # torch.optim.Optimizer or custom optimizer wrapper (CombinedOptimizer, MixedPrecisionOptimizer)
     model: PreTrainedModel
     ref_model: PreTrainedModel
     tokenizer: PreTrainedTokenizerBase
@@ -119,9 +121,13 @@ class TrainingComponents(pydantic.BaseModel):
         except (OSError, PermissionError):
             return False
 
-    def save_checkpoint(self, epoch: int):
-        # create root directory
-        save_dir = os.path.join(self.output_dir, f"epoch_{epoch}")
+    def save_checkpoint(self, checkpoint_id: int, is_step: bool = False):
+        if self.output_dir is None:
+            return
+
+        # create root directory with appropriate prefix
+        prefix = "step" if is_step else "epoch"
+        save_dir = os.path.join(self.output_dir, f"{prefix}_{checkpoint_id}")
         if not os.path.exists(save_dir):
             os.makedirs(save_dir, exist_ok=True)
 

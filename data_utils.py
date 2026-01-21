@@ -1,6 +1,7 @@
 import torch
 import datasets
 import random
+import re
 from type_defs import (
     Problem,
     SamplingParams,
@@ -127,6 +128,7 @@ class JsonlDataset(torch.utils.data.Dataset):
 
 def collate_fn(batch: list[dict], pad_token_id: int):
     """
+    Legacy padded collation - kept for reference.
     batch is a list of dicts containing:
     - input_ids: tensor contining the input ids
     - labels: tensor contining the input ids
@@ -210,6 +212,226 @@ def collate_fn(batch: list[dict], pad_token_id: int):
     return final_item
 
 
+def collate_fn_packed(batch: list[dict], pad_token_id: int):
+    """
+    Padding-free collation for Flash Attention 2.
+
+    Instead of padding sequences to max_len, we concatenate all sequences
+    into a single 1D tensor and track boundaries using position_ids and
+    sequence indices.
+
+    This is much more memory efficient for variable-length sequences.
+    """
+    # Collect all sequences and metadata
+    all_input_ids = []
+    all_logprob_ids = []
+    all_logprobs = []
+    all_grpo_mask = []
+    all_position_ids = []
+
+    # Per-sequence metadata
+    seq_lengths = []
+    rollout_lens = []
+    advantages = []
+    seq_start_indices = []  # Start index of each sequence in the packed tensor
+
+    current_idx = 0
+
+    for item in batch:
+        seq_len = item["input_ids"].numel()
+        prompt_offset = item["prompt_offset"]
+        completion_length = item["num_logprobs"]
+
+        # Track sequence boundary
+        seq_start_indices.append(current_idx)
+        seq_lengths.append(seq_len)
+
+        # Append input_ids
+        all_input_ids.append(item["input_ids"])
+
+        # Create position_ids for this sequence (0, 1, 2, ..., seq_len-1)
+        all_position_ids.append(torch.arange(seq_len, dtype=torch.long))
+
+        # Create logprob_ids (shifted version for loss computation)
+        all_logprob_ids.append(item["logprob_ids"])
+
+        # Create logprobs aligned with the sequence
+        # Need to create a tensor of the same length as input_ids
+        seq_logprobs = torch.ones(seq_len, dtype=torch.float32)
+        logprob_offset = prompt_offset - 1
+        if logprob_offset >= 0 and logprob_offset + completion_length <= seq_len:
+            seq_logprobs[logprob_offset : logprob_offset + completion_length] = item["logprobs"]
+        all_logprobs.append(seq_logprobs)
+
+        # Create GRPO mask (True where we should compute loss)
+        seq_grpo_mask = item["logprob_ids"] != pad_token_id
+        all_grpo_mask.append(seq_grpo_mask)
+
+        # Track rollout length and advantage
+        rollout_lens.append(completion_length)
+        advantages.append(item["advantage"])
+
+        current_idx += seq_len
+
+    # Concatenate everything into packed tensors
+    packed_input_ids = torch.cat(all_input_ids, dim=0)
+    packed_position_ids = torch.cat(all_position_ids, dim=0)
+    packed_logprob_ids = torch.cat(all_logprob_ids, dim=0)
+    packed_logprobs = torch.cat(all_logprobs, dim=0)
+    packed_grpo_mask = torch.cat(all_grpo_mask, dim=0)
+
+    # Create cumulative sequence lengths for Flash Attention
+    # cu_seqlens format: [0, len1, len1+len2, len1+len2+len3, ...]
+    cu_seqlens = torch.zeros(len(batch) + 1, dtype=torch.int32)
+    cu_seqlens[1:] = torch.cumsum(torch.tensor(seq_lengths, dtype=torch.int32), dim=0)
+
+    # Create sequence index for each token (to map back losses to sequences)
+    seq_indices = torch.zeros(packed_input_ids.numel(), dtype=torch.long)
+    for i, (start, length) in enumerate(zip(seq_start_indices, seq_lengths)):
+        seq_indices[start : start + length] = i
+
+    final_item = {
+        # Packed tensors (1D)
+        "input_ids": packed_input_ids.detach(),
+        "position_ids": packed_position_ids.detach(),
+        "logprob_ids": packed_logprob_ids.detach(),
+        "logprobs": packed_logprobs.detach(),
+        "grpo_mask": packed_grpo_mask.detach(),
+        # Sequence metadata
+        "cu_seqlens": cu_seqlens.detach(),
+        "seq_lengths": torch.tensor(seq_lengths, dtype=torch.long).detach(),
+        "seq_indices": seq_indices.detach(),
+        "max_seqlen": max(seq_lengths),
+        # Per-sequence values
+        "advantages": torch.tensor(advantages, dtype=torch.float32).detach(),
+        "rollout_lens": torch.tensor(rollout_lens, dtype=torch.long).detach(),
+        # Metadata
+        "num_tokens": packed_input_ids.numel(),
+        "num_sequences": len(batch),
+        "is_packed": True,
+    }
+    return final_item
+
+
+def split_batch_into_microbatches(batch: dict, max_tokens: int):
+    """
+    Split a packed batch into microbatches based on token count.
+
+    Yields microbatches that each contain <= max_tokens tokens.
+    Each microbatch includes metadata about the total batch for gradient scaling.
+
+    Args:
+        batch: A packed batch from collate_fn_packed
+        max_tokens: Maximum tokens per microbatch
+
+    Yields:
+        Microbatch dicts with additional 'total_tokens_in_batch' and 'num_microbatches' fields
+    """
+    if not batch.get("is_packed", False):
+        # For padded batches, just yield the whole batch
+        batch["total_tokens_in_batch"] = batch["num_tokens"]
+        batch["num_microbatches"] = 1
+        yield batch
+        return
+
+    total_tokens = batch["num_tokens"]
+    num_sequences = batch["num_sequences"]
+    seq_lengths = batch["seq_lengths"].tolist()
+
+    # If batch fits in one microbatch, yield as-is
+    if total_tokens <= max_tokens:
+        batch["total_tokens_in_batch"] = total_tokens
+        batch["num_microbatches"] = 1
+        yield batch
+        return
+
+    # Split into microbatches
+    microbatches = []
+    current_seqs = []
+    current_tokens = 0
+
+    for seq_idx in range(num_sequences):
+        seq_len = seq_lengths[seq_idx]
+
+        # If adding this sequence would exceed limit, start new microbatch
+        if current_tokens + seq_len > max_tokens and current_seqs:
+            microbatches.append(current_seqs)
+            current_seqs = []
+            current_tokens = 0
+
+        current_seqs.append(seq_idx)
+        current_tokens += seq_len
+
+    # Don't forget the last microbatch
+    if current_seqs:
+        microbatches.append(current_seqs)
+
+    num_microbatches = len(microbatches)
+
+    # Now yield each microbatch
+    for seq_indices_list in microbatches:
+        # Extract the sequences for this microbatch
+        start_indices = []
+        end_indices = []
+        cu_seqlens_list = [0]
+        cumsum = 0
+
+        micro_seq_lengths = []
+        micro_advantages = []
+        micro_rollout_lens = []
+
+        for seq_idx in seq_indices_list:
+            seq_len = seq_lengths[seq_idx]
+            # Find token range for this sequence in the packed tensor
+            start = batch["cu_seqlens"][seq_idx].item()
+            end = batch["cu_seqlens"][seq_idx + 1].item()
+            start_indices.append(start)
+            end_indices.append(end)
+
+            cumsum += seq_len
+            cu_seqlens_list.append(cumsum)
+            micro_seq_lengths.append(seq_len)
+            micro_advantages.append(batch["advantages"][seq_idx].item())
+            micro_rollout_lens.append(batch["rollout_lens"][seq_idx].item())
+
+        # Concatenate token-level data for selected sequences
+        token_slices = [slice(s, e) for s, e in zip(start_indices, end_indices)]
+
+        micro_input_ids = torch.cat([batch["input_ids"][sl] for sl in token_slices])
+        micro_position_ids = torch.cat([batch["position_ids"][sl] for sl in token_slices])
+        micro_logprob_ids = torch.cat([batch["logprob_ids"][sl] for sl in token_slices])
+        micro_logprobs = torch.cat([batch["logprobs"][sl] for sl in token_slices])
+        micro_grpo_mask = torch.cat([batch["grpo_mask"][sl] for sl in token_slices])
+
+        # Rebuild seq_indices for the microbatch
+        micro_seq_indices = torch.zeros(micro_input_ids.numel(), dtype=torch.long)
+        offset = 0
+        for i, seq_len in enumerate(micro_seq_lengths):
+            micro_seq_indices[offset:offset + seq_len] = i
+            offset += seq_len
+
+        microbatch = {
+            "input_ids": micro_input_ids.detach(),
+            "position_ids": micro_position_ids.detach(),
+            "logprob_ids": micro_logprob_ids.detach(),
+            "logprobs": micro_logprobs.detach(),
+            "grpo_mask": micro_grpo_mask.detach(),
+            "cu_seqlens": torch.tensor(cu_seqlens_list, dtype=torch.int32).detach(),
+            "seq_lengths": torch.tensor(micro_seq_lengths, dtype=torch.long).detach(),
+            "seq_indices": micro_seq_indices.detach(),
+            "max_seqlen": max(micro_seq_lengths),
+            "advantages": torch.tensor(micro_advantages, dtype=torch.float32).detach(),
+            "rollout_lens": torch.tensor(micro_rollout_lens, dtype=torch.long).detach(),
+            "num_tokens": micro_input_ids.numel(),
+            "num_sequences": len(seq_indices_list),
+            "is_packed": True,
+            # Metadata for gradient scaling
+            "total_tokens_in_batch": total_tokens,
+            "num_microbatches": num_microbatches,
+        }
+        yield microbatch
+
+
 def dataset_from_groups(groups: list[Sample], tokenizer: PreTrainedTokenizer):
     """
     Creates a processed dataset in the format needed for training GRPO
@@ -280,10 +502,25 @@ def dataset_from_groups(groups: list[Sample], tokenizer: PreTrainedTokenizer):
     return ds
 
 
-def create_grpo_data_loader(dataset: datasets.Dataset, comps: TrainingComponents):
+def create_grpo_data_loader(
+    dataset: datasets.Dataset,
+    comps: TrainingComponents,
+    use_packed: bool = False,
+):
+    """
+    Create a DataLoader for GRPO training.
+
+    Args:
+        dataset: The dataset to load from
+        comps: Training components containing tokenizer and hyperparameters
+        use_packed: If True, use padding-free packed collation (requires Flash Attention 2)
+    """
     from functools import partial
 
-    _collate_fn = partial(collate_fn, pad_token_id=comps.tokenizer.pad_token_id)
+    if use_packed:
+        _collate_fn = partial(collate_fn_packed, pad_token_id=comps.tokenizer.pad_token_id)
+    else:
+        _collate_fn = partial(collate_fn, pad_token_id=comps.tokenizer.pad_token_id)
 
     ds = JsonlDataset(dataset=dataset)
     train_loader = DataLoader(
@@ -293,3 +530,70 @@ def create_grpo_data_loader(dataset: datasets.Dataset, comps: TrainingComponents
         shuffle=True,
     )
     return train_loader
+
+
+def load_gsm8k(
+    system_msg: str,
+    eval_split: float = 0.0,
+    seed: int = 67,
+) -> tuple[datasets.Dataset, datasets.Dataset | None]:
+    """
+    Load the GSM8K dataset and convert it to the format expected by this repo.
+
+    Args:
+        system_msg: System message to use for the chat format
+        eval_split: Fraction of data to use for evaluation (0.0 = no eval split)
+        seed: Random seed for train/test split
+
+    Returns:
+        Tuple of (train_dataset, eval_dataset) where eval_dataset may be None
+    """
+    ds = datasets.load_dataset("openai/gsm8k", name="main", split="train")
+
+    # Rename question -> problem to match our format
+    ds = ds.rename_columns({"question": "problem"})
+
+    def _get_answers(sample):
+        """
+        GSM8K stores answers in two formats:
+        1. <<calculation>> format: e.g., "<<12*2=24>>" - we extract the result after '='
+        2. #### format: e.g., "#### 42" - we extract the number after ####
+        """
+        answers = re.findall(r"<<(.+?)>>", sample["answer"])
+        alt_matches = re.findall(r"#### (.+)", sample["answer"])
+
+        if answers:
+            # Format: '12*2=24', '8/2=4', etc - take the result after '='
+            answer = answers[-1].split("=")[-1]
+        elif alt_matches:
+            answer = alt_matches[-1]
+        else:
+            raise ValueError(f"Failed to find answer in: {sample['answer']}")
+
+        # Parse the answer, removing commas for large numbers
+        return {"answer": float(answer.replace(",", ""))}
+
+    ds = ds.map(_get_answers)
+
+    # Add the operation field (required by Problem model) and messages
+    def _add_fields(sample):
+        return {
+            "operation": "gsm8k",
+            "messages": [
+                {"role": "system", "content": system_msg},
+                {"role": "user", "content": sample["problem"]},
+            ],
+        }
+
+    ds = ds.map(_add_fields)
+
+    # Split into train/eval if requested
+    train_dataset = ds
+    eval_dataset = None
+
+    if eval_split > 0:
+        dataset_dict = train_dataset.train_test_split(test_size=eval_split, seed=seed)
+        train_dataset = dataset_dict["train"]
+        eval_dataset = dataset_dict["test"]
+
+    return train_dataset, eval_dataset
