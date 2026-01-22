@@ -249,15 +249,32 @@ def _reformat_to_answer_tags(answer: str) -> str:
 
 
 def _create_sft_message(question: str, answer: str, system_msg: str) -> dict:
-    """Create a single SFT sample in messages format."""
+    """Create a single SFT sample in messages format with answer for evaluation."""
     cleaned = _clean_calculator_annotations(answer)
     reformatted = _reformat_to_answer_tags(cleaned)
+
+    # Extract the numerical answer for evaluation
+    # GSM8K uses "#### <ans>" format for final answers
+    pattern = r"####\s*(.+)$"
+    match = re.search(pattern, answer, re.MULTILINE)
+    if match:
+        final_ans = match.group(1).strip().replace(",", "")
+    else:
+        # Fallback - no numerical answer found
+        final_ans = "0"
+
+    try:
+        numerical_answer = float(final_ans)
+    except ValueError:
+        numerical_answer = 0.0
+
     return {
         "messages": [
             {"role": "system", "content": system_msg},
             {"role": "user", "content": question},
             {"role": "assistant", "content": reformatted},
-        ]
+        ],
+        "answer": numerical_answer,  # For evaluation
     }
 
 
@@ -1579,6 +1596,161 @@ def train(
     if use_wandb:
         wandb.finish()
         typer.secho("✓ Wandb run finished", fg=typer.colors.GREEN)
+
+
+@app.command()
+def sft_train(
+    # Data paths
+    data_path: str = typer.Option(..., "--data-path", help="Path to the training data (jsonl with 'messages' field)"),
+    model_name: str = typer.Option("Qwen/Qwen2-1.5B-Instruct", "--model", "-m", help="Model name or path"),
+    output_dir: str = typer.Option(..., "--output-dir", help="Path to the output directory"),
+    # Training mode
+    max_steps: int = typer.Option(0, "--max-steps", help="Maximum training steps (0 = use epochs)"),
+    num_epochs: int = typer.Option(1, "--epochs", help="Number of epochs (ignored if --max-steps > 0)"),
+    # Batch settings
+    effective_batch_size: int = typer.Option(32, "-B", "--batch-size", help="Effective batch size"),
+    max_tokens_per_gpu: int = typer.Option(8192, "--max-tokens-per-gpu", help="Max tokens per GPU"),
+    max_seq_len: int = typer.Option(2048, "--max-seq-len", help="Maximum sequence length"),
+    # Optimizer settings
+    optimizer_type: str = typer.Option("adamw", "-O", "--optimizer", help="Optimizer: 'adamw' or 'muon'"),
+    lr: float = typer.Option(1e-5, "--lr", help="Learning rate"),
+    muon_lr: float = typer.Option(None, "--muon-lr", help="Muon-specific LR (defaults to --lr)"),
+    beta1: float = typer.Option(0.9, "--beta1", help="Adam beta1"),
+    beta2: float = typer.Option(0.95, "--beta2", help="Adam beta2"),
+    weight_decay: float = typer.Option(0.0, "--wd", help="Weight decay"),
+    # LR scheduler
+    lr_scheduler: str = typer.Option("cosine", "--lr-scheduler", help="LR scheduler type"),
+    warmup_steps: int = typer.Option(0, "--warmup-steps", help="Number of warmup steps"),
+    # Checkpointing
+    save_final_checkpoint: bool = typer.Option(True, "--save-final/--no-save-final", help="Save final checkpoint"),
+    checkpoint_at_epoch: bool = typer.Option(False, "--checkpoint-at-epoch", help="Save checkpoint each epoch"),
+    save_every_steps: int = typer.Option(
+        0, "--save-every", help="Save checkpoint every N optimizer steps (0 = disabled)"
+    ),
+    # Data processing
+    use_processed_dataset: bool = typer.Option(False, "--use-processed", help="Data is already tokenized"),
+    unmask_messages: bool = typer.Option(False, "--unmask", help="Train on all tokens (not just assistant)"),
+    # Wandb
+    use_wandb: bool = typer.Option(False, "--wandb", help="Enable wandb logging"),
+    wandb_project: str = typer.Option("muon-rl", "--wandb-project", help="Wandb project name"),
+    wandb_run_name: str = typer.Option(None, "--wandb-run", help="Wandb run name"),
+    wandb_entity: str = typer.Option(None, "--wandb-entity", help="Wandb entity"),
+    # Misc
+    seed: int = typer.Option(67, "--seed", help="Random seed"),
+    use_liger: bool = typer.Option(False, "--liger", help="Use Liger kernels"),
+    num_gpus: int = typer.Option(1, "--num-gpus", help="Number of GPUs to use"),
+    validation_split: float = typer.Option(0.0, "--validation-split", help="Fraction of data to use for validation"),
+    validation_frequency: int = typer.Option(0, "--validation-frequency", help="Frequency of validation (in steps)"),
+    # GSM8K evaluation
+    gsm8k_eval_path: str = typer.Option(None, "--gsm8k-eval-path", help="Path to GSM8K eval dataset"),
+    gsm8k_eval_frequency: int = typer.Option(None, "--gsm8k-eval-frequency", help="GSM8K eval frequency (steps)"),
+    gsm8k_max_new_tokens: int = typer.Option(512, "--gsm8k-max-new-tokens", help="Max tokens for GSM8K eval"),
+    gsm8k_temperature: float = typer.Option(0.0, "--gsm8k-temperature", help="Temperature for GSM8K eval"),
+    gsm8k_eval_samples: int = typer.Option(None, "--gsm8k-eval-samples", help="Number of GSM8K eval samples"),
+    gsm8k_use_vllm: bool = typer.Option(
+        False, "--gsm8k-use-vllm", help="Use vLLM for fast GSM8K eval (runs after checkpoint saves)"
+    ),
+    gsm8k_vllm_gpu_memory_utilization: float = typer.Option(
+        0.8, "--gsm8k-vllm-gpu-memory-utilization", help="GPU memory utilization for vLLM"
+    ),
+    disable_kl: bool = typer.Option(False, "--disable-kl", help="Disable KL divergence tracking"),
+):
+    """
+    Run SFT training using mini_trainer via training_hub.
+
+    Supports the same optimizer options as the GRPO train command for fair comparison.
+
+    Example:
+        python cli.py sft-train \\
+            --data-path gsm8k-data/gsm8k_sft_train.jsonl \\
+            --model Qwen/Qwen2-1.5B-Instruct \\
+            --output-dir /path/to/checkpoints \\
+            --optimizer muon --lr 1e-5 \\
+            --max-steps 1000 \\
+            --wandb --wandb-run "muon-sft-baseline"
+    """
+    from training_hub import osft
+    from mini_trainer import TrainingMode
+
+    # Determine training mode
+    if max_steps > 0:
+        training_mode = TrainingMode.STEP
+        typer.secho(f"Training for {max_steps} steps", fg=typer.colors.CYAN)
+    else:
+        training_mode = TrainingMode.EPOCH
+        typer.secho(f"Training for {num_epochs} epoch(s)", fg=typer.colors.CYAN)
+
+    # Build optional kwargs
+    optional_kwargs = {}
+    if use_wandb:
+        optional_kwargs["wandb_project"] = wandb_project
+        if wandb_run_name:
+            optional_kwargs["wandb_run_name"] = wandb_run_name
+        if wandb_entity:
+            optional_kwargs["wandb_entity"] = wandb_entity
+    if validation_frequency > 0:
+        optional_kwargs["validation_frequency"] = validation_frequency
+    if validation_split > 0:
+        optional_kwargs["validation_split"] = validation_split
+
+    if muon_lr is not None:
+        optional_kwargs["muon_lr"] = muon_lr
+
+    # GSM8K evaluation parameters
+    if gsm8k_eval_path:
+        optional_kwargs["gsm8k_eval_path"] = gsm8k_eval_path
+        if gsm8k_eval_frequency:
+            optional_kwargs["gsm8k_eval_frequency"] = gsm8k_eval_frequency
+        if gsm8k_max_new_tokens != 512:
+            optional_kwargs["gsm8k_max_new_tokens"] = gsm8k_max_new_tokens
+        if gsm8k_temperature > 0:
+            optional_kwargs["gsm8k_temperature"] = gsm8k_temperature
+        if gsm8k_eval_samples:
+            optional_kwargs["gsm8k_eval_samples"] = gsm8k_eval_samples
+        if gsm8k_use_vllm:
+            optional_kwargs["gsm8k_use_vllm"] = gsm8k_use_vllm
+        if gsm8k_vllm_gpu_memory_utilization != 0.8:
+            optional_kwargs["gsm8k_vllm_gpu_memory_utilization"] = gsm8k_vllm_gpu_memory_utilization
+
+    osft(
+        model_path=model_name,
+        data_path=data_path,
+        ckpt_output_dir=output_dir,
+        # SFT mode (not OSFT)
+        unfreeze_rank_ratio=1.0,  # 1.0 = full fine-tuning (no freezing)
+        osft=False,
+        # Batch settings
+        effective_batch_size=effective_batch_size,
+        max_tokens_per_gpu=max_tokens_per_gpu,
+        max_seq_len=max_seq_len,
+        # Optimizer
+        optimizer_type=optimizer_type,
+        learning_rate=lr,
+        beta1=beta1,
+        beta2=beta2,
+        weight_decay=weight_decay,
+        # LR scheduler
+        lr_scheduler=lr_scheduler,
+        warmup_steps=warmup_steps,
+        # Training mode
+        training_mode=training_mode,
+        num_epochs=num_epochs,
+        max_steps=max_steps,
+        # Checkpointing
+        save_final_checkpoint=save_final_checkpoint,
+        checkpoint_at_epoch=checkpoint_at_epoch,
+        save_every_steps=save_every_steps if save_every_steps > 0 else None,
+        # Data processing
+        use_processed_dataset=use_processed_dataset,
+        unmask_messages=unmask_messages,
+        # KL divergence tracking (enabled by default for comparison with GRPO)
+        compute_kl=not disable_kl,
+        # Misc
+        seed=seed,
+        use_liger=use_liger,
+        nproc_per_node=num_gpus,
+        **optional_kwargs,
+    )
 
 
 if __name__ == "__main__":

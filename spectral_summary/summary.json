@@ -1,0 +1,18 @@
+{
+  "n_params": 197,
+  "n_layers": 28,
+  "experiments": [
+    "adamw_sft",
+    "muon_sft",
+    "adamw_grpo",
+    "muon_grpo"
+  ],
+  "metrics_computed": [
+    "spectral_norm_change",
+    "frobenius_change",
+    "effective_rank_change",
+    "nuclear_norm_change",
+    "top10_energy_change",
+    "top30_rel_change"
+  ]
+}

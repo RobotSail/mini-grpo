@@ -77,14 +77,30 @@ def get_checkpoint_dirs(base_path: str) -> list[Path | str]:
     if (base / "config.json").exists():
         return [base]
 
-    # Find step_* directories
-    checkpoint_dirs = sorted(
-        [d for d in base.iterdir() if d.is_dir() and d.name.startswith("step_")],
-        key=lambda x: int(x.name.split("_")[1])
-    )
+    # Find step_* directories (also handles samples_X_step_Y format from SFT)
+    checkpoint_dirs = []
+    for d in base.iterdir():
+        if not d.is_dir():
+            continue
+        if d.name.startswith("step_"):
+            checkpoint_dirs.append(d)
+        elif "_step_" in d.name:
+            # Handle samples_X_step_Y format
+            checkpoint_dirs.append(d)
+
+    def get_step_number(path: Path) -> int:
+        name = path.name
+        if name.startswith("step_"):
+            return int(name.split("_")[1])
+        elif "_step_" in name:
+            # Extract step number from samples_X_step_Y format
+            return int(name.split("_step_")[1])
+        return 0
+
+    checkpoint_dirs = sorted(checkpoint_dirs, key=get_step_number)
 
     if not checkpoint_dirs:
-        raise ValueError(f"No step_* checkpoint directories found in {base_path}")
+        raise ValueError(f"No checkpoint directories found in {base_path}")
 
     return checkpoint_dirs
 
@@ -317,9 +333,19 @@ def main():
     # Filter by steps if specified
     if args.steps:
         requested_steps = set(int(s.strip()) for s in args.steps.split(","))
+
+        def get_step_from_dir(d):
+            if isinstance(d, str):
+                return -1
+            if d.name.startswith("step_"):
+                return int(d.name.split("_")[1])
+            elif "_step_" in d.name:
+                return int(d.name.split("_step_")[1])
+            return 0
+
         checkpoint_dirs = [
             d for d in checkpoint_dirs
-            if not d.name.startswith("step_") or int(d.name.split("_")[1]) in requested_steps
+            if get_step_from_dir(d) in requested_steps
         ]
         print(f"Filtered to {len(checkpoint_dirs)} checkpoint(s)")
 
@@ -333,6 +359,10 @@ def main():
             label = checkpoint_dir.replace("/", "_")
         elif checkpoint_dir.name.startswith("step_"):
             step = int(checkpoint_dir.name.split("_")[1])
+            label = f"step_{step}"
+        elif "_step_" in checkpoint_dir.name:
+            # Handle samples_X_step_Y format
+            step = int(checkpoint_dir.name.split("_step_")[1])
             label = f"step_{step}"
         else:
             step = 0
