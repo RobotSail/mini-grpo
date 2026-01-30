@@ -21,18 +21,33 @@ DEFAULT_SYSTEM_MSG = "You are a helpful math assistant. Always provide your fina
 
 
 def get_step_from_path(path: Path | str) -> tuple[int, str]:
-    """Extract step number and label from checkpoint path."""
+    """Extract step/token number and label from checkpoint path.
+
+    Handles formats:
+    - step_N (e.g., step_121)
+    - *_step_N (e.g., checkpoint_step_121)
+    - tokens_N (e.g., tokens_100000)
+    - *_tokens_N (e.g., checkpoint_tokens_100000)
+    """
     if isinstance(path, str):
         path = Path(path)
 
     name = path.name
 
+    # step-based checkpoints
     if name.startswith("step_"):
         step = int(name.split("_")[1])
         return step, f"step_{step}"
     elif "_step_" in name:
         step = int(name.split("_step_")[1])
         return step, f"step_{step}"
+    # token-based checkpoints
+    elif name.startswith("tokens_"):
+        tokens = int(name.split("_")[1])
+        return tokens, f"tokens_{tokens}"
+    elif "_tokens_" in name:
+        tokens = int(name.split("_tokens_")[1])
+        return tokens, f"tokens_{tokens}"
     else:
         return 0, name
 
@@ -52,23 +67,31 @@ def get_checkpoint_dirs(base_path: str) -> list[Path | str]:
     if (base / "config.json").exists():
         return [base]
 
-    # Find checkpoint directories
+    # Find checkpoint directories (step-based or token-based)
     checkpoint_dirs = []
     for d in base.iterdir():
         if not d.is_dir():
             continue
-        if d.name.startswith("step_") or "_step_" in d.name:
+        name = d.name
+        is_step_ckpt = name.startswith("step_") or "_step_" in name
+        is_token_ckpt = name.startswith("tokens_") or "_tokens_" in name
+        if is_step_ckpt or is_token_ckpt:
             checkpoint_dirs.append(d)
 
-    def get_step_number(path: Path) -> int:
+    def get_sort_key(path: Path) -> int:
+        """Extract numeric value for sorting (works for both step and token checkpoints)."""
         name = path.name
         if name.startswith("step_"):
             return int(name.split("_")[1])
         elif "_step_" in name:
             return int(name.split("_step_")[1])
+        elif name.startswith("tokens_"):
+            return int(name.split("_")[1])
+        elif "_tokens_" in name:
+            return int(name.split("_tokens_")[1])
         return 0
 
-    checkpoint_dirs = sorted(checkpoint_dirs, key=get_step_number)
+    checkpoint_dirs = sorted(checkpoint_dirs, key=get_sort_key)
 
     if not checkpoint_dirs:
         raise ValueError(f"No checkpoint directories found in {base_path}")
@@ -76,8 +99,9 @@ def get_checkpoint_dirs(base_path: str) -> list[Path | str]:
     return checkpoint_dirs
 
 
-def run_single_eval(checkpoint_path: str, gpu_id: int, eval_path: str | None,
-                    system_msg: str, eval_kwargs: dict, output_file: str) -> tuple[str, int, str, dict | None, str]:
+def run_single_eval(
+    checkpoint_path: str, gpu_id: int, eval_path: str | None, system_msg: str, eval_kwargs: dict, output_file: str
+) -> tuple[str, int, str, dict | None, str]:
     """
     Run evaluation for a single checkpoint in a subprocess.
     Returns (checkpoint_path, step, label, metrics, error_msg)
@@ -86,21 +110,47 @@ def run_single_eval(checkpoint_path: str, gpu_id: int, eval_path: str | None,
 
     # Build command to run eval_gsm8k.py
     cmd = [
-        sys.executable, "eval_gsm8k.py",
-        "--checkpoint-dir", checkpoint_path,
-        "--gpu", str(gpu_id),
-        "--output", output_file,
-        "--max-new-tokens", str(eval_kwargs["max_new_tokens"]),
-        "--temperature", str(eval_kwargs["temperature"]),
-        "--top-k", str(eval_kwargs["top_k"]),
-        "--top-p", str(eval_kwargs["top_p"]),
-        "--repetition-penalty", str(eval_kwargs["repetition_penalty"]),
-        "--group-size", str(eval_kwargs["group_size"]),
-        "--system-msg", system_msg,
+        sys.executable,
+        "eval_gsm8k.py",
+        "--checkpoint-dir",
+        checkpoint_path,
+        "--gpu",
+        str(gpu_id),
+        "--output",
+        output_file,
+        "--max-new-tokens",
+        str(eval_kwargs["max_new_tokens"]),
+        "--temperature",
+        str(eval_kwargs["temperature"]),
+        "--top-k",
+        str(eval_kwargs["top_k"]),
+        "--top-p",
+        str(eval_kwargs["top_p"]),
+        "--repetition-penalty",
+        str(eval_kwargs["repetition_penalty"]),
+        "--group-size",
+        str(eval_kwargs["group_size"]),
+        "--system-msg",
+        system_msg,
     ]
 
     if eval_path:
         cmd.extend(["--eval-path", eval_path])
+
+    # KL divergence options
+    if eval_kwargs.get("compute_kl") or eval_kwargs.get("kl_only"):
+        cmd.extend(["--base-model", eval_kwargs["base_model"]])
+        cmd.extend(["--kl-batch-size", str(eval_kwargs["kl_batch_size"])])
+        cmd.extend(["--kl-max-new-tokens", str(eval_kwargs["kl_max_new_tokens"])])
+        cmd.extend(["--kl-max-prompt-length", str(eval_kwargs["kl_max_prompt_length"])])
+    if eval_kwargs.get("compute_kl"):
+        cmd.append("--compute-kl")
+    if eval_kwargs.get("kl_only"):
+        cmd.append("--kl-only")
+    if eval_kwargs.get("reverse_kl"):
+        cmd.append("--reverse-kl")
+    if eval_kwargs.get("kl_dataset"):
+        cmd.extend(["--kl-dataset", eval_kwargs["kl_dataset"]])
 
     print(f"[GPU {gpu_id}] Starting {label}: {checkpoint_path}")
 
@@ -126,7 +176,17 @@ def run_single_eval(checkpoint_path: str, gpu_id: int, eval_path: str | None,
         if results_data:
             # The key might be the checkpoint name or step label
             metrics = list(results_data.values())[0]
-            print(f"[GPU {gpu_id}] {label}: Accuracy={metrics['accuracy']:.2%}, Parsable={metrics['parsable_rate']:.2%}")
+            # Build status message based on what was computed
+            status_parts = []
+            if "accuracy" in metrics:
+                status_parts.append(f"Accuracy={metrics['accuracy']:.2%}")
+            if "parsable_rate" in metrics:
+                status_parts.append(f"Parsable={metrics['parsable_rate']:.2%}")
+            if "kl_divergence" in metrics:
+                status_parts.append(f"KL={metrics['kl_divergence']:.4f}")
+            if "reverse_kl" in metrics:
+                status_parts.append(f"RevKL={metrics['reverse_kl']:.4f}")
+            print(f"[GPU {gpu_id}] {label}: {', '.join(status_parts)}")
             return checkpoint_path, step, label, metrics, ""
         else:
             return checkpoint_path, step, label, None, "No results in output file"
@@ -138,9 +198,7 @@ def run_single_eval(checkpoint_path: str, gpu_id: int, eval_path: str | None,
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Parallel GSM8K evaluation across multiple GPUs"
-    )
+    parser = argparse.ArgumentParser(description="Parallel GSM8K evaluation across multiple GPUs")
     parser.add_argument(
         "--checkpoint-dir",
         type=str,
@@ -169,7 +227,7 @@ def main():
         "--steps",
         type=str,
         default=None,
-        help="Comma-separated list of steps to evaluate (default: all)",
+        help="Comma-separated list of steps/tokens to evaluate (default: all)",
     )
     parser.add_argument(
         "--max-new-tokens",
@@ -214,6 +272,52 @@ def main():
         default=1,
         help="Number of samples per prompt (for pass@k evaluation)",
     )
+    parser.add_argument(
+        "--compute-kl",
+        action="store_true",
+        help="Compute KL divergence from base model",
+    )
+    parser.add_argument(
+        "--base-model",
+        type=str,
+        default="Qwen/Qwen2-1.5B-Instruct",
+        help="Base model for KL divergence computation",
+    )
+    parser.add_argument(
+        "--kl-batch-size",
+        type=int,
+        default=4,
+        help="Batch size for KL divergence computation",
+    )
+    parser.add_argument(
+        "--kl-max-new-tokens",
+        type=int,
+        default=256,
+        help="Max new tokens to generate for KL computation",
+    )
+    parser.add_argument(
+        "--kl-max-prompt-length",
+        type=int,
+        default=256,
+        help="Max prompt length for KL computation",
+    )
+    parser.add_argument(
+        "--kl-only",
+        action="store_true",
+        help="Only compute KL divergence, skip accuracy evaluation",
+    )
+    parser.add_argument(
+        "--reverse-kl",
+        action="store_true",
+        help="Compute reverse KL: generate from base, compute KL(base || checkpoint)",
+    )
+    parser.add_argument(
+        "--kl-dataset",
+        type=str,
+        default=None,
+        help="Dataset for KL computation. Options: 'ifeval' (recommended for drift), "
+             "'gsm8k', or path to jsonl file.",
+    )
 
     args = parser.parse_args()
 
@@ -228,10 +332,7 @@ def main():
     # Filter by steps if specified
     if args.steps:
         requested_steps = set(int(s.strip()) for s in args.steps.split(","))
-        checkpoint_dirs = [
-            d for d in checkpoint_dirs
-            if get_step_from_path(d)[0] in requested_steps
-        ]
+        checkpoint_dirs = [d for d in checkpoint_dirs if get_step_from_path(d)[0] in requested_steps]
         print(f"Filtered to {len(checkpoint_dirs)} checkpoint(s)")
 
     if not checkpoint_dirs:
@@ -246,6 +347,14 @@ def main():
         "top_p": args.top_p,
         "repetition_penalty": args.repetition_penalty,
         "group_size": args.group_size,
+        "compute_kl": args.compute_kl,
+        "kl_only": args.kl_only,
+        "base_model": args.base_model,
+        "kl_batch_size": args.kl_batch_size,
+        "kl_max_new_tokens": args.kl_max_new_tokens,
+        "kl_max_prompt_length": args.kl_max_prompt_length,
+        "reverse_kl": args.reverse_kl,
+        "kl_dataset": args.kl_dataset,
     }
 
     print(f"\nStarting parallel evaluation with {len(gpu_ids)} GPU(s)...")
@@ -259,14 +368,16 @@ def main():
         for i, ckpt in enumerate(checkpoint_dirs):
             gpu_id = gpu_ids[i % len(gpu_ids)]
             output_file = os.path.join(tmpdir, f"result_{i}.json")
-            work_items.append((
-                str(ckpt),
-                gpu_id,
-                args.eval_path,
-                args.system_msg,
-                eval_kwargs,
-                output_file,
-            ))
+            work_items.append(
+                (
+                    str(ckpt),
+                    gpu_id,
+                    args.eval_path,
+                    args.system_msg,
+                    eval_kwargs,
+                    output_file,
+                )
+            )
 
         # Run evaluations in parallel using ThreadPoolExecutor
         # (threads are fine since actual work is in subprocesses)
@@ -274,10 +385,7 @@ def main():
         errors = []
 
         with ThreadPoolExecutor(max_workers=len(gpu_ids)) as executor:
-            futures = {
-                executor.submit(run_single_eval, *item): item[0]
-                for item in work_items
-            }
+            futures = {executor.submit(run_single_eval, *item): item[0] for item in work_items}
 
             for future in as_completed(futures):
                 checkpoint_path, step, label, metrics, error = future.result()
@@ -302,10 +410,28 @@ def main():
     print(f"\n{'=' * 60}")
     print("SUMMARY")
     print(f"{'=' * 60}")
-    print(f"{'Checkpoint':<20} {'Accuracy':>12} {'Parsable':>12}")
-    print("-" * 48)
+
+    # Build header based on what was computed
+    has_accuracy = not args.kl_only
+    has_kl = args.compute_kl or args.kl_only
+
+    kl_header = "Rev KL" if args.reverse_kl else "KL Div"
+    header = f"{'Checkpoint':<20}"
+    if has_accuracy:
+        header += f" {'Accuracy':>12} {'Parsable':>12}"
+    if has_kl:
+        header += f" {kl_header:>12}"
+    print(header)
+    print("-" * len(header))
+
+    kl_metric_key = "reverse_kl" if args.reverse_kl else "kl_divergence"
     for label, metrics in sorted(results.items(), key=lambda x: x[1]["step"]):
-        print(f"{label:<20} {metrics['accuracy']:>11.2%} {metrics['parsable_rate']:>11.2%}")
+        row = f"{label:<20}"
+        if has_accuracy:
+            row += f" {metrics.get('accuracy', 0):>11.2%} {metrics.get('parsable_rate', 0):>11.2%}"
+        if has_kl:
+            row += f" {metrics.get(kl_metric_key, 0):>11.4f}"
+        print(row)
 
     # Save results
     if args.output:

@@ -1,0 +1,13 @@
+{
+  "samples_11610.0_tokens_1104739": {
+    "step": 0,
+    "path": "checkpoints/sft_adamw/hf_format/samples_11610.0_tokens_1104739",
+    "reverse_kl": 0.06751251089929945,
+    "reverse_kl_std": 0.14933699369430542,
+    "total_tokens": 87511,
+    "num_sequences": 541,
+    "avg_generated_tokens": 161.75785582255082,
+    "kl_direction": "KL(base || checkpoint)",
+    "generator": "base"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "samples_11610.0_tokens_1104739": {
+    "step": 0,
+    "path": "checkpoints/sft_muon/hf_format/samples_11610.0_tokens_1104739",
+    "reverse_kl": 0.039562994691331496,
+    "reverse_kl_std": 0.09468910843133926,
+    "total_tokens": 81887,
+    "num_sequences": 541,
+    "avg_generated_tokens": 151.36229205175601,
+    "kl_direction": "KL(base || checkpoint)",
+    "generator": "base"
+  }
+}

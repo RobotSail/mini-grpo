@@ -1,0 +1,26 @@
+{
+  "baseline": "Qwen/Qwen2-1.5B-Instruct",
+  "experiments": [
+    "adamw_sft",
+    "muon_sft",
+    "adamw_grpo",
+    "muon_grpo"
+  ],
+  "n_params": 197,
+  "metrics": [
+    "frobenius_norm",
+    "spectral_norm",
+    "nuclear_norm",
+    "effective_rank",
+    "stable_rank",
+    "spectral_entropy",
+    "gini_coefficient",
+    "rank_90",
+    "rank_95",
+    "rank_99",
+    "top1_energy",
+    "top5_energy",
+    "top10_energy",
+    "top50_energy"
+  ]
+}

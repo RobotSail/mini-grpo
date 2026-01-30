@@ -1,0 +1,11 @@
+{
+  "tokens_1103184": {
+    "step": 0,
+    "path": "checkpoints-lr-5e-6/grpo-adamw/tokens_1103184",
+    "total_samples": 1319,
+    "correct": 418,
+    "parsable": 1297,
+    "accuracy": 0.3169067475360121,
+    "parsable_rate": 0.9833206974981046
+  }
+}

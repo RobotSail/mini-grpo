@@ -353,6 +353,104 @@ def generate_sft_gsm8k(
         typer.secho(f"[{role}]: {content}", fg=typer.colors.WHITE)
 
 
+@app.command()
+def generate_gsm8k_datasets(
+    system_msg: str = typer.Option(
+        "You are a helpful math assistant. Always provide your final numerical answer inside of the <answer>...</answer> tags, e.g.: <answer>42</answer>",
+        "--system-msg",
+        help="System message to use for the chat format",
+    ),
+    seed: int = typer.Option(67, "--seed", help="Random seed for train/test split"),
+    output_dir: str = typer.Option("generated_data", "--output-dir", help="Directory to save the datasets"),
+    test_split: float = typer.Option(0.1, "--test-split", help="Fraction of data to use for test set"),
+):
+    """
+    Generate both GRPO and SFT datasets from GSM8K using the same train/test split.
+
+    This ensures both training approaches use identical samples for fair comparison.
+    Outputs:
+      - gsm8k_grpo_train.jsonl / gsm8k_grpo_test.jsonl (for GRPO training)
+      - gsm8k_sft_train.jsonl / gsm8k_sft_test.jsonl (for SFT training)
+    """
+    # Load GSM8K once
+    gsm8k = datasets.load_dataset("openai/gsm8k", "main", split="train")
+    typer.secho(f"✓ Loaded {len(gsm8k)} samples from GSM8K", fg=typer.colors.GREEN)
+
+    # Do the train/test split FIRST on raw data indices
+    if test_split > 0:
+        split_data = gsm8k.train_test_split(test_size=test_split, seed=seed)
+        train_gsm8k = split_data["train"]
+        test_gsm8k = split_data["test"]
+        typer.secho(
+            f"✓ Split with seed={seed}: {len(train_gsm8k)} train, {len(test_gsm8k)} test",
+            fg=typer.colors.GREEN,
+        )
+    else:
+        train_gsm8k = gsm8k
+        test_gsm8k = None
+
+    os.makedirs(output_dir, exist_ok=True)
+
+    def _create_grpo_sample(question: str, answer: str) -> dict:
+        """Create a GRPO sample (prompt-only, with numerical answer for grading)."""
+        # Extract numerical answer from GSM8K format
+        alt_matches = re.findall(r"#### (.+)", answer)
+        if alt_matches:
+            numerical_answer = float(alt_matches[-1].replace(",", ""))
+        else:
+            numerical_answer = 0.0
+
+        return {
+            "messages": [
+                {"role": "system", "content": system_msg},
+                {"role": "user", "content": question},
+            ],
+            "answer": numerical_answer,
+            "problem": question,
+            "operation": "gsm8k",
+        }
+
+    def process_split(gsm8k_split, split_name: str):
+        """Process a GSM8K split into both GRPO and SFT formats."""
+        grpo_samples = []
+        sft_samples = []
+
+        for i in range(len(gsm8k_split)):
+            question = gsm8k_split["question"][i]
+            answer = gsm8k_split["answer"][i]
+
+            # GRPO format (prompt only)
+            grpo_samples.append(_create_grpo_sample(question, answer))
+
+            # SFT format (prompt + response)
+            sft_samples.append(_create_sft_message(question, answer, system_msg))
+
+        # Save GRPO dataset
+        grpo_dataset = datasets.Dataset.from_list(grpo_samples)
+        grpo_path = os.path.join(output_dir, f"gsm8k_grpo_{split_name}.jsonl")
+        grpo_dataset.to_json(grpo_path)
+        typer.secho(f"✓ Saved {len(grpo_dataset)} GRPO {split_name} samples to '{grpo_path}'", fg=typer.colors.BLUE)
+
+        # Save SFT dataset
+        sft_dataset = datasets.Dataset.from_list(sft_samples)
+        sft_path = os.path.join(output_dir, f"gsm8k_sft_{split_name}.jsonl")
+        sft_dataset.to_json(sft_path)
+        typer.secho(f"✓ Saved {len(sft_dataset)} SFT {split_name} samples to '{sft_path}'", fg=typer.colors.BLUE)
+
+    # Process train split
+    process_split(train_gsm8k, "train")
+
+    # Process test split if it exists
+    if test_gsm8k is not None:
+        process_split(test_gsm8k, "test")
+
+    typer.secho(
+        f"\n✓ Generated GRPO and SFT datasets with identical samples (seed={seed})",
+        fg=typer.colors.GREEN,
+        bold=True,
+    )
+
+
 @torch.no_grad
 def generate_rollouts(
     model: PreTrainedModel,
@@ -792,7 +890,9 @@ def train_policy_on_rollouts(
     max_tokens_per_microbatch: int = 0,
     current_optim_step: int = 0,
     max_steps: int = 0,
-) -> tuple[int, bool]:
+    current_tokens_trained: int = 0,
+    token_train_budget: int = 0,
+) -> tuple[int, int, bool]:
     """
     Train the policy model on generated rollouts using GRPO.
 
@@ -805,17 +905,20 @@ def train_policy_on_rollouts(
         max_tokens_per_microbatch: Max tokens per microbatch (0 = no limit, process full batch)
         current_optim_step: Current optimizer step count
         max_steps: Maximum optimizer steps (0 = no limit)
+        current_tokens_trained: Current count of tokens trained on
+        token_train_budget: Maximum tokens to train on (0 = no limit)
 
     Returns:
-        Tuple of (updated_optim_step, should_stop) where should_stop is True if max_steps reached
+        Tuple of (updated_optim_step, tokens_trained, should_stop) where should_stop is True if budget reached
     """
     comps.model.train()
 
     # Create dataset from rollouts
     dataset = dataset_from_groups(samples, comps.train_tokenizer)
 
-    # Track optimizer steps
+    # Track optimizer steps and tokens
     optim_step = current_optim_step
+    tokens_trained = current_tokens_trained
 
     # Training loop over inner epochs
     for epoch in range(comps.hyperparams.inner_epochs):
@@ -838,9 +941,12 @@ def train_policy_on_rollouts(
             accumulated_loss = 0.0
             accumulated_metrics = {"kl_div": 0.0, "importance_ratio": 0.0}
             valid_microbatches = 0
+            batch_tokens = 0  # Tokens trained in this batch (sum of rollout_lens)
 
             # Accumulate gradients across microbatches
             for micro_idx, microbatch in enumerate(microbatches):
+                # Track tokens being trained on (rollout_lens = completion tokens with gradients)
+                batch_tokens += microbatch["rollout_lens"].sum().item()
                 if use_packed:
                     grpo_loss, metrics = _train_step_packed(microbatch, comps)
                 else:
@@ -894,11 +1000,12 @@ def train_policy_on_rollouts(
             comps.optimizer.step()
             comps.optimizer.zero_grad()
             optim_step += 1
+            tokens_trained += batch_tokens
 
             # Clear cache after optimizer step
             torch.cuda.empty_cache()
 
-            # Log metrics (including KL divergence)
+            # Log metrics (including KL divergence and tokens)
             kl_div = avg_metrics.get("kl_div", 0.0)
             ir_mean = avg_metrics.get("importance_ratio", 1.0)
             typer.secho(
@@ -907,7 +1014,8 @@ def train_policy_on_rollouts(
                 f"Loss: {avg_loss:.4f} | "
                 f"KL: {kl_div:.4f} | "
                 f"IR: {ir_mean:.4f} | "
-                f"Grad Norm: {gradnorm.item():.4f}",
+                f"Grad Norm: {gradnorm.item():.4f} | "
+                f"Tokens: {tokens_trained:,}",
                 fg=typer.colors.YELLOW,
             )
 
@@ -921,18 +1029,22 @@ def train_policy_on_rollouts(
                         "train/importance_ratio_mean": avg_metrics["importance_ratio"],
                         "train/microbatches": num_microbatches,
                         "train/optim_step": optim_step,
+                        "train/tokens_trained": tokens_trained,
+                        "train/batch_tokens": batch_tokens,
                     },
                     step=optim_step,
                 )
 
-            # Check if we've reached max_steps
+            # Check if we've reached max_steps or token budget
             if max_steps > 0 and optim_step >= max_steps:
-                return optim_step, True
+                return optim_step, tokens_trained, True
+            if token_train_budget > 0 and tokens_trained >= token_train_budget:
+                return optim_step, tokens_trained, True
 
         # Clear cache after each inner epoch
         torch.cuda.empty_cache()
 
-    return optim_step, False
+    return optim_step, tokens_trained, False
 
 
 def _train_step_padded(batch: dict, comps: TrainingComponents) -> tuple[torch.Tensor, dict]:
@@ -1180,6 +1292,12 @@ def train(
     save_every: int = typer.Option(
         0, "--save-every", help="Save checkpoint every N optimizer steps (0 = only at end of epoch/training)"
     ),
+    token_train_budget: int = typer.Option(
+        0, "--token-train-budget", help="Total token budget for training (tokens backpropped on). 0 = disabled."
+    ),
+    save_every_n_tokens: int = typer.Option(
+        0, "--save-every-n-tokens", help="Save checkpoint every N tokens trained (0 = disabled)"
+    ),
     # flash attention / memory optimization
     use_flash_attn: bool = typer.Option(
         False, "--flash-attn", help="Enable Flash Attention 2 with padding-free training"
@@ -1215,6 +1333,7 @@ def train(
                 "model_name": model_name,
                 "epochs": epochs,
                 "max_steps": max_steps,
+                "token_train_budget": token_train_budget,
                 "batch_size": batch_size,
                 "group_size": group_size,
                 "inner_batch_size": inner_batch_size,
@@ -1228,6 +1347,7 @@ def train(
                 "optimizer": optimizer_type,
                 "max_tokens_per_microbatch": max_tokens_per_microbatch,
                 "save_every": save_every,
+                "save_every_n_tokens": save_every_n_tokens,
             }
             wandb.init(
                 project=wandb_project,
@@ -1406,10 +1526,15 @@ def train(
     # Step counters
     global_step = 0  # Counts batches of prompts processed
     optim_step = 0  # Counts optimizer.step() calls
+    tokens_trained = 0  # Counts tokens backpropped on (cumulative)
+    tokens_since_checkpoint = 0  # Tokens since last checkpoint (resets after save)
 
     # Determine training mode
     use_step_based = max_steps > 0
-    if use_step_based:
+    use_token_based = token_train_budget > 0
+    if use_token_based:
+        typer.secho(f"Training for {token_train_budget:,} tokens", fg=typer.colors.CYAN)
+    elif use_step_based:
         typer.secho(f"Training for {max_steps} optimizer steps", fg=typer.colors.CYAN)
     else:
         typer.secho(f"Training for {epochs} epoch(s)", fg=typer.colors.CYAN)
@@ -1421,7 +1546,9 @@ def train(
         minibatches: list[Sample] = []
 
         # Set up progress bar
-        if use_step_based:
+        if use_token_based:
+            desc = f"Tokens {tokens_trained:,}/{token_train_budget:,}"
+        elif use_step_based:
             desc = f"Step {optim_step}/{max_steps}"
         else:
             desc = f"Epoch {epoch + 1}/{epochs}"
@@ -1493,7 +1620,8 @@ def train(
 
             # Train policy on rollouts
             prev_optim_step = optim_step
-            optim_step, should_stop = train_policy_on_rollouts(
+            prev_tokens = tokens_trained
+            optim_step, tokens_trained, should_stop = train_policy_on_rollouts(
                 rollouts,
                 training_comps,
                 use_wandb=use_wandb,
@@ -1502,35 +1630,54 @@ def train(
                 max_tokens_per_microbatch=max_tokens_per_microbatch,
                 current_optim_step=optim_step,
                 max_steps=max_steps,
+                current_tokens_trained=tokens_trained,
+                token_train_budget=token_train_budget,
             )
             steps_this_batch = optim_step - prev_optim_step
+            tokens_this_batch = tokens_trained - prev_tokens
+            tokens_since_checkpoint += tokens_this_batch
+            token_budget_str = f"{token_train_budget:,}" if token_train_budget > 0 else "∞"
             typer.secho(
-                f"Completed {steps_this_batch} optimizer steps (total: {optim_step}/{max_steps if max_steps > 0 else '∞'})",
+                f"Completed {steps_this_batch} optimizer steps (total: {optim_step}/{max_steps if max_steps > 0 else '∞'}) | "
+                f"Tokens: +{tokens_this_batch:,} (total: {tokens_trained:,}/{token_budget_str})",
                 fg=typer.colors.CYAN,
             )
             minibatches.extend(rollouts)
 
-            # Update progress bar with current step
-            if use_step_based:
+            # Update progress bar with current step/tokens
+            if use_token_based:
+                pbar.set_description(f"Tokens {tokens_trained:,}/{token_train_budget:,}")
+            elif use_step_based:
                 pbar.set_description(f"Step {optim_step}/{max_steps}")
             pbar.set_postfix({"avg_reward": f"{avg_reward:.4f}", "acc": f"{correct_rate:.2%}"})
 
             # Clear cache after training step before next rollout generation
             torch.cuda.empty_cache()
 
-            # Check if we've reached max_steps
+            # Check if we've reached max_steps or token budget
             if should_stop:
-                typer.secho(f"\nReached {max_steps} optimizer steps. Stopping training.", fg=typer.colors.GREEN)
+                if token_train_budget > 0 and tokens_trained >= token_train_budget:
+                    typer.secho(f"\nReached {tokens_trained:,} tokens (budget: {token_train_budget:,}). Stopping training.", fg=typer.colors.GREEN)
+                else:
+                    typer.secho(f"\nReached {max_steps} optimizer steps. Stopping training.", fg=typer.colors.GREEN)
                 training_complete = True
                 # Save final checkpoint before breaking
                 if output_dir:
                     training_comps.save_checkpoint(optim_step, is_step=True)
                 break
 
-            # Save checkpoint at intervals
+            # Save checkpoint at step intervals
             if save_every > 0 and optim_step % save_every == 0 and output_dir:
                 typer.secho(f"\n[Step {optim_step}] Saving checkpoint...", fg=typer.colors.CYAN)
                 training_comps.save_checkpoint(optim_step, is_step=True)
+
+            # Save checkpoint at token intervals (resetting counter approach)
+            if save_every_n_tokens > 0 and output_dir:
+                if tokens_since_checkpoint >= save_every_n_tokens:
+                    typer.secho(f"\n[Tokens {tokens_trained:,}] Saving checkpoint...", fg=typer.colors.CYAN)
+                    training_comps.save_checkpoint(tokens_trained, is_step=True, suffix=f"tokens_{tokens_trained}")
+                    # Reset counter, keeping the overflow
+                    tokens_since_checkpoint = tokens_since_checkpoint - save_every_n_tokens
 
             # Intermediate evaluation (based on optim_step)
             if eval_every > 0 and optim_step % eval_every == 0:
@@ -1605,8 +1752,9 @@ def sft_train(
     model_name: str = typer.Option("Qwen/Qwen2-1.5B-Instruct", "--model", "-m", help="Model name or path"),
     output_dir: str = typer.Option(..., "--output-dir", help="Path to the output directory"),
     # Training mode
-    max_steps: int = typer.Option(0, "--max-steps", help="Maximum training steps (0 = use epochs)"),
-    num_epochs: int = typer.Option(1, "--epochs", help="Number of epochs (ignored if --max-steps > 0)"),
+    max_steps: int = typer.Option(0, "--max-steps", help="Maximum training steps (0 = use epochs or tokens)"),
+    max_tokens: int = typer.Option(0, "--max-tokens", help="Maximum tokens to train on (0 = use epochs or steps)"),
+    num_epochs: int = typer.Option(1, "--epochs", help="Number of epochs (ignored if --max-steps or --max-tokens > 0)"),
     # Batch settings
     effective_batch_size: int = typer.Option(32, "-B", "--batch-size", help="Effective batch size"),
     max_tokens_per_gpu: int = typer.Option(8192, "--max-tokens-per-gpu", help="Max tokens per GPU"),
@@ -1626,6 +1774,9 @@ def sft_train(
     checkpoint_at_epoch: bool = typer.Option(False, "--checkpoint-at-epoch", help="Save checkpoint each epoch"),
     save_every_steps: int = typer.Option(
         0, "--save-every", help="Save checkpoint every N optimizer steps (0 = disabled)"
+    ),
+    save_every_n_tokens: int = typer.Option(
+        0, "--save-every-n-tokens", help="Save checkpoint every N tokens trained (0 = disabled)"
     ),
     # Data processing
     use_processed_dataset: bool = typer.Option(False, "--use-processed", help="Data is already tokenized"),
@@ -1672,8 +1823,11 @@ def sft_train(
     from training_hub import osft
     from mini_trainer import TrainingMode
 
-    # Determine training mode
-    if max_steps > 0:
+    # Determine training mode (priority: tokens > steps > epochs)
+    if max_tokens > 0:
+        training_mode = TrainingMode.TOKEN
+        typer.secho(f"Training for {max_tokens:,} tokens", fg=typer.colors.CYAN)
+    elif max_steps > 0:
         training_mode = TrainingMode.STEP
         typer.secho(f"Training for {max_steps} steps", fg=typer.colors.CYAN)
     else:
@@ -1736,10 +1890,12 @@ def sft_train(
         training_mode=training_mode,
         num_epochs=num_epochs,
         max_steps=max_steps,
+        max_tokens=max_tokens,
         # Checkpointing
         save_final_checkpoint=save_final_checkpoint,
         checkpoint_at_epoch=checkpoint_at_epoch,
         save_every_steps=save_every_steps if save_every_steps > 0 else None,
+        save_every_n_tokens=save_every_n_tokens if save_every_n_tokens > 0 else None,
         # Data processing
         use_processed_dataset=use_processed_dataset,
         unmask_messages=unmask_messages,

@@ -121,13 +121,14 @@ class TrainingComponents(pydantic.BaseModel):
         except (OSError, PermissionError):
             return False
 
-    def save_checkpoint(self, checkpoint_id: int, is_step: bool = False):
+    def save_checkpoint(self, checkpoint_id: int, is_step: bool = False, suffix: str = ""):
         if self.output_dir is None:
             return
 
         # create root directory with appropriate prefix
         prefix = "step" if is_step else "epoch"
-        save_dir = os.path.join(self.output_dir, f"{prefix}_{checkpoint_id}")
+        dir_name = f"{prefix}_{checkpoint_id}" if not suffix else suffix.lstrip("_")
+        save_dir = os.path.join(self.output_dir, dir_name)
         if not os.path.exists(save_dir):
             os.makedirs(save_dir, exist_ok=True)
 

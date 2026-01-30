@@ -1,0 +1,13 @@
+{
+  "tokens_1107170": {
+    "step": 0,
+    "path": "checkpoints/grpo_muon/tokens_1107170",
+    "reverse_kl": -0.005305473544898156,
+    "reverse_kl_std": 0.029400421306490898,
+    "total_tokens": 85227,
+    "num_sequences": 541,
+    "avg_generated_tokens": 157.53604436229205,
+    "kl_direction": "KL(base || checkpoint)",
+    "generator": "base"
+  }
+}

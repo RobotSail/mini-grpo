@@ -1,0 +1,37 @@
+Leaderboard results: ../mini-grpo/checkpoints-lr-5e-6/grpo-muon/tokens_1107616
+Overall: 27.96%
+BBH: 39.22%
+GPQA: 25.86%
+IFEval: 33.89%
+MATH-Hard: 0.85%
+MMLU-Pro: 24.64%
+MUSR: 43.30%
+
+Leaderboard results: ../mini-grpo/checkpoints-lr-5e-6/grpo-adamw/tokens_1103184
+Overall: 27.90%
+BBH: 38.83%
+GPQA: 26.58%
+IFEval: 34.47%
+MATH-Hard: 1.87%
+MMLU-Pro: 23.79%
+MUSR: 41.87%
+
+Leaderboard results: ../mini-grpo/checkpoints-lr-5e-6/sft-muon/hf_format/samples_11610.0_tokens_1104739
+Overall: 28.08%
+BBH: 39.19%
+GPQA: 26.08%
+IFEval: 32.89%
+MATH-Hard: 1.69%
+MMLU-Pro: 25.30%
+MUSR: 43.32%
+
+Leaderboard results: ../mini-grpo/checkpoints-lr-5e-6/sft-adamw/hf_format/samples_11610.0_tokens_1104739
+Overall: 27.53%
+BBH: 39.12%
+GPQA: 24.44%
+IFEval: 32.36%
+MATH-Hard: 2.10%
+MMLU-Pro: 24.66%
+MUSR: 42.51%
+
+python eval_gsm8k.py --checkpoint-dir checkpoints-lr-5e-6/sft-adamw/hf_format/samples_11610.0_tokens_1104739 --gpu 0 --output eval_gsm8k_5e6_sft_adamw.json & python eval_gsm8k.py --checkpoint-dir checkpoints-lr-5e-6/sft-muon/hf_format/samples_11610.0_tokens_1104739 --gpu 1 --output eval_gsm8k_5e6_sft_muon.json & python eval_gsm8k.py --checkpoint-dir checkpoints-lr-5e-6/grpo-adamw/tokens_1103184 --gpu 2 --output eval_gsm8k_5e6_grpo_adamw.json & python eval_gsm8k.py --checkpoint-dir checkpoints-lr-5e-6/grpo-muon/tokens_1107616 --gpu 3 --output eval_gsm8k_5e6_grpo_muon.json & wait

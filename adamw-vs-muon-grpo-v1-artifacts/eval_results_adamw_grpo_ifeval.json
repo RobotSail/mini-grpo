@@ -1,0 +1,13 @@
+{
+  "tokens_1110186": {
+    "step": 0,
+    "path": "checkpoints/grpo_adamw/tokens_1110186",
+    "reverse_kl": -0.0024775170375322684,
+    "reverse_kl_std": 0.08855549246072769,
+    "total_tokens": 83867,
+    "num_sequences": 541,
+    "avg_generated_tokens": 155.02218114602587,
+    "kl_direction": "KL(base || checkpoint)",
+    "generator": "base"
+  }
+}
