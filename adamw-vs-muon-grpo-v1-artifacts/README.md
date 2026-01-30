@@ -1,0 +1,347 @@
+## Datasets used
+
+All of the datasets used during training were generated using the command `python cli.py generate-gsm8k --test-split 0.2 --output-dir gsm8k-data`
+
+The exact artifacts are found under `generated-data-v2` which contains 4 files:
+- gsm8k_grpo_test.jsonl
+- gsm8k_grpo_train.jsonl
+- gsm8k_sft_test.jsonl
+- gsm8k_sft_train.jsonl
+
+Here the `grpo` and `sft` datasets are effectively identical to each other, the main difference being that SFT samples directly include the system message while the
+GRPO samples include it at run-time. This is becuase the SFT portion is trained by a different library with its own data processing and expectations on input format.
+
+Here's an example of the two:
+
+**grpo**:
+
+```json
+{
+  "messages": [
+    {
+      "content": "You are a helpful math assistant. Always provide your final numerical answer inside of the <answer>...</answer> tags, e.g.: <answer>42</answer>",
+      "role": "system"
+    },
+    {
+      "content": "A farmer planted 30 rows of tomatoes with 10 plants in each row. Each tomato plant yields 20 pieces of tomatoes. How many pieces of tomatoes can the farmer get from all his planted tomatoes?",
+      "role": "user"
+    }
+  ],
+  "answer": 6000.0,
+  "problem": "A farmer planted 30 rows of tomatoes with 10 plants in each row. Each tomato plant yields 20 pieces of tomatoes. How many pieces of tomatoes can the farmer get from all his planted tomatoes?",
+  "operation": "gsm8k"
+}
+```
+
+**sft**:
+
+```json
+{
+  "messages": [
+    {
+      "content": "You are a helpful math assistant. Always provide your final numerical answer inside of the <answer>...</answer> tags, e.g.: <answer>42</answer>",
+      "role": "system"
+    },
+    {
+      "content": "A farmer planted 30 rows of tomatoes with 10 plants in each row. Each tomato plant yields 20 pieces of tomatoes. How many pieces of tomatoes can the farmer get from all his planted tomatoes?",
+      "role": "user"
+    },
+    {
+      "content": "The farmer planted a total of 30 x 10 = 300 tomato plants.\nThus, the farmer can get 300 x 20 = 6000 pieces of tomatoes.\n<answer>6000</answer>",
+      "role": "assistant"
+    }
+  ],
+  "answer": 6000.0
+}
+```
+
+
+
+## Commands used for Muon vs. AdamW:
+
+### GRPO:
+
+These were the commands used to launch GRPO training with Muon and AdamW
+
+**Muon:**
+
+```
+/mnt/nvme3n1/workspace/osilkin/mini-grpo/cli.py train --train-path generated-data-v2/gsm8k_grpo_train.jsonl --model-name Qwen/Qwen2-1.5B-Instruct --output-dir ./checkpoints/grpo_muon --optimizer muon --lr 1e-6 --batch-size 8 --group-size 8 --inner-batch-size 64 --token-train-budget 1200000 --save-every-n-tokens 100000 --flash-attn --seed 67 --kl 0 --gpu 0 --max-tokens-per-microbatch 8192 --wandb --wandb-project gsm8k-comparison --wandb-run grpo-muon
+```
+
+**AdamW:**
+
+```
+/mnt/nvme3n1/workspace/osilkin/mini-grpo/cli.py train --train-path generated-data-v2/gsm8k_grpo_train.jsonl --model-name Qwen/Qwen2-1.5B-Instruct --output-dir ./checkpoints/grpo_adamw --optimizer adamw --lr 1e-6 --batch-size 8 --group-size 8 --inner-batch-size 64 --token-train-budget 1200000 --save-every-n-tokens 100000 --kl 0 --flash-attn --seed 67 --gpu 0 --max-tokens-per-microbatch 8192 --wandb --wandb-project gsm8k-comparison --wandb-run grpo-adamw
+```
+
+### SFT:
+
+Here are the commands we used to launch SFT runs for Muon + AdamW.
+The `--data-path` shown here points to the tokenized dataset, the original dataset can be found at `generated-data-v2/gsm8k_sft_train.jsonl`
+
+
+**Muon:**
+
+```
+/mnt/nvme3n1/workspace/osilkin/mini_trainer/src/mini_trainer/train.py --model-name-or-path=Qwen/Qwen2-1.5B-Instruct --data-path=./checkpoints/sft_muon/_internal_data_processing/data.jsonl --batch-size=64 --max-tokens-per-gpu=8192 --learning-rate=1e-06 --num-warmup-steps=0 --lr-scheduler=constant --lr-scheduler-kwargs={} --seed=67 --output-dir=./checkpoints/sft_muon --training-mode=token --max-epochs=1 --max-steps=0 --max-tokens=1200000 --train-dtype=float32 --optimizer=muon --wandb-project=gsm8k-comparison --wandb-run-name=sft-muon --save-final-checkpoint --save-every-n-tokens=100000 --compute-kl
+
+```
+
+**AdamW:**
+
+
+```
+/mnt/nvme3n1/workspace/osilkin/mini_trainer/src/mini_trainer/train.py --model-name-or-path=Qwen/Qwen2-1.5B-Instruct --data-path=./checkpoints/sft_adamw/_internal_data_processing/data.jsonl --batch-size=64 --max-tokens-per-gpu=8192 --learning-rate=1e-06 --num-warmup-steps=0 --lr-scheduler=constant --lr-scheduler-kwargs={} --seed=67 --output-dir=./checkpoints/sft_adamw --training-mode=token --max-epochs=1 --max-steps=0 --max-tokens=1200000 --train-dtype=float32 --optimizer=adamw --wandb-project=gsm8k-comparison --wandb-run-name=sft-adamw --save-final-checkpoint --save-every-n-tokens=100000 --compute-kl
+```
+
+#### Software Used
+
+For SFT, we call out to a modified version of mini-trainer which runs through training hub and uses instructlab-training for its data processing, as opposed to our GRPO loop which does its own data processing.
+
+
+## Frozen dependencies
+
+### mini-trainer
+
+The only other codebase which we modify is https://github.com/RobotSail/mini_trainer.git and the exact commit hash for that repo is: 8686ddb85a44695fb167f75cac264b10de4d8552 
+
+These are the exact dependencies used in our experiments:
+
+```txt
+accelerate==1.12.0
+aiofiles==25.1.0
+aiohappyeyeballs==2.6.1
+aiohttp==3.13.3
+aiosignal==1.4.0
+annotated-doc==0.0.4
+annotated-types==0.7.0
+anthropic==0.71.0
+anyio==4.12.1
+apache-tvm-ffi==0.1.8.post2
+astor==0.8.1
+asttokens==3.0.1
+attr==0.3.2
+attrs==25.4.0
+bitsandbytes==0.49.1
+blake3==1.0.8
+cachetools==6.2.4
+causal-conv1d==1.6.0
+cbor2==5.8.0
+certifi==2026.1.4
+cffi==2.0.0
+charset-normalizer==3.4.4
+click==8.3.1
+cloudpickle==3.1.2
+compressed-tensors==0.13.0
+contourpy==1.3.3
+cryptography==46.0.3
+cuda-bindings==13.1.1
+cuda-pathfinder==1.2.2
+cuda-python==13.1.1
+cupy-cuda12x==13.6.0
+cycler==0.12.1
+datasets==4.5.0
+decorator==5.2.1
+deprecated==1.3.1
+depyf==0.20.0
+dill==0.4.0
+diskcache==5.6.3
+distro==1.9.0
+dnspython==2.8.0
+docstring-parser==0.17.0
+einops==0.8.1
+email-validator==2.3.0
+executing==2.2.1
+fastapi==0.128.0
+fastapi-cli==0.0.20
+fastapi-cloud-cli==0.11.0
+fastar==0.8.0
+fastrlock==0.8.3
+filelock==3.20.3
+flash-attn==2.8.3
+flashinfer-python==0.5.3
+fonttools==4.61.1
+frozenlist==1.8.0
+fsspec==2025.10.0
+gguf==0.17.1
+gitdb==4.0.12
+gitpython==3.1.46
+grpcio==1.76.0
+grpcio-reflection==1.76.0
+h11==0.16.0
+hf-xet==1.2.0
+httpcore==1.0.9
+httptools==0.7.1
+httpx==0.28.1
+httpx-sse==0.4.3
+huggingface-hub==0.36.0
+idna==3.11
+ijson==3.4.0.post0
+iniconfig==2.3.0
+instructlab-training==0.13.0
+interegular==0.3.3
+ipython==9.9.0
+ipython-pygments-lexers==1.1.1
+jedi==0.19.2
+jinja2==3.1.6
+jiter==0.12.0
+jmespath==1.0.1
+jsonschema==4.26.0
+jsonschema-specifications==2025.9.1
+kernels==0.11.7
+kiwisolver==1.4.9
+lark==1.2.2
+liger-kernel==0.6.4
+llguidance==1.3.0
+llvmlite==0.44.0
+lm-format-enforcer==0.11.3
+loguru==0.7.3
+mamba-ssm==2.3.0
+markdown-it-py==4.0.0
+markupsafe==3.0.2
+matplotlib==3.10.8
+matplotlib-inline==0.2.1
+mcp==1.25.0
+mdurl==0.1.2
+mistral-common==1.8.8
+model-hosting-container-standards==0.1.13
+mpmath==1.3.0
+msgpack==1.1.2
+msgspec==0.20.0
+multidict==6.7.0
+multiprocess==0.70.18
+muon-fsdp2==0.3.0
+networkx==3.6.1
+ninja==1.13.0
+numba==0.61.2
+numpy==2.2.6
+nvidia-cublas==13.1.0.3
+nvidia-cublas-cu12==12.8.4.1
+nvidia-cuda-cupti==13.0.85
+nvidia-cuda-cupti-cu12==12.8.90
+nvidia-cuda-nvrtc==13.0.88
+nvidia-cuda-nvrtc-cu12==12.8.93
+nvidia-cuda-runtime==13.0.96
+nvidia-cuda-runtime-cu12==12.8.90
+nvidia-cudnn-cu12==9.10.2.21
+nvidia-cudnn-cu13==9.15.1.9
+nvidia-cudnn-frontend==1.17.0
+nvidia-cufft==12.0.0.61
+nvidia-cufft-cu12==11.3.3.83
+nvidia-cufile==1.15.1.6
+nvidia-cufile-cu12==1.13.1.3
+nvidia-curand==10.4.0.35
+nvidia-curand-cu12==10.3.9.90
+nvidia-cusolver==12.0.4.66
+nvidia-cusolver-cu12==11.7.3.90
+nvidia-cusparse==12.6.3.3
+nvidia-cusparse-cu12==12.5.8.93
+nvidia-cusparselt-cu12==0.7.1
+nvidia-cusparselt-cu13==0.8.0
+nvidia-cutlass-dsl==4.3.5
+nvidia-ml-py==13.590.44
+nvidia-nccl-cu12==2.27.5
+nvidia-nccl-cu13==2.28.9
+nvidia-nvjitlink==13.0.88
+nvidia-nvjitlink-cu12==12.8.93
+nvidia-nvshmem-cu12==3.3.20
+nvidia-nvshmem-cu13==3.4.5
+nvidia-nvtx==13.0.85
+nvidia-nvtx-cu12==12.8.90
+openai==2.15.0
+openai-harmony==0.0.8
+opencv-python-headless==4.13.0.90
+outlines-core==0.2.11
+packaging==25.0
+pandas==2.3.3
+parso==0.8.5
+partial-json-parser==0.2.1.1.post7
+peft==0.18.1
+pexpect==4.9.0
+pillow==12.1.0
+platformdirs==4.5.1
+pluggy==1.6.0
+prometheus-client==0.24.1
+prometheus-fastapi-instrumentator==7.1.0
+prompt-toolkit==3.0.52
+propcache==0.4.1
+protobuf==6.33.4
+psutil==7.2.1
+ptyprocess==0.7.0
+pure-eval==0.2.3
+py-cpuinfo==9.0.0
+pyarrow==23.0.0
+pybase64==1.4.3
+pycountry==24.6.1
+pycparser==2.23
+pydantic==2.12.5
+pydantic-core==2.41.5
+pydantic-extra-types==2.11.0
+pydantic-settings==2.12.0
+pygments==2.19.2
+pyjwt==2.10.1
+pyparsing==3.3.1
+pytest==9.0.2
+python-dateutil==2.9.0.post0
+python-dotenv==1.2.1
+python-json-logger==4.0.0
+python-multipart==0.0.21
+pytz==2025.2
+pyyaml==6.0.3
+pyzmq==27.1.0
+ray==2.53.0
+referencing==0.37.0
+regex==2026.1.15
+requests==2.32.5
+-e file:///mnt/nvme3n1/workspace/osilkin/mini_trainer
+rich==14.2.0
+rich-toolkit==0.17.1
+rignore==0.7.6
+rpds-py==0.30.0
+safetensors==0.7.0
+seaborn==0.13.2
+sentencepiece==0.2.1
+sentry-sdk==2.50.0
+setproctitle==1.3.7
+setuptools==80.9.0
+shellingham==1.5.4
+six==1.17.0
+smmap==5.0.2
+sniffio==1.3.1
+sse-starlette==3.2.0
+stack-data==0.6.3
+starlette==0.50.0
+supervisor==4.3.0
+sympy==1.14.0
+tabulate==0.9.0
+tiktoken==0.12.0
+tokenizers==0.22.2
+torch==2.9.1
+torchaudio==2.9.1
+torchvision==0.24.1
+tqdm==4.67.1
+training-hub==0.5.0
+traitlets==5.14.3
+transformers==4.57.6
+triton==3.5.1
+trl==0.27.0
+typer==0.21.1
+typing-extensions==4.15.0
+typing-inspection==0.4.2
+tzdata==2025.3
+urllib3==2.6.3
+uvicorn==0.40.0
+uvloop==0.22.1
+vllm==0.14.0
+wandb==0.24.0
+watchfiles==1.1.1
+wcwidth==0.2.14
+websockets==16.0
+wheel==0.45.1
+wrapt==2.0.1
+xgrammar==0.1.29
+xxhash==3.6.0
+yarl==1.22.0
+```
+
