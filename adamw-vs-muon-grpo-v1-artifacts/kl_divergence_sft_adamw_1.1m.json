@@ -1,0 +1,9 @@
+{
+  "samples_11610.0_tokens_1104739": {
+    "path": "/mnt/nvme3n1/workspace/osilkin/mini-grpo/adamw-vs-muon-grpo-v1-artifacts/checkpoints/sft_adamw/hf_format/samples_11610.0_tokens_1104739",
+    "kl_divergence": 0.312956493835357,
+    "kl_std": 0.7645372152328491,
+    "total_tokens": 26472,
+    "num_sequences": 1495
+  }
+}

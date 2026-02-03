@@ -1,0 +1,38 @@
+{
+  "tokens_1501867": {
+    "step": 0,
+    "path": "/mnt/nvme2n1/checkpoints/qwen2-1.5b-gsm8k-sft-adamw_verify_1/hf_format/samples_15796.0_tokens_1501867",
+    "total_samples": 1319,
+    "correct": 557,
+    "parsable": 1316,
+    "accuracy": 0.422289613343442,
+    "parsable_rate": 0.9977255496588324
+  },
+  "tokens_2104838": {
+    "step": 0,
+    "path": "/mnt/nvme2n1/checkpoints/qwen2-1.5b-gsm8k-sft-muon_verify_1/hf_format/samples_22158.0_tokens_2104838",
+    "total_samples": 1319,
+    "correct": 579,
+    "parsable": 1308,
+    "accuracy": 0.43896891584533737,
+    "parsable_rate": 0.9916603487490523
+  },
+  "tokens_1363556": {
+    "step": 0,
+    "path": "/mnt/nvme2n1/checkpoints/qwen2-1.5b-gsm8k-grpo-muon_verify_1/tokens_1363556",
+    "total_samples": 1319,
+    "correct": 790,
+    "parsable": 1291,
+    "accuracy": 0.5989385898407885,
+    "parsable_rate": 0.9787717968157695
+  },
+  "tokens_1812776": {
+    "step": 0,
+    "path": "/mnt/nvme2n1/checkpoints/qwen2-1.5b-gsm8k-grpo-adamw_verify_1/tokens_1812776",
+    "total_samples": 1319,
+    "correct": 799,
+    "parsable": 1294,
+    "accuracy": 0.6057619408642911,
+    "parsable_rate": 0.9810462471569371
+  }
+}

@@ -407,7 +407,7 @@ def split_batch_into_microbatches(batch: dict, max_tokens: int):
         micro_seq_indices = torch.zeros(micro_input_ids.numel(), dtype=torch.long)
         offset = 0
         for i, seq_len in enumerate(micro_seq_lengths):
-            micro_seq_indices[offset:offset + seq_len] = i
+            micro_seq_indices[offset : offset + seq_len] = i
             offset += seq_len
 
         microbatch = {
@@ -505,6 +505,7 @@ def dataset_from_groups(groups: list[Sample], tokenizer: PreTrainedTokenizer):
 def create_grpo_data_loader(
     dataset: datasets.Dataset,
     comps: TrainingComponents,
+    seed: int,
     use_packed: bool = False,
 ):
     """
@@ -522,12 +523,15 @@ def create_grpo_data_loader(
     else:
         _collate_fn = partial(collate_fn, pad_token_id=comps.tokenizer.pad_token_id)
 
+    # creates a generator for the seed
+    generator = torch.Generator().manual_seed(seed)
     ds = JsonlDataset(dataset=dataset)
     train_loader = DataLoader(
         dataset=ds,
         collate_fn=_collate_fn,
         batch_size=comps.hyperparams.inner_batch_size,
         shuffle=True,
+        generator=generator,
     )
     return train_loader
 

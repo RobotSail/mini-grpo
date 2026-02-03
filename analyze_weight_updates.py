@@ -39,22 +39,22 @@ BASELINE_MODEL = "Qwen/Qwen2-1.5B-Instruct"
 
 EXPERIMENTS = {
     "adamw_sft": {
-        "path": "checkpoints/sft_adamw/hf_format/samples_11610.0_tokens_1104739/",
+        "path": "/mnt/nvme2n1/checkpoints/qwen2-1.5b-gsm8k-sft-adamw_verify_1/hf_format/samples_15796.0_tokens_1501867",
         "label": "AdamW + SFT",
         "color": "#1f77b4",
     },
     "muon_sft": {
-        "path": "checkpoints/sft_muon/hf_format/samples_11610.0_tokens_1104739/",
+        "path": "/mnt/nvme2n1/checkpoints/qwen2-1.5b-gsm8k-sft-muon_verify_1/hf_format/samples_22158.0_tokens_2104838",
         "label": "Muon + SFT",
         "color": "#ff7f0e",
     },
     "adamw_grpo": {
-        "path": "checkpoints/grpo_adamw/tokens_1110186/",
+        "path": "/mnt/nvme2n1/checkpoints/qwen2-1.5b-gsm8k-grpo-adamw_verify_1/tokens_1812776",
         "label": "AdamW + GRPO",
         "color": "#2ca02c",
     },
     "muon_grpo": {
-        "path": "checkpoints/grpo_muon/tokens_1107170/",
+        "path": "/mnt/nvme2n1/checkpoints/qwen2-1.5b-gsm8k-grpo-muon_verify_1/tokens_1363556",
         "label": "Muon + GRPO",
         "color": "#d62728",
     },
@@ -66,6 +66,7 @@ COMPONENT_ORDER = ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj
 # =============================================================================
 # WEIGHT LOADING
 # =============================================================================
+
 
 def load_weights(checkpoint_path: str, device: torch.device) -> dict[str, torch.Tensor]:
     """Load weight tensors from a checkpoint directory or HuggingFace model."""
@@ -126,6 +127,7 @@ def parse_param_name(name: str) -> dict | None:
 # SVD COMPUTATION
 # =============================================================================
 
+
 def compute_update_svd(delta_w: torch.Tensor) -> list[float]:
     """Compute singular values of the weight update."""
     delta_w_f32 = delta_w.float()
@@ -152,7 +154,7 @@ def compute_update_metrics(sv: list[float]) -> dict:
     sv_arr = np.array(sv)
 
     # Frobenius norm: ||ΔW||_F = sqrt(Σσᵢ²)
-    frobenius_norm = np.sqrt(np.sum(sv_arr ** 2))
+    frobenius_norm = np.sqrt(np.sum(sv_arr**2))
 
     # Spectral norm: ||ΔW||_2 = σ₁
     spectral_norm = sv_arr[0]
@@ -162,13 +164,13 @@ def compute_update_metrics(sv: list[float]) -> dict:
 
     # Effective rank: (Σσᵢ)² / Σσᵢ²
     # Ranges from 1 (rank-1) to n (full-rank uniform)
-    effective_rank = (nuclear_norm ** 2) / (frobenius_norm ** 2) if frobenius_norm > 0 else 0
+    effective_rank = (nuclear_norm**2) / (frobenius_norm**2) if frobenius_norm > 0 else 0
 
     # Stable rank: ||ΔW||_F² / σ₁²
-    stable_rank = (frobenius_norm ** 2) / (spectral_norm ** 2) if spectral_norm > 0 else 0
+    stable_rank = (frobenius_norm**2) / (spectral_norm**2) if spectral_norm > 0 else 0
 
     # Top-k energy ratios
-    total_energy = frobenius_norm ** 2
+    total_energy = frobenius_norm**2
     top1_energy = sv_arr[0] ** 2 / total_energy if total_energy > 0 else 0
     top5_energy = np.sum(sv_arr[:5] ** 2) / total_energy if total_energy > 0 and len(sv_arr) >= 5 else 0
     top10_energy = np.sum(sv_arr[:10] ** 2) / total_energy if total_energy > 0 and len(sv_arr) >= 10 else 0
@@ -178,7 +180,7 @@ def compute_update_metrics(sv: list[float]) -> dict:
     # Normalized to [0, 1]: 0 = all energy in one SV, 1 = uniform distribution
     n = len(sv_arr)
     if total_energy > 0 and n > 1:
-        p = (sv_arr ** 2) / total_energy
+        p = (sv_arr**2) / total_energy
         p = p[p > 0]  # Avoid log(0)
         spectral_entropy = (-1.0 / np.log(n)) * np.sum(p * np.log(p))
     else:
@@ -187,12 +189,24 @@ def compute_update_metrics(sv: list[float]) -> dict:
     # Rank for X% energy: minimum k such that Σσᵢ²(1:k) / ||ΔW||_F² >= threshold
     # More interpretable measure of low-rank structure
     if total_energy > 0:
-        cumulative_energy = np.cumsum(sv_arr ** 2) / total_energy
+        cumulative_energy = np.cumsum(sv_arr**2) / total_energy
         rank_90 = int(np.searchsorted(cumulative_energy, 0.90) + 1)
         rank_95 = int(np.searchsorted(cumulative_energy, 0.95) + 1)
         rank_99 = int(np.searchsorted(cumulative_energy, 0.99) + 1)
     else:
         rank_90 = rank_95 = rank_99 = 0
+
+    # Magnitude of SV at the energy threshold cutoff
+    # This tells us "what's the smallest SV we need to include to capture X% of energy"
+    sv_at_rank_90 = float(sv_arr[rank_90 - 1]) if rank_90 > 0 and rank_90 <= len(sv_arr) else 0.0
+    sv_at_rank_95 = float(sv_arr[rank_95 - 1]) if rank_95 > 0 and rank_95 <= len(sv_arr) else 0.0
+    sv_at_rank_99 = float(sv_arr[rank_99 - 1]) if rank_99 > 0 and rank_99 <= len(sv_arr) else 0.0
+
+    # Cumulative sum of SVs up to energy threshold (partial nuclear norm)
+    # This tells us the total magnitude of the low-rank component capturing X% of energy
+    sv_sum_at_rank_90 = float(np.sum(sv_arr[:rank_90])) if rank_90 > 0 else 0.0
+    sv_sum_at_rank_95 = float(np.sum(sv_arr[:rank_95])) if rank_95 > 0 else 0.0
+    sv_sum_at_rank_99 = float(np.sum(sv_arr[:rank_99])) if rank_99 > 0 else 0.0
 
     # Gini coefficient of singular values
     # 0 = perfectly uniform (all SVs equal), 1 = maximally concentrated (one SV has all energy)
@@ -216,6 +230,12 @@ def compute_update_metrics(sv: list[float]) -> dict:
         "rank_90": rank_90,
         "rank_95": rank_95,
         "rank_99": rank_99,
+        "sv_at_rank_90": sv_at_rank_90,
+        "sv_at_rank_95": sv_at_rank_95,
+        "sv_at_rank_99": sv_at_rank_99,
+        "sv_sum_at_rank_90": sv_sum_at_rank_90,
+        "sv_sum_at_rank_95": sv_sum_at_rank_95,
+        "sv_sum_at_rank_99": sv_sum_at_rank_99,
         "top1_energy": top1_energy,
         "top5_energy": top5_energy,
         "top10_energy": top10_energy,
@@ -227,6 +247,7 @@ def compute_update_metrics(sv: list[float]) -> dict:
 # =============================================================================
 # CACHING
 # =============================================================================
+
 
 def get_cache_path(cache_dir: Path, exp_name: str) -> Path:
     """Get cache file path for an experiment."""
@@ -251,6 +272,7 @@ def load_cache(cache_path: Path) -> dict | None:
 # =============================================================================
 # MAIN COMPUTATION
 # =============================================================================
+
 
 def compute_all_updates(
     baseline_weights: dict[str, torch.Tensor],
@@ -351,6 +373,7 @@ def build_metrics_dataframe(all_results: dict[str, dict]) -> pd.DataFrame:
 # VISUALIZATION: BAR CHARTS
 # =============================================================================
 
+
 def plot_metric_by_layer(df: pd.DataFrame, metric: str, title: str, ylabel: str, output_path: Path):
     """Plot a metric as grouped bar chart by layer."""
     layer_df = df[(df["layer"] >= 0) & (df["layer"] < 28)].copy()
@@ -375,7 +398,7 @@ def plot_metric_by_layer(df: pd.DataFrame, metric: str, title: str, ylabel: str,
     ax.set_xticks(x)
     ax.set_xticklabels(x)
     ax.legend(loc="upper right")
-    ax.grid(axis='y', alpha=0.3)
+    ax.grid(axis="y", alpha=0.3)
 
     plt.tight_layout()
     plt.savefig(output_path, dpi=150, bbox_inches="tight")
@@ -407,7 +430,126 @@ def plot_metric_by_component(df: pd.DataFrame, metric: str, title: str, ylabel: 
     ax.set_xticks(x)
     ax.set_xticklabels(COMPONENT_ORDER, rotation=45, ha="right")
     ax.legend(loc="upper right")
-    ax.grid(axis='y', alpha=0.3)
+    ax.grid(axis="y", alpha=0.3)
+
+    plt.tight_layout()
+    plt.savefig(output_path, dpi=150, bbox_inches="tight")
+    plt.close(fig)
+
+
+def plot_rank_and_magnitude_by_layer(
+    df: pd.DataFrame, rank_metric: str, sv_sum_metric: str, sv_at_metric: str, energy_pct: str, output_path: Path
+):
+    """Plot rank, cumulative SV sum, and individual SV at energy threshold as 3-panel figure."""
+    layer_df = df[(df["layer"] >= 0) & (df["layer"] < 28)].copy()
+    rank_agg = layer_df.groupby(["experiment", "layer"])[rank_metric].mean().reset_index()
+    sv_sum_agg = layer_df.groupby(["experiment", "layer"])[sv_sum_metric].mean().reset_index()
+    sv_at_agg = layer_df.groupby(["experiment", "layer"])[sv_at_metric].mean().reset_index()
+
+    fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(16, 12), sharex=True)
+
+    n_experiments = len(EXPERIMENTS)
+    n_layers = 28
+    width = 0.8 / n_experiments
+    x = np.arange(n_layers)
+
+    # Top panel: rank
+    for i, (exp_name, exp_config) in enumerate(EXPERIMENTS.items()):
+        exp_data = rank_agg[rank_agg["experiment"] == exp_name].set_index("layer")[rank_metric]
+        values = [exp_data.get(l, 0) for l in range(n_layers)]
+        offset = (i - n_experiments / 2 + 0.5) * width
+        ax1.bar(x + offset, values, width, label=exp_config["label"], color=exp_config["color"], alpha=0.8)
+
+    ax1.set_ylabel(f"Rank $k$ for {energy_pct} Energy")
+    ax1.set_title(
+        rf"Weight Update $\Delta W = W_{{\mathrm{{exp}}}} - W_{{\mathrm{{base}}}}$: "
+        f"Rank and Magnitude at {energy_pct} Energy Threshold by Layer"
+    )
+    ax1.legend(loc="upper right", ncol=2)
+    ax1.grid(axis="y", alpha=0.3)
+
+    # Middle panel: cumulative SV sum
+    for i, (exp_name, exp_config) in enumerate(EXPERIMENTS.items()):
+        exp_data = sv_sum_agg[sv_sum_agg["experiment"] == exp_name].set_index("layer")[sv_sum_metric]
+        values = [exp_data.get(l, 0) for l in range(n_layers)]
+        offset = (i - n_experiments / 2 + 0.5) * width
+        ax2.bar(x + offset, values, width, label=exp_config["label"], color=exp_config["color"], alpha=0.8)
+
+    ax2.set_ylabel(rf"$\sum_{{i=1}}^{{k}} \sigma_i(\Delta W)$")
+    ax2.grid(axis="y", alpha=0.3)
+
+    # Bottom panel: SV at rank
+    for i, (exp_name, exp_config) in enumerate(EXPERIMENTS.items()):
+        exp_data = sv_at_agg[sv_at_agg["experiment"] == exp_name].set_index("layer")[sv_at_metric]
+        values = [exp_data.get(l, 0) for l in range(n_layers)]
+        offset = (i - n_experiments / 2 + 0.5) * width
+        ax3.bar(x + offset, values, width, label=exp_config["label"], color=exp_config["color"], alpha=0.8)
+
+    ax3.set_xlabel("Layer Index")
+    ax3.set_ylabel(rf"$\sigma_{{k}}(\Delta W)$")
+    ax3.set_xticks(x)
+    ax3.set_xticklabels(x)
+    ax3.grid(axis="y", alpha=0.3)
+
+    plt.tight_layout()
+    plt.savefig(output_path, dpi=150, bbox_inches="tight")
+    plt.close(fig)
+
+
+def plot_rank_and_magnitude_by_component(
+    df: pd.DataFrame, rank_metric: str, sv_sum_metric: str, sv_at_metric: str, energy_pct: str, output_path: Path
+):
+    """Plot rank, cumulative SV sum, and individual SV at energy threshold by component as 3-panel figure."""
+    layer_df = df[(df["layer"] >= 0) & (df["layer"] < 28)].copy()
+    layer_df = layer_df[layer_df["component"].isin(COMPONENT_ORDER)]
+    rank_agg = layer_df.groupby(["experiment", "component"])[rank_metric].mean().reset_index()
+    sv_sum_agg = layer_df.groupby(["experiment", "component"])[sv_sum_metric].mean().reset_index()
+    sv_at_agg = layer_df.groupby(["experiment", "component"])[sv_at_metric].mean().reset_index()
+
+    fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(12, 12), sharex=True)
+
+    n_experiments = len(EXPERIMENTS)
+    n_components = len(COMPONENT_ORDER)
+    width = 0.8 / n_experiments
+    x = np.arange(n_components)
+
+    # Top panel: rank
+    for i, (exp_name, exp_config) in enumerate(EXPERIMENTS.items()):
+        exp_data = rank_agg[rank_agg["experiment"] == exp_name].set_index("component")[rank_metric]
+        values = [exp_data.get(c, 0) for c in COMPONENT_ORDER]
+        offset = (i - n_experiments / 2 + 0.5) * width
+        ax1.bar(x + offset, values, width, label=exp_config["label"], color=exp_config["color"], alpha=0.8)
+
+    ax1.set_ylabel(f"Rank $k$ for {energy_pct} Energy")
+    ax1.set_title(
+        rf"Weight Update $\Delta W = W_{{\mathrm{{exp}}}} - W_{{\mathrm{{base}}}}$: "
+        f"Rank and Magnitude at {energy_pct} Energy Threshold by Component"
+    )
+    ax1.legend(loc="upper right", ncol=2)
+    ax1.grid(axis="y", alpha=0.3)
+
+    # Middle panel: cumulative SV sum
+    for i, (exp_name, exp_config) in enumerate(EXPERIMENTS.items()):
+        exp_data = sv_sum_agg[sv_sum_agg["experiment"] == exp_name].set_index("component")[sv_sum_metric]
+        values = [exp_data.get(c, 0) for c in COMPONENT_ORDER]
+        offset = (i - n_experiments / 2 + 0.5) * width
+        ax2.bar(x + offset, values, width, label=exp_config["label"], color=exp_config["color"], alpha=0.8)
+
+    ax2.set_ylabel(rf"$\sum_{{i=1}}^{{k}} \sigma_i(\Delta W)$")
+    ax2.grid(axis="y", alpha=0.3)
+
+    # Bottom panel: SV at rank
+    for i, (exp_name, exp_config) in enumerate(EXPERIMENTS.items()):
+        exp_data = sv_at_agg[sv_at_agg["experiment"] == exp_name].set_index("component")[sv_at_metric]
+        values = [exp_data.get(c, 0) for c in COMPONENT_ORDER]
+        offset = (i - n_experiments / 2 + 0.5) * width
+        ax3.bar(x + offset, values, width, label=exp_config["label"], color=exp_config["color"], alpha=0.8)
+
+    ax3.set_xlabel("Component Type")
+    ax3.set_ylabel(rf"$\sigma_{{k}}(\Delta W)$")
+    ax3.set_xticks(x)
+    ax3.set_xticklabels(COMPONENT_ORDER, rotation=45, ha="right")
+    ax3.grid(axis="y", alpha=0.3)
 
     plt.tight_layout()
     plt.savefig(output_path, dpi=150, bbox_inches="tight")
@@ -417,6 +559,7 @@ def plot_metric_by_component(df: pd.DataFrame, metric: str, title: str, ylabel: 
 # =============================================================================
 # VISUALIZATION: SPECTRAL DECAY
 # =============================================================================
+
 
 def plot_spectral_decay(all_results: dict, component: str, output_path: Path):
     """Plot singular value decay curves (log scale) for a component type."""
@@ -452,7 +595,8 @@ def plot_spectral_decay(all_results: dict, component: str, output_path: Path):
     plt.suptitle(
         f"Spectral Decay of Weight Updates: {component}\n"
         r"$\sigma_i(\Delta W)$ where $\Delta W = W_{exp} - W_{base}$",
-        fontsize=12, fontweight="bold"
+        fontsize=12,
+        fontweight="bold",
     )
     plt.tight_layout()
     plt.savefig(output_path, dpi=150, bbox_inches="tight")
@@ -479,14 +623,14 @@ def plot_cumulative_energy(all_results: dict, component: str, output_path: Path)
                 continue
 
             sv = np.array(result["parameters"][param_name]["singular_values"])
-            total_energy = np.sum(sv ** 2)
-            cumulative_energy = np.cumsum(sv ** 2) / total_energy
+            total_energy = np.sum(sv**2)
+            cumulative_energy = np.cumsum(sv**2) / total_energy
 
             ranks = np.arange(1, len(sv) + 1)
             ax.plot(ranks, cumulative_energy, color=color, linewidth=1.5, label=f"Layer {layer_idx}")
 
-        ax.axhline(y=0.9, color='gray', linestyle='--', alpha=0.5, label="90% energy")
-        ax.axhline(y=0.99, color='gray', linestyle=':', alpha=0.5, label="99% energy")
+        ax.axhline(y=0.9, color="gray", linestyle="--", alpha=0.5, label="90% energy")
+        ax.axhline(y=0.99, color="gray", linestyle=":", alpha=0.5, label="99% energy")
         ax.set_xlabel("Singular Value Rank")
         ax.set_ylabel("Cumulative Energy Fraction")
         ax.set_title(exp_config["label"])
@@ -498,7 +642,8 @@ def plot_cumulative_energy(all_results: dict, component: str, output_path: Path)
     plt.suptitle(
         f"Cumulative Energy of Weight Updates: {component}\n"
         r"$\sum_{j=1}^{k} \sigma_j^2(\Delta W) \;/\; \|\Delta W\|_F^2$",
-        fontsize=12, fontweight="bold"
+        fontsize=12,
+        fontweight="bold",
     )
     plt.tight_layout()
     plt.savefig(output_path, dpi=150, bbox_inches="tight")
@@ -508,6 +653,7 @@ def plot_cumulative_energy(all_results: dict, component: str, output_path: Path)
 # =============================================================================
 # VISUALIZATION: HEATMAPS
 # =============================================================================
+
 
 def plot_component_heatmap(df: pd.DataFrame, metric: str, title: str, output_path: Path):
     """Plot heatmaps of metric by layer x component."""
@@ -541,6 +687,7 @@ def plot_component_heatmap(df: pd.DataFrame, metric: str, title: str, output_pat
 # =============================================================================
 # WEIGHT SVD (not update SVD)
 # =============================================================================
+
 
 def compute_weight_svd(w: torch.Tensor) -> list[float]:
     """Compute singular values of a weight matrix."""
@@ -590,6 +737,7 @@ def compute_all_weight_svds(
 # CONDITION NUMBER ANALYSIS
 # =============================================================================
 
+
 def compute_condition_number(sv: list[float], eps: float = 1e-10) -> float:
     """Compute condition number κ = σ₁/σₙ from singular values."""
     if not sv or len(sv) < 2:
@@ -597,7 +745,7 @@ def compute_condition_number(sv: list[float], eps: float = 1e-10) -> float:
     sigma_max = sv[0]
     sigma_min = sv[-1]
     if sigma_min < eps:
-        return float('inf')
+        return float("inf")
     return sigma_max / sigma_min
 
 
@@ -614,15 +762,17 @@ def build_condition_number_dataframe(
         if parsed is None:
             continue
         cond = compute_condition_number(sv)
-        if cond == float('inf'):
+        if cond == float("inf"):
             continue  # Skip degenerate matrices
-        rows.append({
-            "experiment": "baseline",
-            "experiment_label": "Baseline",
-            **parsed,
-            "condition_number": cond,
-            "log_condition_number": np.log10(cond) if cond > 0 else 0,
-        })
+        rows.append(
+            {
+                "experiment": "baseline",
+                "experiment_label": "Baseline",
+                **parsed,
+                "condition_number": cond,
+                "log_condition_number": np.log10(cond) if cond > 0 else 0,
+            }
+        )
 
     # Add experiments
     for exp_name, exp_svd in all_exp_svds.items():
@@ -631,15 +781,17 @@ def build_condition_number_dataframe(
             if parsed is None:
                 continue
             cond = compute_condition_number(sv)
-            if cond == float('inf'):
+            if cond == float("inf"):
                 continue
-            rows.append({
-                "experiment": exp_name,
-                "experiment_label": EXPERIMENTS[exp_name]["label"],
-                **parsed,
-                "condition_number": cond,
-                "log_condition_number": np.log10(cond) if cond > 0 else 0,
-            })
+            rows.append(
+                {
+                    "experiment": exp_name,
+                    "experiment_label": EXPERIMENTS[exp_name]["label"],
+                    **parsed,
+                    "condition_number": cond,
+                    "log_condition_number": np.log10(cond) if cond > 0 else 0,
+                }
+            )
 
     return pd.DataFrame(rows)
 
@@ -674,7 +826,7 @@ def plot_condition_number_by_layer(df: pd.DataFrame, output_path: Path):
     ax.set_title(r"Mean Condition Number by Layer: $\kappa(W) = \sigma_1 / \sigma_n$")
     ax.set_xticks(x[::2])
     ax.legend(loc="upper right")
-    ax.grid(True, alpha=0.3, axis='y')
+    ax.grid(True, alpha=0.3, axis="y")
 
     plt.tight_layout()
     plt.savefig(output_path, dpi=150, bbox_inches="tight")
@@ -712,7 +864,7 @@ def plot_condition_number_by_component(df: pd.DataFrame, output_path: Path):
     ax.set_xticks(x)
     ax.set_xticklabels(COMPONENT_ORDER, rotation=45, ha="right")
     ax.legend(loc="upper right")
-    ax.grid(True, alpha=0.3, axis='y')
+    ax.grid(True, alpha=0.3, axis="y")
 
     plt.tight_layout()
     plt.savefig(output_path, dpi=150, bbox_inches="tight")
@@ -743,13 +895,10 @@ def plot_condition_number_heatmap(df: pd.DataFrame, output_path: Path):
         ax = axes[idx]
         exp_df = layer_df[layer_df["experiment"] == exp_name]
 
-        pivot = exp_df.pivot_table(
-            index="layer", columns="component", values="log_condition_number", aggfunc="mean"
-        )
+        pivot = exp_df.pivot_table(index="layer", columns="component", values="log_condition_number", aggfunc="mean")
         pivot = pivot.reindex(columns=[c for c in COMPONENT_ORDER if c in pivot.columns])
 
-        sns.heatmap(pivot, ax=ax, cmap="YlOrRd", vmin=vmin, vmax=vmax,
-                    cbar_kws={"label": r"$\log_{10}(\kappa)$"})
+        sns.heatmap(pivot, ax=ax, cmap="YlOrRd", vmin=vmin, vmax=vmax, cbar_kws={"label": r"$\log_{10}(\kappa)$"})
         ax.set_title(labels[exp_name])
         ax.set_xlabel("Component")
         ax.set_ylabel("Layer")
@@ -758,8 +907,9 @@ def plot_condition_number_heatmap(df: pd.DataFrame, output_path: Path):
     for idx in range(n_exp, len(axes)):
         axes[idx].set_visible(False)
 
-    plt.suptitle(r"Condition Number $\kappa(W) = \sigma_1 / \sigma_n$ by Layer and Component",
-                 fontsize=14, fontweight="bold")
+    plt.suptitle(
+        r"Condition Number $\kappa(W) = \sigma_1 / \sigma_n$ by Layer and Component", fontsize=14, fontweight="bold"
+    )
     plt.tight_layout()
     plt.savefig(output_path, dpi=150, bbox_inches="tight")
     plt.close(fig)
@@ -784,22 +934,24 @@ def build_condition_number_diff_dataframe(
             cond_exp = compute_condition_number(sv_exp)
             cond_base = compute_condition_number(sv_base)
 
-            if cond_exp == float('inf') or cond_base == float('inf'):
+            if cond_exp == float("inf") or cond_base == float("inf"):
                 continue
 
             cond_diff = cond_exp - cond_base
             # Also compute log ratio for large differences
             log_ratio = np.log10(cond_exp / cond_base) if cond_base > 0 else 0
 
-            rows.append({
-                "experiment": exp_name,
-                "experiment_label": EXPERIMENTS[exp_name]["label"],
-                **parsed,
-                "condition_number_base": cond_base,
-                "condition_number_exp": cond_exp,
-                "condition_number_diff": cond_diff,
-                "condition_number_log_ratio": log_ratio,
-            })
+            rows.append(
+                {
+                    "experiment": exp_name,
+                    "experiment_label": EXPERIMENTS[exp_name]["label"],
+                    **parsed,
+                    "condition_number_base": cond_base,
+                    "condition_number_exp": cond_exp,
+                    "condition_number_diff": cond_diff,
+                    "condition_number_log_ratio": log_ratio,
+                }
+            )
 
     return pd.DataFrame(rows)
 
@@ -822,13 +974,13 @@ def plot_condition_number_diff_by_layer(df: pd.DataFrame, output_path: Path):
         offset = (i - n_exp / 2 + 0.5) * width
         ax.bar(x + offset, values, width, label=exp_config["label"], color=exp_config["color"], alpha=0.8)
 
-    ax.axhline(y=0, color='black', linestyle='-', linewidth=0.5)
+    ax.axhline(y=0, color="black", linestyle="-", linewidth=0.5)
     ax.set_xlabel("Layer")
     ax.set_ylabel(r"$\log_{10}(\kappa_{exp} / \kappa_{base})$")
     ax.set_title(r"Condition Number Change vs Baseline: $\log_{10}(\kappa_{exp} / \kappa_{base})$")
     ax.set_xticks(x[::2])
     ax.legend(loc="upper right")
-    ax.grid(True, alpha=0.3, axis='y')
+    ax.grid(True, alpha=0.3, axis="y")
 
     plt.tight_layout()
     plt.savefig(output_path, dpi=150, bbox_inches="tight")
@@ -854,14 +1006,14 @@ def plot_condition_number_diff_by_component(df: pd.DataFrame, output_path: Path)
         offset = (i - n_exp / 2 + 0.5) * width
         ax.bar(x + offset, values, width, label=exp_config["label"], color=exp_config["color"], alpha=0.8)
 
-    ax.axhline(y=0, color='black', linestyle='-', linewidth=0.5)
+    ax.axhline(y=0, color="black", linestyle="-", linewidth=0.5)
     ax.set_xlabel("Component")
     ax.set_ylabel(r"$\log_{10}(\kappa_{exp} / \kappa_{base})$")
     ax.set_title(r"Condition Number Change vs Baseline: $\log_{10}(\kappa_{exp} / \kappa_{base})$")
     ax.set_xticks(x)
     ax.set_xticklabels(COMPONENT_ORDER, rotation=45, ha="right")
     ax.legend(loc="upper right")
-    ax.grid(True, alpha=0.3, axis='y')
+    ax.grid(True, alpha=0.3, axis="y")
 
     plt.tight_layout()
     plt.savefig(output_path, dpi=150, bbox_inches="tight")
@@ -889,14 +1041,24 @@ def plot_condition_number_diff_heatmap(df: pd.DataFrame, output_path: Path):
         )
         pivot = pivot.reindex(columns=[c for c in COMPONENT_ORDER if c in pivot.columns])
 
-        sns.heatmap(pivot, ax=ax, cmap="RdBu_r", vmin=vmin, vmax=vmax, center=0,
-                    cbar_kws={"label": r"$\log_{10}(\kappa_{exp} / \kappa_{base})$"})
+        sns.heatmap(
+            pivot,
+            ax=ax,
+            cmap="RdBu_r",
+            vmin=vmin,
+            vmax=vmax,
+            center=0,
+            cbar_kws={"label": r"$\log_{10}(\kappa_{exp} / \kappa_{base})$"},
+        )
         ax.set_title(exp_config["label"])
         ax.set_xlabel("Component")
         ax.set_ylabel("Layer")
 
-    plt.suptitle(r"Condition Number Change: $\log_{10}(\kappa_{exp} / \kappa_{base})$ by Layer and Component",
-                 fontsize=14, fontweight="bold")
+    plt.suptitle(
+        r"Condition Number Change: $\log_{10}(\kappa_{exp} / \kappa_{base})$ by Layer and Component",
+        fontsize=14,
+        fontweight="bold",
+    )
     plt.tight_layout()
     plt.savefig(output_path, dpi=150, bbox_inches="tight")
     plt.close(fig)
@@ -905,6 +1067,7 @@ def plot_condition_number_diff_heatmap(df: pd.DataFrame, output_path: Path):
 # =============================================================================
 # VISUALIZATION: SPECTRAL COMPARISON (σ(W_exp) vs σ(W_base))
 # =============================================================================
+
 
 def plot_spectral_comparison(
     baseline_svd: dict[str, list[float]],
@@ -925,7 +1088,7 @@ def plot_spectral_comparison(
         param_name = f"model.layers.{layer_idx}.{block}.{component}.weight"
 
         if param_name not in baseline_svd or param_name not in exp_svd:
-            ax.text(0.5, 0.5, "No data", ha='center', va='center', transform=ax.transAxes)
+            ax.text(0.5, 0.5, "No data", ha="center", va="center", transform=ax.transAxes)
             ax.set_title(f"Layer {layer_idx}")
             continue
 
@@ -933,8 +1096,8 @@ def plot_spectral_comparison(
         sv_exp = np.array(exp_svd[param_name])
         ranks = np.arange(1, len(sv_base) + 1)
 
-        ax.semilogy(ranks, sv_base, 'b-', linewidth=1.5, label='Baseline', alpha=0.8)
-        ax.semilogy(ranks, sv_exp, 'r-', linewidth=1.5, label=exp_label, alpha=0.8)
+        ax.semilogy(ranks, sv_base, "b-", linewidth=1.5, label="Baseline", alpha=0.8)
+        ax.semilogy(ranks, sv_exp, "r-", linewidth=1.5, label=exp_label, alpha=0.8)
 
         ax.set_xlabel("Singular Value Rank")
         ax.set_ylabel(r"$\sigma_i$ (log scale)")
@@ -945,7 +1108,8 @@ def plot_spectral_comparison(
     plt.suptitle(
         f"Spectral Comparison: {component}\n"
         r"$\sigma_i(W_{base})$ vs $\sigma_i(W_{exp})$",
-        fontsize=12, fontweight="bold"
+        fontsize=12,
+        fontweight="bold",
     )
     plt.tight_layout()
     plt.savefig(output_path, dpi=150, bbox_inches="tight")
@@ -971,7 +1135,7 @@ def plot_spectral_difference(
         param_name = f"model.layers.{layer_idx}.{block}.{component}.weight"
 
         if param_name not in baseline_svd or param_name not in exp_svd:
-            ax.text(0.5, 0.5, "No data", ha='center', va='center', transform=ax.transAxes)
+            ax.text(0.5, 0.5, "No data", ha="center", va="center", transform=ax.transAxes)
             ax.set_title(f"Layer {layer_idx}")
             continue
 
@@ -980,10 +1144,10 @@ def plot_spectral_difference(
         sv_diff = sv_exp - sv_base
         ranks = np.arange(1, len(sv_base) + 1)
 
-        ax.plot(ranks, sv_diff, 'k-', linewidth=1, alpha=0.8)
-        ax.axhline(y=0, color='gray', linestyle='--', alpha=0.5)
-        ax.fill_between(ranks, 0, sv_diff, where=(sv_diff > 0), alpha=0.3, color='green', label='+')
-        ax.fill_between(ranks, 0, sv_diff, where=(sv_diff < 0), alpha=0.3, color='red', label='-')
+        ax.plot(ranks, sv_diff, "k-", linewidth=1, alpha=0.8)
+        ax.axhline(y=0, color="gray", linestyle="--", alpha=0.5)
+        ax.fill_between(ranks, 0, sv_diff, where=(sv_diff > 0), alpha=0.3, color="green", label="+")
+        ax.fill_between(ranks, 0, sv_diff, where=(sv_diff < 0), alpha=0.3, color="red", label="-")
 
         ax.set_xlabel("Singular Value Rank")
         ax.set_ylabel(r"$\sigma_i(W_{exp}) - \sigma_i(W_{base})$")
@@ -993,7 +1157,8 @@ def plot_spectral_difference(
     plt.suptitle(
         f"Spectral Difference: {component} ({exp_label})\n"
         r"$\sigma_i(W_{exp}) - \sigma_i(W_{base})$",
-        fontsize=12, fontweight="bold"
+        fontsize=12,
+        fontweight="bold",
     )
     plt.tight_layout()
     plt.savefig(output_path, dpi=150, bbox_inches="tight")
@@ -1017,7 +1182,7 @@ def plot_spectral_comparison_all(
         param_name = f"model.layers.{layer_idx}.{block}.{component}.weight"
 
         if param_name not in baseline_svd:
-            ax.text(0.5, 0.5, "No data", ha='center', va='center', transform=ax.transAxes)
+            ax.text(0.5, 0.5, "No data", ha="center", va="center", transform=ax.transAxes)
             ax.set_title(f"Layer {layer_idx}")
             continue
 
@@ -1025,15 +1190,14 @@ def plot_spectral_comparison_all(
         ranks = np.arange(1, len(sv_base) + 1)
 
         # Plot baseline
-        ax.semilogy(ranks, sv_base, 'k-', linewidth=2, label='Baseline', alpha=0.9)
+        ax.semilogy(ranks, sv_base, "k-", linewidth=2, label="Baseline", alpha=0.9)
 
         # Plot all experiments
         for exp_name, exp_config in EXPERIMENTS.items():
             if exp_name not in all_exp_svds or param_name not in all_exp_svds[exp_name]:
                 continue
             sv_exp = np.array(all_exp_svds[exp_name][param_name])
-            ax.semilogy(ranks, sv_exp, color=exp_config["color"], linewidth=1.2,
-                       label=exp_config["label"], alpha=0.7)
+            ax.semilogy(ranks, sv_exp, color=exp_config["color"], linewidth=1.2, label=exp_config["label"], alpha=0.7)
 
         ax.set_xlabel("Singular Value Rank")
         ax.set_ylabel(r"$\sigma_i$ (log scale)")
@@ -1045,7 +1209,8 @@ def plot_spectral_comparison_all(
     plt.suptitle(
         f"Spectral Comparison (All Experiments): {component}\n"
         r"$\sigma_i(W)$ for baseline and all trained models",
-        fontsize=12, fontweight="bold"
+        fontsize=12,
+        fontweight="bold",
     )
     plt.tight_layout()
     plt.savefig(output_path, dpi=150, bbox_inches="tight")
@@ -1069,7 +1234,7 @@ def plot_spectral_diff_summary(
         param_name = f"model.layers.{layer_idx}.{block}.{component}.weight"
 
         if param_name not in baseline_svd:
-            ax.text(0.5, 0.5, "No data", ha='center', va='center', transform=ax.transAxes)
+            ax.text(0.5, 0.5, "No data", ha="center", va="center", transform=ax.transAxes)
             ax.set_title(f"Layer {layer_idx}")
             continue
 
@@ -1081,10 +1246,9 @@ def plot_spectral_diff_summary(
                 continue
             sv_exp = np.array(all_exp_svds[exp_name][param_name])
             sv_diff = sv_exp - sv_base
-            ax.plot(ranks, sv_diff, color=exp_config["color"], linewidth=1.2,
-                   label=exp_config["label"], alpha=0.8)
+            ax.plot(ranks, sv_diff, color=exp_config["color"], linewidth=1.2, label=exp_config["label"], alpha=0.8)
 
-        ax.axhline(y=0, color='gray', linestyle='--', alpha=0.5)
+        ax.axhline(y=0, color="gray", linestyle="--", alpha=0.5)
         ax.set_xlabel("Singular Value Rank")
         ax.set_ylabel(r"$\sigma_i(W_{exp}) - \sigma_i(W_{base})$")
         ax.set_title(f"Layer {layer_idx}")
@@ -1095,7 +1259,8 @@ def plot_spectral_diff_summary(
     plt.suptitle(
         f"Spectral Difference by Experiment: {component}\n"
         r"$\sigma_i(W_{exp}) - \sigma_i(W_{base})$",
-        fontsize=12, fontweight="bold"
+        fontsize=12,
+        fontweight="bold",
     )
     plt.tight_layout()
     plt.savefig(output_path, dpi=150, bbox_inches="tight")
@@ -1105,6 +1270,7 @@ def plot_spectral_diff_summary(
 # =============================================================================
 # VISUALIZATION: SCATTER
 # =============================================================================
+
 
 def plot_optimizer_scatter(df: pd.DataFrame, metric: str, title: str, output_path: Path):
     """Scatter plot: AdamW metric vs Muon metric."""
@@ -1119,30 +1285,29 @@ def plot_optimizer_scatter(df: pd.DataFrame, metric: str, title: str, output_pat
         adamw_df = layer_df[layer_df["experiment"] == f"adamw_{obj_suffix}"]
         muon_df = layer_df[layer_df["experiment"] == f"muon_{obj_suffix}"]
 
-        merged = adamw_df.merge(
-            muon_df[["param_name", metric]],
-            on="param_name",
-            suffixes=("_adamw", "_muon")
-        )
+        merged = adamw_df.merge(muon_df[["param_name", metric]], on="param_name", suffixes=("_adamw", "_muon"))
 
         ax.scatter(
             merged[f"{metric}_adamw"],
             merged[f"{metric}_muon"],
-            label=obj_label, marker=marker, alpha=0.6, s=50, c=color
+            label=obj_label,
+            marker=marker,
+            alpha=0.6,
+            s=50,
+            c=color,
         )
 
     all_vals = layer_df[metric]
     lim_min, lim_max = all_vals.min(), all_vals.max()
     margin = (lim_max - lim_min) * 0.1
-    ax.plot([lim_min - margin, lim_max + margin], [lim_min - margin, lim_max + margin],
-            'k--', alpha=0.5, label="Equal")
+    ax.plot([lim_min - margin, lim_max + margin], [lim_min - margin, lim_max + margin], "k--", alpha=0.5, label="Equal")
 
     ax.set_xlabel(f"AdamW: {metric}")
     ax.set_ylabel(f"Muon: {metric}")
     ax.set_title(title)
     ax.legend()
     ax.grid(True, alpha=0.3)
-    ax.set_aspect('equal', adjustable='box')
+    ax.set_aspect("equal", adjustable="box")
 
     plt.tight_layout()
     plt.savefig(output_path, dpi=150, bbox_inches="tight")
@@ -1152,6 +1317,7 @@ def plot_optimizer_scatter(df: pd.DataFrame, metric: str, title: str, output_pat
 # =============================================================================
 # MAIN
 # =============================================================================
+
 
 def main():
     parser = argparse.ArgumentParser(description="Analyze weight update spectral structure")
@@ -1183,9 +1349,7 @@ def main():
     all_results = {}
     all_exp_svds = {}
     for exp_name, exp_config in EXPERIMENTS.items():
-        result = compute_all_updates(
-            baseline_weights, exp_name, exp_config["path"], device, cache_dir
-        )
+        result = compute_all_updates(baseline_weights, exp_name, exp_config["path"], device, cache_dir)
         all_results[exp_name] = result
 
         # Also compute weight SVDs for spectral comparison
@@ -1208,115 +1372,140 @@ def main():
     # Bar charts
     print("  - Frobenius norm by layer...")
     plot_metric_by_layer(
-        df, "frobenius_norm",
+        df,
+        "frobenius_norm",
         r"Mean Update Magnitude by Layer: $\langle\|\Delta W\|_F\rangle_{\mathrm{components}}$",
         r"Mean $\|\Delta W\|_F$",
-        output_dir / "frobenius_by_layer.png"
+        output_dir / "frobenius_by_layer.png",
     )
 
     print("  - Effective rank by layer...")
     plot_metric_by_layer(
-        df, "effective_rank",
+        df,
+        "effective_rank",
         r"Mean Effective Rank by Layer: $\langle(\sum_i \sigma_i)^2 / \sum_i \sigma_i^2\rangle_{\mathrm{components}}$",
         "Mean Effective Rank",
-        output_dir / "effective_rank_by_layer.png"
+        output_dir / "effective_rank_by_layer.png",
     )
 
     print("  - Stable rank by layer...")
     plot_metric_by_layer(
-        df, "stable_rank",
+        df,
+        "stable_rank",
         r"Mean Stable Rank by Layer: $\langle\|\Delta W\|_F^2 / \sigma_1^2\rangle_{\mathrm{components}}$",
         "Mean Stable Rank",
-        output_dir / "stable_rank_by_layer.png"
+        output_dir / "stable_rank_by_layer.png",
     )
 
     print("  - Spectral entropy by layer...")
     plot_metric_by_layer(
-        df, "spectral_entropy",
+        df,
+        "spectral_entropy",
         r"Mean Spectral Entropy by Layer: $\langle H \rangle_{\mathrm{components}}$"
-        + "\n" + r"$H = \frac{-1}{\log n} \sum_i \frac{\sigma_i^2}{\sum_j \sigma_j^2} \log\frac{\sigma_i^2}{\sum_j \sigma_j^2}$",
+        + "\n"
+        + r"$H = \frac{-1}{\log n} \sum_i \frac{\sigma_i^2}{\sum_j \sigma_j^2} \log\frac{\sigma_i^2}{\sum_j \sigma_j^2}$",
         "Mean Spectral Entropy",
-        output_dir / "spectral_entropy_by_layer.png"
+        output_dir / "spectral_entropy_by_layer.png",
     )
 
     print("  - Gini coefficient by layer...")
     plot_metric_by_layer(
-        df, "gini_coefficient",
+        df,
+        "gini_coefficient",
         r"Mean Gini Coefficient by Layer: $\langle G \rangle_{\mathrm{components}}$"
-        + "\n" + r"$G \in [0,1]$: 0 = uniform SVs, 1 = all energy in one SV",
+        + "\n"
+        + r"$G \in [0,1]$: 0 = uniform SVs, 1 = all energy in one SV",
         "Mean Gini Coefficient",
-        output_dir / "gini_by_layer.png"
+        output_dir / "gini_by_layer.png",
     )
 
     print("  - Rank for 90%/95%/99% energy by layer...")
     plot_metric_by_layer(
-        df, "rank_90",
+        df,
+        "rank_90",
         r"Mean Rank for 90% Energy by Layer: min $k$ s.t. $\sum_{i=1}^{k} \sigma_i^2 \geq 0.9 \|\Delta W\|_F^2$",
         "Mean Rank (90% energy)",
-        output_dir / "rank90_by_layer.png"
+        output_dir / "rank90_by_layer.png",
     )
     plot_metric_by_layer(
-        df, "rank_95",
+        df,
+        "rank_95",
         r"Mean Rank for 95% Energy by Layer",
         "Mean Rank (95% energy)",
-        output_dir / "rank95_by_layer.png"
+        output_dir / "rank95_by_layer.png",
     )
     plot_metric_by_layer(
-        df, "rank_99",
+        df,
+        "rank_99",
         r"Mean Rank for 99% Energy by Layer",
         "Mean Rank (99% energy)",
-        output_dir / "rank99_by_layer.png"
+        output_dir / "rank99_by_layer.png",
     )
 
     print("  - Metrics by component...")
     plot_metric_by_component(
-        df, "frobenius_norm",
+        df,
+        "frobenius_norm",
         r"Mean Update Magnitude by Component: $\langle\|\Delta W\|_F\rangle_{\mathrm{layers}}$",
         r"Mean $\|\Delta W\|_F$",
-        output_dir / "frobenius_by_component.png"
+        output_dir / "frobenius_by_component.png",
     )
 
     plot_metric_by_component(
-        df, "effective_rank",
+        df,
+        "effective_rank",
         r"Mean Effective Rank by Component (averaged across layers)",
         "Mean Effective Rank",
-        output_dir / "effective_rank_by_component.png"
+        output_dir / "effective_rank_by_component.png",
     )
 
     plot_metric_by_component(
-        df, "spectral_entropy",
+        df,
+        "spectral_entropy",
         r"Mean Spectral Entropy by Component: $\langle H \rangle_{\mathrm{layers}}$",
         "Mean Spectral Entropy",
-        output_dir / "spectral_entropy_by_component.png"
+        output_dir / "spectral_entropy_by_component.png",
     )
 
     plot_metric_by_component(
-        df, "stable_rank",
+        df,
+        "stable_rank",
         r"Mean Stable Rank by Component: $\langle\|\Delta W\|_F^2 / \sigma_1^2\rangle_{\mathrm{layers}}$",
         "Mean Stable Rank",
-        output_dir / "stable_rank_by_component.png"
+        output_dir / "stable_rank_by_component.png",
     )
 
     plot_metric_by_component(
-        df, "gini_coefficient",
+        df,
+        "gini_coefficient",
         r"Mean Gini Coefficient by Component: $\langle G \rangle_{\mathrm{layers}}$",
         "Mean Gini Coefficient",
-        output_dir / "gini_by_component.png"
+        output_dir / "gini_by_component.png",
     )
 
     plot_metric_by_component(
-        df, "rank_90",
+        df,
+        "rank_90",
         r"Mean Rank for 90% Energy by Component",
         "Mean Rank (90% energy)",
-        output_dir / "rank90_by_component.png"
+        output_dir / "rank90_by_component.png",
     )
 
     plot_metric_by_component(
-        df, "rank_95",
+        df,
+        "rank_95",
         r"Mean Rank for 95% Energy by Component",
         "Mean Rank (95% energy)",
-        output_dir / "rank95_by_component.png"
+        output_dir / "rank95_by_component.png",
     )
+
+    # Rank and magnitude combined plots
+    print("  - Cumulative SV magnitude at energy thresholds...")
+    plot_rank_and_magnitude_by_layer(df, "rank_90", "sv_sum_at_rank_90", "sv_at_rank_90", "90%", output_dir / "sv_magnitude_90_by_layer.png")
+    plot_rank_and_magnitude_by_layer(df, "rank_95", "sv_sum_at_rank_95", "sv_at_rank_95", "95%", output_dir / "sv_magnitude_95_by_layer.png")
+    plot_rank_and_magnitude_by_layer(df, "rank_99", "sv_sum_at_rank_99", "sv_at_rank_99", "99%", output_dir / "sv_magnitude_99_by_layer.png")
+    plot_rank_and_magnitude_by_component(df, "rank_90", "sv_sum_at_rank_90", "sv_at_rank_90", "90%", output_dir / "sv_magnitude_90_by_component.png")
+    plot_rank_and_magnitude_by_component(df, "rank_95", "sv_sum_at_rank_95", "sv_at_rank_95", "95%", output_dir / "sv_magnitude_95_by_component.png")
 
     # Spectral decay plots
     print("  - Spectral decay plots...")
@@ -1331,42 +1520,40 @@ def main():
     # Heatmaps
     print("  - Component heatmaps...")
     plot_component_heatmap(
-        df, "frobenius_norm",
+        df,
+        "frobenius_norm",
         r"Update Magnitude: $\|\Delta W\|_F$ by Layer and Component",
-        output_dir / "heatmap_frobenius.png"
+        output_dir / "heatmap_frobenius.png",
     )
     plot_component_heatmap(
-        df, "effective_rank",
+        df,
+        "effective_rank",
         r"Effective Rank of $\Delta W$ by Layer and Component",
-        output_dir / "heatmap_effective_rank.png"
+        output_dir / "heatmap_effective_rank.png",
     )
     plot_component_heatmap(
-        df, "stable_rank",
+        df,
+        "stable_rank",
         r"Stable Rank of $\Delta W$: $\|\Delta W\|_F^2 / \sigma_1^2$ by Layer and Component",
-        output_dir / "heatmap_stable_rank.png"
+        output_dir / "heatmap_stable_rank.png",
     )
     plot_component_heatmap(
-        df, "gini_coefficient",
+        df,
+        "gini_coefficient",
         r"Gini Coefficient of $\Delta W$ by Layer and Component",
-        output_dir / "heatmap_gini.png"
+        output_dir / "heatmap_gini.png",
     )
     plot_component_heatmap(
-        df, "rank_90",
-        r"Rank for 90% Energy of $\Delta W$ by Layer and Component",
-        output_dir / "heatmap_rank90.png"
+        df, "rank_90", r"Rank for 90% Energy of $\Delta W$ by Layer and Component", output_dir / "heatmap_rank90.png"
     )
 
     # Scatter plots
     print("  - Optimizer scatter plots...")
     plot_optimizer_scatter(
-        df, "frobenius_norm",
-        r"Optimizer Comparison: $\|\Delta W\|_F$",
-        output_dir / "scatter_frobenius.png"
+        df, "frobenius_norm", r"Optimizer Comparison: $\|\Delta W\|_F$", output_dir / "scatter_frobenius.png"
     )
     plot_optimizer_scatter(
-        df, "effective_rank",
-        r"Optimizer Comparison: Effective Rank",
-        output_dir / "scatter_effective_rank.png"
+        df, "effective_rank", r"Optimizer Comparison: Effective Rank", output_dir / "scatter_effective_rank.png"
     )
 
     # Spectral comparison plots: σ(W_exp) vs σ(W_base)
@@ -1374,19 +1561,19 @@ def main():
     for component in ["down_proj", "up_proj", "q_proj"]:
         # Combined plot: baseline + all experiments on same axes
         plot_spectral_comparison_all(
-            baseline_svd, all_exp_svds, component,
-            output_dir / f"spectral_all_{component}.png"
+            baseline_svd, all_exp_svds, component, output_dir / f"spectral_all_{component}.png"
         )
         # Difference plot with all experiments
-        plot_spectral_diff_summary(
-            baseline_svd, all_exp_svds, component,
-            output_dir / f"spectral_diff_{component}.png"
-        )
+        plot_spectral_diff_summary(baseline_svd, all_exp_svds, component, output_dir / f"spectral_diff_{component}.png")
         # Individual experiment comparison plots
         for exp_name, exp_config in EXPERIMENTS.items():
             plot_spectral_comparison(
-                baseline_svd, all_exp_svds[exp_name], exp_name, exp_config["label"],
-                component, output_dir / f"spectral_cmp_{exp_name}_{component}.png"
+                baseline_svd,
+                all_exp_svds[exp_name],
+                exp_name,
+                exp_config["label"],
+                component,
+                output_dir / f"spectral_cmp_{exp_name}_{component}.png",
             )
 
     # Condition number analysis
@@ -1417,21 +1604,37 @@ def main():
         "experiments": list(EXPERIMENTS.keys()),
         "n_params": len(df["param_name"].unique()),
         "metrics": [
-            "frobenius_norm", "spectral_norm", "nuclear_norm",
-            "effective_rank", "stable_rank", "spectral_entropy",
-            "gini_coefficient", "rank_90", "rank_95", "rank_99",
-            "top1_energy", "top5_energy", "top10_energy", "top50_energy"
+            "frobenius_norm",
+            "spectral_norm",
+            "nuclear_norm",
+            "effective_rank",
+            "stable_rank",
+            "spectral_entropy",
+            "gini_coefficient",
+            "rank_90",
+            "rank_95",
+            "rank_99",
+            "sv_at_rank_90",
+            "sv_at_rank_95",
+            "sv_at_rank_99",
+            "sv_sum_at_rank_90",
+            "sv_sum_at_rank_95",
+            "sv_sum_at_rank_99",
+            "top1_energy",
+            "top5_energy",
+            "top10_energy",
+            "top50_energy",
         ],
     }
     with open(output_dir / "summary.json", "w") as f:
         json.dump(summary, f, indent=2)
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("Analysis complete!")
     print(f"  Output directory: {output_dir}")
     print(f"  Metrics CSV: {metrics_path}")
     print(f"  Visualizations: {len(list(output_dir.glob('*.png')))} plots")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
 
 if __name__ == "__main__":

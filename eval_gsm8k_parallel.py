@@ -20,7 +20,7 @@ from pathlib import Path
 DEFAULT_SYSTEM_MSG = "You are a helpful math assistant. Always provide your final numerical answer inside of the <answer>...</answer> tags, e.g.: <answer>42</answer>"
 
 
-def get_step_from_path(path: Path | str) -> tuple[int, str]:
+def get_step_from_path(path: Path | str, include_parent: bool = False) -> tuple[int, str]:
     """Extract step/token number and label from checkpoint path.
 
     Handles formats:
@@ -28,28 +28,43 @@ def get_step_from_path(path: Path | str) -> tuple[int, str]:
     - *_step_N (e.g., checkpoint_step_121)
     - tokens_N (e.g., tokens_100000)
     - *_tokens_N (e.g., checkpoint_tokens_100000)
+
+    Args:
+        path: Path to checkpoint
+        include_parent: If True, include parent directory name in label to avoid collisions
     """
     if isinstance(path, str):
         path = Path(path)
 
     name = path.name
 
+    # Get parent prefix for disambiguation (e.g., "sft_adamw" from ".../sft_adamw/hf_format/...")
+    parent_prefix = ""
+    if include_parent:
+        # Walk up to find a meaningful parent name (skip hf_format, checkpoints, etc.)
+        for parent in path.parents:
+            pname = parent.name
+            if pname and pname not in ("hf_format", "checkpoints", ""):
+                # Extract short identifier (e.g., "grpo_adamw" -> "grpo_adamw")
+                parent_prefix = pname + "_"
+                break
+
     # step-based checkpoints
     if name.startswith("step_"):
         step = int(name.split("_")[1])
-        return step, f"step_{step}"
+        return step, f"{parent_prefix}step_{step}"
     elif "_step_" in name:
         step = int(name.split("_step_")[1])
-        return step, f"step_{step}"
+        return step, f"{parent_prefix}step_{step}"
     # token-based checkpoints
     elif name.startswith("tokens_"):
         tokens = int(name.split("_")[1])
-        return tokens, f"tokens_{tokens}"
+        return tokens, f"{parent_prefix}tokens_{tokens}"
     elif "_tokens_" in name:
         tokens = int(name.split("_tokens_")[1])
-        return tokens, f"tokens_{tokens}"
+        return tokens, f"{parent_prefix}tokens_{tokens}"
     else:
-        return 0, name
+        return 0, f"{parent_prefix}{name}"
 
 
 def get_checkpoint_dirs(base_path: str) -> list[Path | str]:
@@ -106,7 +121,7 @@ def run_single_eval(
     Run evaluation for a single checkpoint in a subprocess.
     Returns (checkpoint_path, step, label, metrics, error_msg)
     """
-    step, label = get_step_from_path(checkpoint_path)
+    step, label = get_step_from_path(checkpoint_path, include_parent=True)
 
     # Build command to run eval_gsm8k.py
     cmd = [
@@ -202,8 +217,14 @@ def main():
     parser.add_argument(
         "--checkpoint-dir",
         type=str,
-        required=True,
+        default=None,
         help="Path to checkpoint directory (single checkpoint or dir with step_* subdirs)",
+    )
+    parser.add_argument(
+        "--checkpoints",
+        type=str,
+        default=None,
+        help="Comma-separated list of specific checkpoint paths to evaluate",
     )
     parser.add_argument(
         "--gpus",
@@ -321,19 +342,29 @@ def main():
 
     args = parser.parse_args()
 
+    # Validate arguments
+    if not args.checkpoint_dir and not args.checkpoints:
+        parser.error("Either --checkpoint-dir or --checkpoints must be specified")
+
     # Parse GPU IDs
     gpu_ids = [int(g.strip()) for g in args.gpus.split(",")]
     print(f"Using GPUs: {gpu_ids}")
 
     # Get checkpoints
-    checkpoint_dirs = get_checkpoint_dirs(args.checkpoint_dir)
-    print(f"Found {len(checkpoint_dirs)} checkpoint(s)")
+    if args.checkpoints:
+        # Use explicitly specified checkpoint paths
+        checkpoint_dirs = [p.strip() for p in args.checkpoints.split(",")]
+        print(f"Using {len(checkpoint_dirs)} specified checkpoint(s)")
+    else:
+        # Discover checkpoints from directory
+        checkpoint_dirs = get_checkpoint_dirs(args.checkpoint_dir)
+        print(f"Found {len(checkpoint_dirs)} checkpoint(s)")
 
-    # Filter by steps if specified
-    if args.steps:
-        requested_steps = set(int(s.strip()) for s in args.steps.split(","))
-        checkpoint_dirs = [d for d in checkpoint_dirs if get_step_from_path(d)[0] in requested_steps]
-        print(f"Filtered to {len(checkpoint_dirs)} checkpoint(s)")
+        # Filter by steps if specified
+        if args.steps:
+            requested_steps = set(int(s.strip()) for s in args.steps.split(","))
+            checkpoint_dirs = [d for d in checkpoint_dirs if get_step_from_path(d)[0] in requested_steps]
+            print(f"Filtered to {len(checkpoint_dirs)} checkpoint(s)")
 
     if not checkpoint_dirs:
         print("No checkpoints to evaluate!")
@@ -437,13 +468,16 @@ def main():
     if args.output:
         output_path = Path(args.output)
         output_path.parent.mkdir(parents=True, exist_ok=True)
-    else:
+    elif args.checkpoint_dir:
         checkpoint_path = Path(args.checkpoint_dir)
         if checkpoint_path.exists() and checkpoint_path.is_dir():
             output_path = checkpoint_path / "eval_results.json"
         else:
             safe_name = args.checkpoint_dir.replace("/", "_")
             output_path = Path(f"eval_results_{safe_name}.json")
+    else:
+        # Using --checkpoints, default to current directory
+        output_path = Path("eval_results_selected.json")
 
     with open(output_path, "w") as f:
         json.dump(results, f, indent=2)

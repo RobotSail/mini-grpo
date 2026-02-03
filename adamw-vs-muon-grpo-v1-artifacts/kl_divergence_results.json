@@ -1,0 +1,30 @@
+{
+  "tokens_1812776": {
+    "path": "/mnt/nvme2n1/checkpoints/qwen2-1.5b-gsm8k-grpo-adamw_verify_1/tokens_1812776",
+    "kl_divergence": 0.38997615375985756,
+    "kl_std": 1.0448188781738281,
+    "total_tokens": 26550,
+    "num_sequences": 1495
+  },
+  "tokens_1363556": {
+    "path": "/mnt/nvme2n1/checkpoints/qwen2-1.5b-gsm8k-grpo-muon_verify_1/tokens_1363556",
+    "kl_divergence": 0.14422898315889462,
+    "kl_std": 0.6128095388412476,
+    "total_tokens": 26550,
+    "num_sequences": 1495
+  },
+  "samples_15796.0_tokens_1501867": {
+    "path": "/mnt/nvme2n1/checkpoints/qwen2-1.5b-gsm8k-sft-adamw_verify_1/hf_format/samples_15796.0_tokens_1501867",
+    "kl_divergence": 0.34586365895531723,
+    "kl_std": 0.824234664440155,
+    "total_tokens": 26550,
+    "num_sequences": 1495
+  },
+  "samples_22158.0_tokens_2104838": {
+    "path": "/mnt/nvme2n1/checkpoints/qwen2-1.5b-gsm8k-sft-muon_verify_1/hf_format/samples_22158.0_tokens_2104838",
+    "kl_divergence": 0.17404518026865584,
+    "kl_std": 0.41988152265548706,
+    "total_tokens": 26550,
+    "num_sequences": 1495
+  }
+}

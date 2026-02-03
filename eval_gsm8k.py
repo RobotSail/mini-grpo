@@ -115,6 +115,19 @@ def load_gsm8k_eval(
     if data_path:
         # Load from local file
         dataset = datasets.load_dataset("json", data_files=data_path, split="train")
+
+        # IMPORTANT: Strip assistant messages from eval data to avoid leaking answers
+        # SFT training data includes assistant responses, but eval should only have
+        # system + user messages for the model to generate a response
+        def _strip_assistant_messages(sample):
+            if "messages" in sample:
+                # Keep only system and user messages
+                filtered = [m for m in sample["messages"] if m["role"] in ("system", "user")]
+                return {"messages": filtered}
+            return {}
+
+        dataset = dataset.map(_strip_assistant_messages)
+        print(f"[INFO] Stripped assistant messages from eval data to prevent answer leakage")
     else:
         # Load from HuggingFace
         dataset = datasets.load_dataset("openai/gsm8k", name="main", split="test")

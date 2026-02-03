@@ -1,3 +1,10 @@
+# seed here for reproducibility
+import os
+
+os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
+
+
+from typing import Any
 import requests
 from transformers import GenerationConfig
 import json
@@ -18,6 +25,7 @@ from torch.optim import AdamW
 import os
 from IPython import embed
 from tqdm import tqdm
+import numpy as np
 
 try:
     import wandb
@@ -453,6 +461,7 @@ def generate_gsm8k_datasets(
 
 @torch.no_grad
 def generate_rollouts(
+    ctx: TrainingComponents,
     model: PreTrainedModel,
     tokenizer: AutoTokenizer,
     batch: dict[str, list[any]],
@@ -627,12 +636,107 @@ def grade_groups(group: Sample):
             pass
 
 
-def print_example_rollout(samples: list[Sample], step: int = 0):
-    """Print batch statistics and example rollouts after generation."""
+def _truncate_response(response: str, max_len: int = 80) -> str:
+    """Truncate response text, keeping the end if too long."""
+    # collapse whitespace and newlines for table display
+    cleaned = " ".join(response.split())
+    if len(cleaned) <= max_len:
+        return cleaned
+    return "..." + cleaned[-(max_len - 3) :]
+
+
+def _extract_last_answer(response: str) -> str | None:
+    """Extract content from the last <answer>...</answer> tag, or None if not found."""
+    matches = answer_pattern.findall(response)
+    if not matches:
+        return None
+    return matches[-1].strip()
+
+
+def _print_group_detail(sample: Sample, label: str, color):
+    """Print detailed information for a single group of rollouts."""
+    typer.secho(f"\n{'─' * 70}", fg=color)
+    typer.secho(f"  [{label}]", fg=color, bold=True)
+    typer.secho(f"{'─' * 70}", fg=color)
+
+    # print the problem
+    typer.secho("\n  Problem:", fg=typer.colors.BRIGHT_CYAN, bold=True)
+    problem_text = sample.problem.problem
+    # wrap long problems for readability
+    for line in problem_text.split("\n"):
+        typer.secho(f"    {line}", fg=typer.colors.WHITE)
+    typer.secho(f"    Expected Answer: {sample.problem.answer}", fg=typer.colors.YELLOW)
+
+    # calculate group stats
+    rewards = [r.reward for r in sample.rollouts]
+    avg_reward = sum(rewards) / len(rewards) if rewards else 0.0
+    typer.secho(f"    Group Avg Reward: {avg_reward:.4f}", fg=typer.colors.CYAN)
+
+    # print table header
+    typer.secho("\n  Rollouts Table:", fg=typer.colors.BRIGHT_CYAN, bold=True)
+    header = f"  {'#':>3} | {'Response (truncated)':<60} | {'Reward':>8} | {'Adv':>8} | {'Parse':>5} | {'Answer':<20} | {'Correct':>7}"
+    typer.secho(header, fg=typer.colors.WHITE, bold=True)
+    typer.secho(
+        f"  {'-' * 3}-+-{'-' * 60}-+-{'-' * 8}-+-{'-' * 8}-+-{'-' * 5}-+-{'-' * 20}-+-{'-' * 7}", fg=typer.colors.WHITE
+    )
+
+    # track best and worst rollouts
+    best_rollout = None
+    worst_rollout = None
+    best_reward = float("-inf")
+    worst_reward = float("inf")
+
+    for i, rollout in enumerate(sample.rollouts):
+        truncated = _truncate_response(rollout.response, 60)
+        correct_str = "✓" if rollout.is_correct else "✗"
+        correct_color = typer.colors.GREEN if rollout.is_correct else typer.colors.RED
+
+        # extract answer tag content
+        answer_content = _extract_last_answer(rollout.response)
+        parsable_str = "✓" if answer_content is not None else "✗"
+        parsable_color = typer.colors.GREEN if answer_content is not None else typer.colors.RED
+        answer_display = (
+            (answer_content[:17] + "...") if answer_content and len(answer_content) > 20 else (answer_content or "-")
+        )
+
+        row = f"  {i + 1:>3} | {truncated:<60} | {rollout.reward:>8.4f} | {rollout.advantage:>8.4f} | "
+        typer.echo(row, nl=False)
+        typer.secho(f"{parsable_str:>5}", fg=parsable_color, nl=False)
+        typer.echo(f" | {answer_display:<20} | ", nl=False)
+        typer.secho(f"{correct_str:>7}", fg=correct_color)
+
+        if rollout.reward > best_reward:
+            best_reward = rollout.reward
+            best_rollout = rollout
+        if rollout.reward < worst_reward:
+            worst_reward = rollout.reward
+            worst_rollout = rollout
+
+    # print full conversation for best rollout
+    if best_rollout:
+        typer.secho(f"\n  Best Rollout (reward={best_reward:.4f}):", fg=typer.colors.GREEN, bold=True)
+        for msg in best_rollout.seed_messages:
+            typer.secho(f"    [{msg.role}]:", fg=typer.colors.CYAN)
+            typer.secho(msg.content, fg=typer.colors.WHITE)
+        typer.secho("    [assistant]:", fg=typer.colors.CYAN)
+        typer.secho(best_rollout.response, fg=typer.colors.GREEN)
+
+    # print full conversation for worst rollout (only if different from best)
+    if worst_rollout and worst_rollout is not best_rollout:
+        typer.secho(f"\n  Worst Rollout (reward={worst_reward:.4f}):", fg=typer.colors.RED, bold=True)
+        for msg in worst_rollout.seed_messages:
+            typer.secho(f"    [{msg.role}]:", fg=typer.colors.CYAN)
+            typer.secho(msg.content, fg=typer.colors.WHITE)
+        typer.secho("    [assistant]:", fg=typer.colors.CYAN)
+        typer.secho(worst_rollout.response, fg=typer.colors.RED)
+
+
+def print_example_rollout(samples: list[Sample], step: int = 0, verbose: bool = False):
+    """Print batch statistics and optionally detailed rollouts for best/worst groups."""
     if not samples:
         return
 
-    # Calculate batch statistics
+    # calculate batch statistics
     total_rollouts = sum(len(s.rollouts) for s in samples)
     total_rewards = sum(r.reward for s in samples for r in s.rollouts)
     parsable_count = sum(1 for s in samples for r in s.rollouts if r.is_parsable)
@@ -642,12 +746,12 @@ def print_example_rollout(samples: list[Sample], step: int = 0):
     parsable_rate = parsable_count / total_rollouts if total_rollouts > 0 else 0.0
     correct_rate = correct_count / total_rollouts if total_rollouts > 0 else 0.0
 
-    # Print batch statistics
-    typer.secho(f"\n{'=' * 70}", fg=typer.colors.BRIGHT_MAGENTA)
+    # print batch statistics header
+    typer.secho(f"\n{'=' * 120}", fg=typer.colors.BRIGHT_MAGENTA)
     typer.secho(f"  ROLLOUT SUMMARY (Step {step})", fg=typer.colors.BRIGHT_MAGENTA, bold=True)
-    typer.secho(f"{'=' * 70}", fg=typer.colors.BRIGHT_MAGENTA)
+    typer.secho(f"{'=' * 120}", fg=typer.colors.BRIGHT_MAGENTA)
 
-    typer.secho(f"\n[BATCH STATISTICS]:", fg=typer.colors.BRIGHT_CYAN)
+    typer.secho("\n[BATCH STATISTICS]:", fg=typer.colors.BRIGHT_CYAN)
     typer.secho(
         f"  Prompts: {len(samples)} | Rollouts: {total_rollouts} | Rollouts/Prompt: {total_rollouts // len(samples)}",
         fg=typer.colors.WHITE,
@@ -662,52 +766,71 @@ def print_example_rollout(samples: list[Sample], step: int = 0):
     )
     typer.secho(f"  Avg Reward: {avg_reward:.4f}", fg=typer.colors.CYAN)
 
-    # Find one correct and one incorrect example for comparison
-    correct_example = None
-    incorrect_example = None
+    # print per-group summary table
+    typer.secho("\n[PER-GROUP SUMMARY]:", fg=typer.colors.BRIGHT_CYAN)
+    header = f"  {'#':>3} | {'Question':<50} | {'Ans':>8} | {'Reward':>8} | {'Adv':>8} | {'Parse':>6} | {'Acc':>6}"
+    typer.secho(header, fg=typer.colors.WHITE, bold=True)
+    typer.secho(
+        f"  {'-' * 3}-+-{'-' * 50}-+-{'-' * 8}-+-{'-' * 8}-+-{'-' * 8}-+-{'-' * 6}-+-{'-' * 6}", fg=typer.colors.WHITE
+    )
 
-    for sample in samples:
-        for rollout in sample.rollouts:
-            if rollout.is_correct and correct_example is None:
-                correct_example = (sample, rollout)
-            elif not rollout.is_correct and incorrect_example is None:
-                incorrect_example = (sample, rollout)
-            if correct_example and incorrect_example:
-                break
-        if correct_example and incorrect_example:
-            break
+    for idx, sample in enumerate(samples, 1):
+        num_rollouts = len(sample.rollouts)
+        if num_rollouts == 0:
+            continue
 
-    # Print examples
-    examples_to_print = []
-    if correct_example:
-        examples_to_print.append(("CORRECT", correct_example, typer.colors.GREEN))
-    if incorrect_example:
-        examples_to_print.append(("INCORRECT", incorrect_example, typer.colors.RED))
+        # calculate per-group stats
+        group_rewards = [r.reward for r in sample.rollouts]
+        group_advantages = [r.advantage for r in sample.rollouts]
+        group_parsable = sum(1 for r in sample.rollouts if r.is_parsable)
+        group_correct = sum(1 for r in sample.rollouts if r.is_correct)
 
-    # Fallback: if no correct/incorrect distinction, just show first rollout
-    if not examples_to_print and samples and samples[0].rollouts:
-        examples_to_print.append(("EXAMPLE", (samples[0], samples[0].rollouts[0]), typer.colors.WHITE))
+        avg_grp_reward = sum(group_rewards) / num_rollouts
+        avg_grp_adv = sum(group_advantages) / num_rollouts
+        parse_rate = group_parsable / num_rollouts
+        acc_rate = group_correct / num_rollouts
 
-    for label, (sample, rollout), color in examples_to_print:
-        typer.secho(f"\n[{label} ROLLOUT]:", fg=color, bold=True)
+        # truncate question for display
+        question = sample.problem.problem
+        if len(question) > 50:
+            question = question[:47] + "..."
 
-        # Print the user prompt (skip system message for brevity)
-        user_msg = next((m for m in rollout.seed_messages if m.role == "user"), None)
-        if user_msg:
-            prompt_preview = user_msg.content[:150] + ("..." if len(user_msg.content) > 150 else "")
-            typer.secho(f"  Prompt: {prompt_preview}", fg=typer.colors.YELLOW)
+        # format answer (handle floats that are actually ints)
+        ans = sample.problem.answer
+        ans_str = str(int(ans)) if ans == int(ans) else f"{ans:.2f}"
+        if len(ans_str) > 8:
+            ans_str = ans_str[:8]
 
-        # Print the response (truncated)
-        response_preview = rollout.response[:400] + ("..." if len(rollout.response) > 400 else "")
-        typer.secho(f"  Response: {response_preview}", fg=typer.colors.WHITE)
+        # color based on accuracy
+        if acc_rate >= 0.5:
+            row_color = typer.colors.GREEN
+        elif acc_rate > 0:
+            row_color = typer.colors.YELLOW
+        else:
+            row_color = typer.colors.RED
 
-        # Print grading
-        typer.secho(
-            f"  Expected: {sample.problem.answer} | Parsable: {rollout.is_parsable} | Correct: {rollout.is_correct} | Reward: {rollout.reward:.2f}",
-            fg=color,
-        )
+        row = f"  {idx:>3} | {question:<50} | {ans_str:>8} | {avg_grp_reward:>8.3f} | {avg_grp_adv:>+8.3f} | {parse_rate:>5.0%} | {acc_rate:>5.0%}"
+        typer.secho(row, fg=row_color)
 
-    typer.secho(f"{'=' * 70}\n", fg=typer.colors.BRIGHT_MAGENTA)
+    # detailed group info only if verbose
+    if verbose:
+
+        def group_avg_reward(sample: Sample) -> float:
+            if not sample.rollouts:
+                return 0.0
+            return sum(r.reward for r in sample.rollouts) / len(sample.rollouts)
+
+        sorted_samples = sorted(samples, key=group_avg_reward, reverse=True)
+
+        best_group = sorted_samples[0]
+        worst_group = sorted_samples[-1]
+
+        _print_group_detail(best_group, "BEST GROUP (highest avg reward)", typer.colors.GREEN)
+
+        if worst_group is not best_group:
+            _print_group_detail(worst_group, "WORST GROUP (lowest avg reward)", typer.colors.RED)
+
+    typer.secho(f"\n{'=' * 120}\n", fg=typer.colors.BRIGHT_MAGENTA)
 
 
 # i dont think we even have tensors flowing through this function but you
@@ -773,6 +896,7 @@ def eval_model(
 
     for npass in pass_at:
         samples = generate_rollouts(
+            comps,
             comps.model,
             comps.tokenizer,
             batch=next(iter(eval_data)),
@@ -822,6 +946,8 @@ def eval(
     temperature: float = typer.Option(0.7, "-t", "--temp", help="Sampling temperature"),
     group_size: int = typer.Option(1, "-G", "--group-size", help="Number of rollouts per prompt (for pass@k)"),
 ):
+    raise NotImplementedError("this path currently isn't implemented or being used")
+
     """Run evaluation on a dataset without training."""
     device = torch.device("cuda", gpu)
 
@@ -846,6 +972,7 @@ def eval(
 
     eval_data = eval_dataset.batch(eval_dataset.num_rows)
     samples = generate_rollouts(
+        ctx,
         model,
         tokenizer,
         batch=next(iter(eval_data)),
@@ -922,7 +1049,7 @@ def train_policy_on_rollouts(
 
     # Training loop over inner epochs
     for epoch in range(comps.hyperparams.inner_epochs):
-        data_loader = create_grpo_data_loader(dataset, comps, use_packed=use_packed)
+        data_loader = create_grpo_data_loader(dataset, comps, seed=comps.seed + epoch, use_packed=use_packed)
 
         for batch in data_loader:
             # Clear cache at start of each batch
@@ -1293,10 +1420,10 @@ def train(
         0, "--save-every", help="Save checkpoint every N optimizer steps (0 = only at end of epoch/training)"
     ),
     token_train_budget: int = typer.Option(
-        0, "--token-train-budget", help="Total token budget for training (tokens backpropped on). 0 = disabled."
+        0, "--token-train-budget", help="Total token budget for training (loss-counted tokens backpropped on). 0 = disabled."
     ),
     save_every_n_tokens: int = typer.Option(
-        0, "--save-every-n-tokens", help="Save checkpoint every N tokens trained (0 = disabled)"
+        0, "--save-every-n-tokens", help="Save checkpoint every N loss-counted tokens (tokens backpropped on, 0 = disabled)"
     ),
     # flash attention / memory optimization
     use_flash_attn: bool = typer.Option(
@@ -1307,7 +1434,32 @@ def train(
     wandb_project: str = typer.Option("mini-grpo-gsm8k", "--wandb-project", help="Wandb project name"),
     wandb_run_name: str = typer.Option(None, "--wandb-run", help="Wandb run name (auto-generated if not set)"),
     wandb_entity: str = typer.Option(None, "--wandb-entity", help="Wandb entity/team name"),
+    # verbosity
+    verbose_rollouts: bool = typer.Option(
+        False, "--verbose-rollouts", help="Show detailed best/worst group rollouts after each batch"
+    ),
 ):
+    # seeds all related libraries at the start of training
+    random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    np.random.seed(seed)
+
+    # Enable deterministic CUDA operations for reproducibility
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False  # benchmark mode is non-deterministic
+
+    # Set CUBLAS workspace config for deterministic behavior
+    os.environ.setdefault("CUBLAS_WORKSPACE_CONFIG", ":4096:8")
+
+    # Enable PyTorch's deterministic algorithms mode
+    # Use warn_only=True to avoid errors from ops without deterministic implementations
+    try:
+        torch.use_deterministic_algorithms(True, warn_only=True)
+    except TypeError:
+        # Older PyTorch versions don't support warn_only
+        torch.use_deterministic_algorithms(True)
+
     # load the raw dataset
     # train_dataset = JsonlDataset(data_path)
     train_dataset = datasets.load_dataset("json", data_files=train_path, split="train")
@@ -1359,6 +1511,7 @@ def train(
 
     # device setup
     train_device = torch.device("cuda", gpu)
+    torch.cuda.set_device(gpu)  # required for NCCL to use the correct GPU
 
     # Model loading kwargs
     # Flash Attention 2 requires bf16/fp16 weights, otherwise use FP32 for mixed precision
@@ -1399,8 +1552,6 @@ def train(
 
         # Initialize process group for single-GPU FSDP2 (if not already initialized by torchrun)
         if not dist.is_initialized():
-            import os
-
             os.environ.setdefault("MASTER_ADDR", "localhost")
             os.environ.setdefault("MASTER_PORT", "29500")
             os.environ.setdefault("RANK", "0")
@@ -1467,7 +1618,8 @@ def train(
             typer.secho(f"✓ Using {optimizer_type.upper()} optimizer", fg=typer.colors.GREEN)
 
     # create training components
-    training_comps = TrainingComponents(
+    ctx = TrainingComponents(
+        seed=seed,
         optimizer=optimizer,
         model=model,
         ref_model=ref_model,
@@ -1498,7 +1650,7 @@ def train(
     )
 
     # check if we need to write into output dir
-    if output_dir is not None and not training_comps.valid_save_dir():
+    if output_dir is not None and not ctx.valid_save_dir():
         typer.secho(
             f"Error: Cannot write to output directory '{output_dir}'",
             fg=typer.colors.RED,
@@ -1513,7 +1665,7 @@ def train(
         typer.secho("\n" + "=" * 60, fg=typer.colors.BRIGHT_YELLOW)
         typer.secho("  BASELINE EVALUATION (Before Training)", fg=typer.colors.BRIGHT_YELLOW, bold=True)
         typer.secho("=" * 60, fg=typer.colors.BRIGHT_YELLOW)
-        baseline_metrics = eval_model(eval_dataset, training_comps, return_metrics=True)
+        baseline_metrics = eval_model(eval_dataset, ctx, return_metrics=True)
         if use_wandb and baseline_metrics:
             wandb.log(
                 {
@@ -1554,7 +1706,9 @@ def train(
             desc = f"Epoch {epoch + 1}/{epochs}"
 
         pbar = tqdm(
-            train_dataset.shuffle().iter(batch_size),
+            train_dataset.shuffle(
+                seed=ctx.seed + epoch,
+            ).iter(batch_size),
             desc=desc,
             total=len(train_dataset) // batch_size,
         )
@@ -1577,19 +1731,29 @@ def train(
                     wandb.finish(exit_code=1)
                 raise typer.Exit(code=1)
 
+            # Preview questions in this batch
+            num_samples = len(batch["problem"])
+            typer.secho(f"\n📋 Batch Preview ({num_samples} questions):", fg=typer.colors.CYAN, bold=True)
+            for i, problem in enumerate(batch["problem"][:3], 1):
+                question = problem if len(problem) <= 100 else problem[:97] + "..."
+                typer.secho(f"  {i}. {question}", fg=typer.colors.WHITE)
+            if num_samples > 3:
+                typer.secho(f"  ... and {num_samples - 3} more", fg=typer.colors.WHITE, dim=True)
+
             # Generate rollouts for each prompt
             rollouts = generate_rollouts(
+                ctx,
                 model,
                 tokenizer,
                 batch,
-                training_comps.hyperparams.batch_size,
-                training_comps.hyperparams.group_size,
-                sampling_params=training_comps.sampling_params,
+                ctx.hyperparams.batch_size,
+                ctx.hyperparams.group_size,
+                sampling_params=ctx.sampling_params,
                 show_tqdm=True,
             )
 
             # Print rollout summary with statistics and examples
-            print_example_rollout(rollouts, step=optim_step)
+            print_example_rollout(rollouts, step=optim_step, verbose=verbose_rollouts)
 
             # Calculate batch metrics
             total_rewards = sum(rollout.reward for sample in rollouts for rollout in sample.rollouts)
@@ -1623,7 +1787,7 @@ def train(
             prev_tokens = tokens_trained
             optim_step, tokens_trained, should_stop = train_policy_on_rollouts(
                 rollouts,
-                training_comps,
+                ctx,
                 use_wandb=use_wandb,
                 global_step=global_step,
                 use_packed=use_flash_attn,
@@ -1657,25 +1821,28 @@ def train(
             # Check if we've reached max_steps or token budget
             if should_stop:
                 if token_train_budget > 0 and tokens_trained >= token_train_budget:
-                    typer.secho(f"\nReached {tokens_trained:,} tokens (budget: {token_train_budget:,}). Stopping training.", fg=typer.colors.GREEN)
+                    typer.secho(
+                        f"\nReached {tokens_trained:,} tokens (budget: {token_train_budget:,}). Stopping training.",
+                        fg=typer.colors.GREEN,
+                    )
                 else:
                     typer.secho(f"\nReached {max_steps} optimizer steps. Stopping training.", fg=typer.colors.GREEN)
                 training_complete = True
                 # Save final checkpoint before breaking
                 if output_dir:
-                    training_comps.save_checkpoint(optim_step, is_step=True)
+                    ctx.save_checkpoint(optim_step, is_step=True)
                 break
 
             # Save checkpoint at step intervals
             if save_every > 0 and optim_step % save_every == 0 and output_dir:
                 typer.secho(f"\n[Step {optim_step}] Saving checkpoint...", fg=typer.colors.CYAN)
-                training_comps.save_checkpoint(optim_step, is_step=True)
+                ctx.save_checkpoint(optim_step, is_step=True)
 
             # Save checkpoint at token intervals (resetting counter approach)
             if save_every_n_tokens > 0 and output_dir:
                 if tokens_since_checkpoint >= save_every_n_tokens:
                     typer.secho(f"\n[Tokens {tokens_trained:,}] Saving checkpoint...", fg=typer.colors.CYAN)
-                    training_comps.save_checkpoint(tokens_trained, is_step=True, suffix=f"tokens_{tokens_trained}")
+                    ctx.save_checkpoint(tokens_trained, is_step=True, suffix=f"tokens_{tokens_trained}")
                     # Reset counter, keeping the overflow
                     tokens_since_checkpoint = tokens_since_checkpoint - save_every_n_tokens
 
@@ -1683,7 +1850,7 @@ def train(
             if eval_every > 0 and optim_step % eval_every == 0:
                 if eval_dataset is not None and len(eval_dataset) > 0:
                     typer.secho(f"\n[Step {optim_step}] Running intermediate evaluation...", fg=typer.colors.CYAN)
-                    metrics = eval_model(eval_dataset, training_comps, return_metrics=True)
+                    metrics = eval_model(eval_dataset, ctx, return_metrics=True)
                     if use_wandb and metrics:
                         wandb.log(
                             {
@@ -1715,7 +1882,7 @@ def train(
 
             # End-of-epoch evaluation
             if eval_dataset is not None and len(eval_dataset) > 0:
-                metrics = eval_model(eval_dataset, training_comps, return_metrics=True)
+                metrics = eval_model(eval_dataset, ctx, return_metrics=True)
                 if use_wandb and metrics:
                     wandb.log(
                         {
@@ -1729,9 +1896,9 @@ def train(
         # Save checkpoint at end of epoch/training (only if not using interval saving)
         if save_every == 0 and output_dir:
             if use_step_based:
-                training_comps.save_checkpoint(optim_step, is_step=True)
+                ctx.save_checkpoint(optim_step, is_step=True)
             else:
-                training_comps.save_checkpoint(epoch, is_step=False)
+                ctx.save_checkpoint(epoch, is_step=False)
 
         epoch += 1
 
@@ -1753,7 +1920,7 @@ def sft_train(
     output_dir: str = typer.Option(..., "--output-dir", help="Path to the output directory"),
     # Training mode
     max_steps: int = typer.Option(0, "--max-steps", help="Maximum training steps (0 = use epochs or tokens)"),
-    max_tokens: int = typer.Option(0, "--max-tokens", help="Maximum tokens to train on (0 = use epochs or steps)"),
+    max_tokens: int = typer.Option(0, "--max-tokens", help="Maximum loss-counted tokens to train on (tokens backpropped on, 0 = use epochs or steps)"),
     num_epochs: int = typer.Option(1, "--epochs", help="Number of epochs (ignored if --max-steps or --max-tokens > 0)"),
     # Batch settings
     effective_batch_size: int = typer.Option(32, "-B", "--batch-size", help="Effective batch size"),
@@ -1776,7 +1943,7 @@ def sft_train(
         0, "--save-every", help="Save checkpoint every N optimizer steps (0 = disabled)"
     ),
     save_every_n_tokens: int = typer.Option(
-        0, "--save-every-n-tokens", help="Save checkpoint every N tokens trained (0 = disabled)"
+        0, "--save-every-n-tokens", help="Save checkpoint every N loss-counted tokens (tokens backpropped on, 0 = disabled)"
     ),
     # Data processing
     use_processed_dataset: bool = typer.Option(False, "--use-processed", help="Data is already tokenized"),

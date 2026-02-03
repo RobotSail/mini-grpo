@@ -1,0 +1,23 @@
+{
+  "tokens_1110186": {
+    "path": "/mnt/nvme3n1/workspace/osilkin/mini-grpo/adamw-vs-muon-grpo-v1-artifacts/checkpoints/grpo_adamw/tokens_1110186",
+    "kl_divergence": 0.28184305884294814,
+    "kl_std": 0.9175326824188232,
+    "total_tokens": 26550,
+    "num_sequences": 1495
+  },
+  "tokens_1107170": {
+    "path": "/mnt/nvme3n1/workspace/osilkin/mini-grpo/adamw-vs-muon-grpo-v1-artifacts/checkpoints/grpo_muon/tokens_1107170",
+    "kl_divergence": 0.0862730787029374,
+    "kl_std": 0.4689117968082428,
+    "total_tokens": 26550,
+    "num_sequences": 1495
+  },
+  "samples_11610.0_tokens_1104739": {
+    "path": "/mnt/nvme3n1/workspace/osilkin/mini-grpo/adamw-vs-muon-grpo-v1-artifacts/checkpoints/sft_muon/hf_format/samples_11610.0_tokens_1104739",
+    "kl_divergence": 0.09455210482782339,
+    "kl_std": 0.28252410888671875,
+    "total_tokens": 26550,
+    "num_sequences": 1495
+  }
+}

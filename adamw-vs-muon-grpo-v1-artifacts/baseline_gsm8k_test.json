@@ -1,0 +1,11 @@
+{
+  "Qwen_Qwen2-1.5B-Instruct": {
+    "step": -1,
+    "path": "Qwen/Qwen2-1.5B-Instruct",
+    "total_samples": 1319,
+    "correct": 65,
+    "parsable": 103,
+    "accuracy": 0.04927975739196361,
+    "parsable_rate": 0.07808946171341925
+  }
+}

@@ -93,8 +93,10 @@ class Hyperparameters(pydantic.BaseModel):
 
 from typing import Any
 
+
 class TrainingComponents(pydantic.BaseModel):
     model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
+    seed: int
 
     output_dir: str | None = None
     optimizer: Any  # torch.optim.Optimizer or custom optimizer wrapper (CombinedOptimizer, MixedPrecisionOptimizer)
