@@ -4,8 +4,7 @@ import utils
 import datasets
 import torch.distributed as dist
 import torch
-from transformers import AutoModelForCausalLM, AutoTokenizer, PreTrainedModel, GenerationMixin
-from transformers import PreTrainedTokenizer, GenerationConfig
+from transformers import AutoModelForCausalLM, AutoTokenizer, PreTrainedModel, PreTrainedTokenizer
 from torch.distributed._composable.fsdp import fully_shard, MixedPrecisionPolicy
 import os
 from optimizers import create_fsdp2_muon_optimizer, create_mixed_precision_optimizer, create_optimizer
@@ -16,6 +15,12 @@ import pydantic as pd
 import functools
 import torch.nn.functional as F
 from torch.nn.utils.clip_grad import clip_grad_norm_
+
+# vllm server for fast inference on separate GPU
+import subprocess
+import time
+import httpx
+import signal
 
 import logging
 
@@ -30,6 +35,7 @@ logger = logging.getLogger(__name__)
 
 # Regex pattern to match <answer>...</answer> tags
 answer_pattern = re.compile(r"<answer>(.*?)</answer>", re.DOTALL | re.IGNORECASE)
+
 
 def parse_number(text: str) -> float:
     """
@@ -256,7 +262,10 @@ class RSTrainer:
         beta1: float,
         beta2: float,
         weight_decay: float,
-        gpu: int,
+        # device configuration
+        gpu: int = 0,
+        vllm_gpu: int = 1,
+        vllm_gpu_memory_utilization: float = 0.9,
     ):
 
         # first we must set the seed
@@ -297,7 +306,7 @@ class RSTrainer:
         self.device = torch.device('cuda', gpu)
         utils.init_distributed(gpu)
         self.policy, self.ref_policy = self._load_fsdp_models(model_name, self.device)
-        logger.info('loaded models with fsdp2')
+        logger.info('loaded models with fsdp2 on cuda:%d', gpu)
 
         # now we can load the optimizers
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
@@ -353,6 +362,11 @@ class RSTrainer:
             "wd": weight_decay,
         }
         utils.initialize_wandb(wandb_project, wandb_run_name, run_config)
+
+        # initialize vllm for fast inference on a separate GPU
+        self.vllm_gpu = vllm_gpu
+        self.vllm_gpu_memory_utilization = vllm_gpu_memory_utilization
+        self._start_vllm_server()
         
 
     @property
@@ -362,95 +376,258 @@ class RSTrainer:
         
         return self._train_iterator
 
+    def _start_vllm_server(self, model_path: str | None = None):
+        """
+        Start vLLM as an OpenAI-compatible server on a dedicated GPU.
         
+        Args:
+            model_path: Path to model weights. If None, uses self.model_name.
+        """
+        model_to_load = model_path or self.model_name
+        logger.info("starting vLLM server on GPU %d with model %s...", self.vllm_gpu, model_to_load)
+        
+        # find an available port
+        import socket
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.bind(('', 0))
+            self._vllm_port = s.getsockname()[1]
+        
+        # build server command
+        cmd = [
+            "python", "-m", "vllm.entrypoints.openai.api_server",
+            "--model", model_to_load,
+            "--port", str(self._vllm_port),
+            "--gpu-memory-utilization", str(self.vllm_gpu_memory_utilization),
+            "--max-model-len", str(self.max_seq_len),
+            "--seed", str(self.seed),
+            "--dtype", "bfloat16",
+            "--trust-remote-code",
+            "--disable-log-requests",
+        ]
+        
+        # set environment to isolate GPU
+        env = os.environ.copy()
+        env["CUDA_VISIBLE_DEVICES"] = str(self.vllm_gpu)
+        
+        # start server process
+        self._vllm_process = subprocess.Popen(
+            cmd,
+            env=env,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+        )
+        
+        # register cleanup handler
+        import atexit
+        atexit.register(self._shutdown_vllm_server)
+        
+        # wait for server to be ready
+        self._vllm_base_url = f"http://localhost:{self._vllm_port}"
+        self._wait_for_vllm_server()
+        
+        logger.info("vLLM server ready at %s on GPU %d", self._vllm_base_url, self.vllm_gpu)
+    
+    def _wait_for_vllm_server(self, timeout: int = 300):
+        """Wait for vLLM server to become ready."""
+        start = time.time()
+        health_url = f"{self._vllm_base_url}/health"
+        
+        while time.time() - start < timeout:
+            try:
+                with httpx.Client(timeout=5) as client:
+                    resp = client.get(health_url)
+                    if resp.status_code == 200:
+                        return
+            except (httpx.ConnectError, httpx.ReadTimeout):
+                pass
+            
+            # check if process died
+            if self._vllm_process.poll() is not None:
+                # read output for debugging
+                output = self._vllm_process.stdout.read().decode() if self._vllm_process.stdout else ""
+                raise RuntimeError(f"vLLM server process died. Output:\n{output[-2000:]}")
+            
+            time.sleep(2)
+        
+        raise RuntimeError(f"vLLM server did not become ready within {timeout}s")
 
+    def _get_policy_state_dict(self) -> dict[str, torch.Tensor]:
+        """Extract state dict from FSDP2 model, converting DTensors to regular tensors."""
+        from torch.distributed.tensor import DTensor
+        
+        state_dict = {}
+        for name, param in self.policy.named_parameters():
+            if isinstance(param.data, DTensor):
+                # gather full tensor from DTensor (handles sharding)
+                state_dict[name] = param.data.full_tensor().detach().clone()
+            else:
+                state_dict[name] = param.data.detach().clone()
+        return state_dict
 
+    def _sync_weights_to_vllm(self):
+        """
+        Sync weights from the FSDP2 training model to vLLM server.
+        
+        Since vLLM server doesn't support online weight updates, we:
+        1. Save current weights to a checkpoint
+        2. Shutdown the old server
+        3. Start a new server with the updated weights
+        """
+        logger.info("syncing weights to vLLM server...")
+        
+        # create checkpoint directory for vLLM
+        vllm_checkpoint_dir = os.path.join(self.output_dir or "/tmp", "vllm_checkpoint")
+        os.makedirs(vllm_checkpoint_dir, exist_ok=True)
+        
+        # get state dict from FSDP2 model
+        state_dict = self._get_policy_state_dict()
+        
+        # save in HuggingFace format so vLLM can load it
+        from transformers import AutoConfig
+        config = AutoConfig.from_pretrained(self.model_name)
+        config.save_pretrained(vllm_checkpoint_dir)
+        self.tokenizer.save_pretrained(vllm_checkpoint_dir)
+        
+        # save model weights
+        torch.save(state_dict, os.path.join(vllm_checkpoint_dir, "pytorch_model.bin"))
+        
+        # also save as safetensors for faster loading
+        try:
+            from safetensors.torch import save_file
+            save_file(state_dict, os.path.join(vllm_checkpoint_dir, "model.safetensors"))
+        except ImportError:
+            pass  # safetensors not available, pytorch_model.bin will be used
+        
+        # restart server with new weights
+        self._shutdown_vllm_server()
+        self._start_vllm_server(model_path=vllm_checkpoint_dir)
+        
+        logger.info("weight sync complete (server restarted with updated weights)")
     
     @torch.no_grad
     def _generate_rollouts(self) -> list[RejectionSample]:
+        """Generate rollouts using vLLM server for fast inference."""
         self.policy.eval()
-        self.policy: GenerationMixin
-        # we must collect samples for inference, if we have no more samples then we need
-        # to re-create the iterator
-        self.tokenizer: PreTrainedTokenizer
         collected_samples: list[RejectionSample] = []
-        while len(collected_samples) < self.samples_to_accept:
-            # create a new iterator and update the seed
-            sample = next(self.train_iterator)
-            
-            # inference batches from the model -- here we use model.generate which is super inefficient, 
-            # I really want to implement this in vLLM but we need it to be consistent w/ existing experiments! 
-            input_ids = self.tokenizer.apply_chat_template(sample["messages"], add_generation_prompt=True, return_tensors="pt")
-            input_ids = input_ids.to(self.device)
-
-            # generate some output
-            output = self.policy.generate(
-                input_ids,
-                attention_mask=torch.ones_like(input_ids),
-                generation_config=GenerationConfig(
-                    max_length=self.max_seq_len,
-                    max_new_tokens=self.max_new_tokens,
-                    do_sample=True,
-                    temperature=self.temperature,
-                    top_k=self.top_k,
-                    top_p=self.top_p,
-                    return_dict_in_generate=True,
-                    num_return_sequences=self.inference_group_size,
-                ),
-            )
+        
+        # track statistics
+        prompts_tried = 0
+        total_completions = 0
+        reward_counts = {0.0: 0, 0.1: 0, 1.1: 0}
+        
+        pbar = tqdm(
+            total=self.samples_to_accept, 
+            desc="collecting rollouts",
+            unit="samples",
+        )
+        
+        # create HTTP client for vLLM server
+        completions_url = f"{self._vllm_base_url}/v1/completions"
+        
+        with httpx.Client(timeout=120) as client:
+            while len(collected_samples) < self.samples_to_accept:
+                sample = next(self.train_iterator)
+                prompts_tried += 1
                 
-            # extract each of the assistant completions
-            completions: list[RejectionSample] = []
-            max_reward = 0.0
-            len_input_seq = input_ids.shape[-1]
-            for seq in output.sequences[:, len_input_seq:].tolist():
-                seq: list[int]
+                # prepare prompt for vLLM
+                prompt_ids = self.tokenizer.apply_chat_template(
+                    sample["messages"], 
+                    add_generation_prompt=True, 
+                    return_tensors="pt"
+                ).squeeze(0).tolist()
+                prompt_text = self.tokenizer.decode(prompt_ids)
+                
+                # call vLLM server API
+                request_body = {
+                    "model": self.model_name,
+                    "prompt": prompt_text,
+                    "max_tokens": self.max_new_tokens,
+                    "temperature": self.temperature,
+                    "top_p": self.top_p,
+                    "n": self.inference_group_size,
+                    "echo": False,
+                }
+                if self.top_k > 0:
+                    request_body["top_k"] = self.top_k
+                
                 try:
-                    eos_token_idx = seq.index(self.tokenizer.eos_token_id) + 1
-                except ValueError:
-                    # when eos token id isnt present we default to using the entire seq
-                    eos_token_idx = len(seq)
+                    resp = client.post(completions_url, json=request_body)
+                    resp.raise_for_status()
+                    result = resp.json()
+                except Exception as e:
+                    logger.warning("vLLM generation failed: %s", e)
+                    continue
                 
-                # now parse out the token ids
-                completion_ids = seq[:eos_token_idx]
-                response = self.tokenizer.decode(completion_ids)
-                reward = reward_response(response, sample["answer"])
-                max_reward = max(reward, max_reward)
-                completions.append(
-                    RejectionSample(
-                        prompt_ids=input_ids.squeeze(0).tolist(),
-                        response_ids=completion_ids,
-                        response=response,
-                        reward=reward,
+                completions: list[RejectionSample] = []
+                max_reward = 0.0
+                
+                for choice in result.get("choices", []):
+                    completion_text = choice.get("text", "")
+                    completion_ids = self.tokenizer.encode(completion_text, add_special_tokens=False)
+                    total_completions += 1
+                    
+                    # truncate at EOS if present
+                    try:
+                        eos_idx = completion_ids.index(self.tokenizer.eos_token_id) + 1
+                        completion_ids = completion_ids[:eos_idx]
+                        completion_text = self.tokenizer.decode(completion_ids)
+                    except ValueError:
+                        pass
+                    
+                    reward = reward_response(completion_text, sample["answer"])
+                    reward_counts[reward] = reward_counts.get(reward, 0) + 1
+                    max_reward = max(reward, max_reward)
+                    
+                    completions.append(
+                        RejectionSample(
+                            prompt_ids=prompt_ids,
+                            response_ids=completion_ids,
+                            response=completion_text,
+                            reward=reward,
+                        )
                     )
-                )
 
-            # now the fun part - here we select which sample will proceed to the dataset
-            # we only select completions with positive reward which are also equivalent to the max reward obtained
-            best_samples = [c for c in completions if c.reward == max_reward > 0.0]
-            if not best_samples:
-                logger.info("none of the sampled responses produced any reward")
-                continue
+                best_samples = [c for c in completions if c.reward == max_reward > 0.0]
+                if not best_samples:
+                    continue
 
-            elected_sample = random.choice(best_samples)
+                elected_sample = random.choice(best_samples)
+                accept = self._should_accept_sample(max_reward)
 
-            # Probabilistic accept/reject sampling. We always accept samples in the format we want
-            # if the max reward is only 0.1 then we randomly accept one with probability 0.1/1.1
-            accept = False
-            if max_reward == 1.1:  # this is the highest reward that can be assigned
-                logger.info('collecting quality sample')
-                accept = True
-            elif random.random() * 1.1 <= 0.1:  # accept a subpar sample with probability 0.1/1.1
-                logger.info('collecting subpar sample')
-                accept = True 
-
-            if accept:
-                logger.info("produced a sample with positive reward")
-                collected_samples.append(elected_sample)
-            else:
-                logger.info("failed to produce any samples with positive reward")
+                if accept:
+                    collected_samples.append(elected_sample)
+                    pbar.update(1)
+                    # update postfix with reward stats
+                    pbar.set_postfix({
+                        "prompts": prompts_tried,
+                        "correct": reward_counts.get(1.1, 0),
+                        "format_only": reward_counts.get(0.1, 0),
+                        "no_reward": reward_counts.get(0.0, 0),
+                    })
+        
+        pbar.close()
+        
+        # log final summary
+        logger.info(
+            "rollout generation complete: %d samples from %d prompts (%d completions) | "
+            "rewards: correct=%.1f%%, format_only=%.1f%%, none=%.1f%%",
+            len(collected_samples),
+            prompts_tried,
+            total_completions,
+            100 * reward_counts.get(1.1, 0) / max(total_completions, 1),
+            100 * reward_counts.get(0.1, 0) / max(total_completions, 1),
+            100 * reward_counts.get(0.0, 0) / max(total_completions, 1),
+        )
 
         return collected_samples
+    
+    def _should_accept_sample(self, max_reward: float) -> bool:
+        """Probabilistic accept/reject sampling based on reward."""
+        if max_reward == 1.1:  # highest possible reward (correct answer + format)
+            return True
+        elif random.random() * 1.1 <= 0.1:  # accept subpar with probability 0.1/1.1
+            return True
+        return False
     
     @staticmethod
     def _collate_samples(batch: list[RejectionSample], max_tokens_per_gpu: int):
@@ -466,12 +643,12 @@ class RSTrainer:
             # causal shift << so we predict as n -> n+1 
             input_ids = input_ids[:-1]
             labels = labels[1:]
-            position_ids = [range(len(input_ids))]
+            position_ids = list(range(len(input_ids)))
             num_loss_tokens = len(item.response_ids)
             processed_samples.append({
-                "input_ids": input_ids,
-                "labels": labels,
-                "position_ids": position_ids,
+                "input_ids": torch.tensor(input_ids, dtype=torch.long),
+                "labels": torch.tensor(labels, dtype=torch.long),
+                "position_ids": torch.tensor(position_ids, dtype=torch.long),
                 "num_loss_tokens": num_loss_tokens,
                 "num_tokens": len(input_ids),
             })
@@ -491,9 +668,9 @@ class RSTrainer:
         # now we collate
         final_microbatches = []
         for mb in microbatches:
-            input_ids = torch.cat([s["input_ids"] for s in mb], dtype=torch.long)
-            labels = torch.cat([s["labels"] for s in mb], dtype=torch.long)
-            position_ids = torch.cat([s["position_ids"]  for s in mb], dtype=torch.long)
+            input_ids = torch.cat([s["input_ids"] for s in mb])
+            labels = torch.cat([s["labels"] for s in mb])
+            position_ids = torch.cat([s["position_ids"]  for s in mb])
             final_microbatches.append({
                 "input_ids": input_ids.unsqueeze(0),
                 "labels": labels.unsqueeze(0),
@@ -523,7 +700,7 @@ class RSTrainer:
         Inner training loop
         """
         logger.info("starting training")
-        _collate_fn = functools.partialmethod(self._collate_samples, max_tokens_per_gpu=self.max_tokens_per_gpu)
+        _collate_fn = functools.partial(self._collate_samples, max_tokens_per_gpu=self.max_tokens_per_gpu)
         self.policy.train()
 
         for epoch in range(self.inner_epochs):
@@ -533,7 +710,7 @@ class RSTrainer:
                 batch_size=self.inner_batch_size,
                 shuffle=True,
                 collate_fn=_collate_fn,
-                generator=torch.Generator().manual_seed(self.seed + epoch),
+                generator=torch.Generator(self.device).manual_seed(self.seed + epoch),
             )
             for batch in train_loader:
                 total_loss_tokens = batch["num_loss_tokens"]
@@ -544,10 +721,10 @@ class RSTrainer:
                     position_ids = mb["position_ids"].to(self.device)
 
                     # forward and cross-entropy loss
-                    outputs, _ = self.policy(input_ids=input_ids, position_ids=position_ids)
+                    output = self.policy(input_ids=input_ids, position_ids=position_ids)
 
                     # we dont reduce so that we can properly accumulate the gradient
-                    loss = F.cross_entropy(outputs.logits, target=labels, reduction="sum")
+                    loss = F.cross_entropy(output.logits.squeeze(0), target=labels.squeeze(0), reduction="sum")
                     loss /= total_loss_tokens
 
                     # cross-entropy and we do our own reduction
@@ -567,31 +744,54 @@ class RSTrainer:
 
 
 
-
         
 
 
     def train(self):
         """
-        This is the rejection sampling training loop
+        Rejection sampling training loop with vLLM for fast inference.
+        
+        vLLM runs as a separate server on its own GPU:
+        1. Generate rollouts with vLLM server
+        2. Train policy model on training GPU
+        3. Sync updated weights to vLLM (restarts server with new weights)
         """
-        logger.info('starting training')
+        logger.info('starting training on cuda:%d (vLLM server on cuda:%d)', self.device.index, self.vllm_gpu)
         self.stats_tracker.reset()
-        self.policy.eval()  
+        self.policy.eval()
 
-        # create an iterator for our dataset
-        train_ds = self.training_dataset.to_iterable_dataset()
-
-        # keep looping
         while not self.stats_tracker.completed_training():
-            # we must collect samples for inference, if we have no more samples then we need
-            # to re-create the iterator
+            # generate rollouts with vLLM server
             rollouts = self._generate_rollouts()
 
-            # now we must optimize the model
+            # train the policy model
             self._train_policy(rollouts)
+            
+            # sync updated weights to vLLM (restarts server)
+            self._sync_weights_to_vllm()
         
         logger.info('completed training')
+        
+        # cleanup vLLM server
+        self._shutdown_vllm_server()
+    
+    def _shutdown_vllm_server(self):
+        """Gracefully shutdown the vLLM server."""
+        if not hasattr(self, '_vllm_process'):
+            return
+        if self._vllm_process.poll() is not None:
+            return  # already terminated
+            
+        logger.info("shutting down vLLM server...")
+        
+        # send SIGTERM for graceful shutdown
+        self._vllm_process.terminate()
+        try:
+            self._vllm_process.wait(timeout=30)
+        except subprocess.TimeoutExpired:
+            logger.warning("vLLM server did not shutdown gracefully, killing...")
+            self._vllm_process.kill()
+            self._vllm_process.wait(timeout=5)
             
 
 

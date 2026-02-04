@@ -1953,6 +1953,7 @@ def rs_train(
 
     # device selection
     gpu: int = typer.Option(0, "--gpu", "-g", help="CUDA GPU index to use for training"),
+    vllm_gpu: int = typer.Option(1, "--vllm-gpu", help="CUDA GPU index to use for training"),
 ):
     """
     Train a model with Rejection Sampling on the given dataset.
@@ -1985,6 +1986,8 @@ def rs_train(
         beta2=beta2,
         weight_decay=wd,
         gpu=gpu,
+        vllm_gpu=vllm_gpu,
+        vllm_gpu_memory_utilization=0.9,
     )
     # runs the training loop
     trainer.train()
