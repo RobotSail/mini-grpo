@@ -1,0 +1,610 @@
+import random
+import re
+import utils
+import datasets
+import torch.distributed as dist
+import torch
+from transformers import AutoModelForCausalLM, AutoTokenizer, PreTrainedModel, GenerationMixin
+from transformers import PreTrainedTokenizer, GenerationConfig
+from torch.distributed._composable.fsdp import fully_shard, MixedPrecisionPolicy
+import os
+from optimizers import create_fsdp2_muon_optimizer, create_mixed_precision_optimizer, create_optimizer
+import typing as t
+from tqdm import tqdm
+from type_defs import RolloutResult, Problem, TokenSample, Sample
+import pydantic as pd
+import functools
+import torch.nn.functional as F
+from torch.nn.utils.clip_grad import clip_grad_norm_
+
+import logging
+
+class RejectionSample(pd.BaseModel):
+    prompt_ids: list[int]
+    response_ids: list[int]
+    response: str
+    reward: float
+
+# Create logger for trainer module
+logger = logging.getLogger(__name__)
+
+# Regex pattern to match <answer>...</answer> tags
+answer_pattern = re.compile(r"<answer>(.*?)</answer>", re.DOTALL | re.IGNORECASE)
+
+def parse_number(text: str) -> float:
+    """
+    Parse a string into a float, handling common formats from GSM8K answers.
+
+    Handles:
+    - Whitespace (leading/trailing/internal)
+    - Percentage signs (42% -> 42.0)
+    - Currency symbols ($100, EUR50, etc.)
+    - Comma separators (1,000,000 -> 1000000)
+    - Negative numbers (-42, negative prefix)
+    - Decimal numbers (3.14)
+
+    Returns: float
+    Raises: ValueError if no valid number can be parsed
+    """
+    if not text or not isinstance(text, str):
+        raise ValueError(f"Empty or invalid input: {text}")
+
+    # Strip whitespace
+    text = text.strip()
+
+    # Remove currency symbols ($, EUR, GBP, JPY, etc.)
+    text = re.sub(r"[$\u20AC\u00A3\u00A5\u20B9]", "", text)
+
+    # Remove percentage sign (keep the number)
+    text = text.replace("%", "")
+
+    # Remove commas (thousand separators)
+    text = text.replace(",", "")
+
+    # Strip remaining whitespace after removals
+    text = text.strip()
+
+    # Check for digits
+    if not any(c.isdigit() for c in text):
+        raise ValueError(f"No digits found in answer: {text}")
+
+    # Extract the numeric portion (handles cases like "42 dollars" -> "42")
+    match = re.search(r"-?\d+\.?\d*", text)
+    if not match:
+        raise ValueError(f"Could not extract number from: {text}")
+
+    return float(match.group())
+
+def reward_response(response: str, answer: int | float) -> float:
+    """
+    Returns these rewards:
+    0.0 if unparsable
+    0.1 if parsable but incorrect
+    1.1 if correct
+    """
+
+    # Find all answer tags
+    matches = answer_pattern.findall(response)
+
+    # No answer tags found - no reward
+    if not matches:
+        return 0.0
+
+    # Take the LAST answer (final answer after reasoning)
+    last_match = matches[-1]
+
+    # Attempt to parse the response, if we can parse then instance 0.1 reward
+    try:
+        parsed_answer = parse_number(last_match)
+    except ValueError:
+        # cannot parse response
+        return 0.0
+    
+    # Check correctness with tolerance for floating point comparison
+    # GSM8K won't have any answers this small so it shouldn't be an issue
+    expected = float(answer)
+    is_close_enough = abs(parsed_answer - expected) < 1e-6
+    return 1.1 if is_close_enough else 0.1  # these are the exact rewards used during the GRPO experiments
+
+
+    
+
+
+
+
+
+class StatsTracker:
+    # simple module for tracking statistics
+    def __init__(self, token_training_budget: int, checkpoint_frequency: int):
+        self.token_training_budget = token_training_budget
+        self.checkpoint_frequency = checkpoint_frequency
+        self._train_tokens_seen = 0
+        self._last_checkpoint_save = 0
+        self._inference_iteration = 0
+    
+    def reset(self):
+        self._train_tokens_seen = 0
+        self._last_checkpoint_save = 0
+        self._inference_iteration = 0
+        
+    def accumulate_tokens(self, tokens: int):
+        self._train_tokens_seen += tokens
+
+    def should_save(self):
+        return (self._train_tokens_seen - self._last_checkpoint_save) >= self.checkpoint_frequency
+    
+    def mark_checkpointed(self):
+        self._last_checkpoint_save = self._train_tokens_seen
+
+    def completed_training(self):
+        return self._train_tokens_seen >= self.token_training_budget
+    
+    def advance_iteration(self):
+        self._inference_iteration += 1
+    
+    @property
+    def train_tokens_seen(self) -> int:
+        return self._train_tokens_seen
+    
+    @property
+    def last_checkpoint_save(self) -> int:
+        return self._last_checkpoint_save
+    
+    @property
+    def inference_iteration(self) -> int:
+        return self._inference_iteration
+
+    
+class InfiniteDatasetIterator:
+    def __init__(self, ds: datasets.Dataset, seed: int):
+        self.dataset = ds
+        self.seed = seed
+    
+    def __iter__(self):
+        epoch = 0
+        while True:
+            iterator = self.dataset.shuffle(self.seed + epoch)
+            for item in iterator:
+                yield item
+            epoch += 1
+        
+
+
+
+
+
+        
+
+class RSTrainer:
+
+    @staticmethod
+    def _load_fsdp_models(model_name: str, device: torch.device) -> tuple[PreTrainedModel, PreTrainedModel]:
+        # Flash Attention 2 requires bf16/fp16 weights, otherwise use FP32 for mixed precision
+        # Load in FP32 first, then apply FSDP2 MixedPrecisionPolicy for FP32 master weights
+        policy_model_kwargs = {
+            "device_map": device,
+            "torch_dtype": torch.float32,  # Load FP32, FSDP2 will handle bf16 forward
+            "attn_implementation": "flash_attention_2",
+        }
+        ref_model_kwargs = {
+            "device_map": device,
+            "torch_dtype": torch.float16,  # Reference model in fp16 (inference only, better precision)
+            "attn_implementation": "flash_attention_2",
+        }
+        logger.info("✓ Using Flash Attention 2 with FSDP2 mixed precision (FP32 master weights, bf16 forward)")
+
+        # Initialize policy model
+        model = AutoModelForCausalLM.from_pretrained(model_name, **policy_model_kwargs)
+        
+        mp_policy = MixedPrecisionPolicy(
+            param_dtype=torch.bfloat16,  # Forward/backward in bf16 (Flash Attention compatible)
+            reduce_dtype=torch.float32,  # Gradient reduction in fp32
+        )
+        # Apply FSDP2 to each transformer layer for memory efficiency
+        for layer in model.model.layers:
+            fully_shard(layer, mp_policy=mp_policy)
+        fully_shard(model, mp_policy=mp_policy)
+        logger.info("✓ Policy model wrapped with FSDP2 MixedPrecisionPolicy")
+
+        # Reference model (frozen)
+        ref_model = AutoModelForCausalLM.from_pretrained(model_name, **ref_model_kwargs)
+        ref_model.eval()
+        ref_model.requires_grad_(False)
+        logger.info("✓ Reference model loaded in FP16 (frozen)")
+
+        return (model, ref_model)
+    
+
+    @staticmethod
+    def _valid_save_dir(output_dir: str = None) -> bool:
+        if not output_dir:
+            return False
+
+        # Try to create the directory if it doesn't exist
+        try:
+            os.makedirs(output_dir, exist_ok=True)
+            return True
+        except (OSError, PermissionError):
+            return False
+
+
+    # trainer class for rejection sampling
+    def __init__(
+        self, 
+        data_path: str,
+        model_name: str,
+        output_dir: str | None,
+        token_budget: int,
+        inner_epochs: int,
+        inner_batch_size: int,
+        save_every_n_tokens: int,
+        samples_to_accept: int,
+        inference_batch_size: int,
+        inference_group_size: int,
+        # sampling params
+        temperature: float,
+        top_k: int,
+        top_p: float,
+        max_new_tokens: int,
+        max_seq_len: int,
+        max_tokens_per_gpu: int,
+        wandb_project: str,
+        wandb_run_name: str,
+        seed: int,
+        optimizer_type: str,
+        lr: float,
+        beta1: float,
+        beta2: float,
+        weight_decay: float,
+        gpu: int,
+    ):
+
+        # first we must set the seed
+        utils.set_determinism(seed)
+
+        # set some basic variables
+        self.stats_tracker = StatsTracker(
+            token_training_budget=token_budget,
+            checkpoint_frequency=save_every_n_tokens,
+        )
+        self.inference_batch_size = inference_batch_size
+        self.inference_group_size = inference_group_size
+        self.temperature = temperature
+        self.max_new_tokens = max_new_tokens
+        self.samples_to_accept = samples_to_accept
+        self.inner_batch_size = inner_batch_size
+        self.inner_epochs = inner_epochs
+        self.seed = seed
+        self.max_seq_len = max_seq_len
+        self.max_tokens_per_gpu = max_tokens_per_gpu
+        self.model_name = model_name
+        self.output_dir = output_dir
+        self.top_k = top_k
+        self.top_p = top_p
+
+
+        # check basic validation
+        if self.output_dir and not self._valid_save_dir(self.output_dir):
+            raise ValueError(f'invalid output directory: cannot write to {output_dir}')
+
+        # then we load the training dataset
+        self.training_dataset = datasets.load_dataset("json", data_files=data_path, split="train")
+        self._train_iterator = None
+    
+        logger.info('loaded %d unique samples for training from %s', len(self.training_dataset), data_path)
+
+        # next we load the model
+        self.device = torch.device('cuda', gpu)
+        utils.init_distributed(gpu)
+        self.policy, self.ref_policy = self._load_fsdp_models(model_name, self.device)
+        logger.info('loaded models with fsdp2')
+
+        # now we can load the optimizers
+        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+        logger.info('loaded tokenizer')
+
+        # create optimizer
+        optimizer = None
+        if optimizer_type.lower() == "muon":
+            # Use FSDP2-compatible Muon optimizer
+            optimizer = create_fsdp2_muon_optimizer(
+                model=self.policy,
+                muon_lr=lr,
+                adamw_lr=lr,
+                beta1=beta1,
+                beta2=beta2,
+                weight_decay=weight_decay,
+            )
+            logger.info(f"✓ Using MUON optimizer (FSDP2-compatible via muon-fsdp2, lr={lr})")
+        else:
+            logger.info(f"Muon optimizer was not detected, selecting AdamW as the optimizer.")
+            optimizer = create_optimizer(
+                model=self.policy,
+                optimizer_type="adamw",
+                lr=lr,
+                beta1=beta1,
+                beta2=beta2,
+                weight_decay=weight_decay,
+                muon_lr=lr,
+            )
+            logger.info(f"✓ Using AdamW optimizer {lr=}")
+        assert optimizer is not None
+        self.optimizer = optimizer
+        
+
+        # next we load wandb and populate whatever we need
+        run_config = {
+            "model_name": model_name,
+            "token_train_budget": token_budget,
+            "samples_to_accept": samples_to_accept,
+            "inference_batch_size": inference_batch_size,
+            "group_size": inference_group_size,
+            "inner_batch_size": inner_batch_size,
+            "inner_epochs": inner_epochs,
+            "lr": lr,
+            "max_new_tokens": max_new_tokens,
+            "max_seq_len": max_seq_len,
+            "temperature": temperature,
+            "optimizer": optimizer,
+            "max_tokens_per_microbatch": max_tokens_per_gpu,
+            "save_every_n_tokens": save_every_n_tokens,
+            "beta1": beta1,
+            "beta2": beta2,
+            "wd": weight_decay,
+        }
+        utils.initialize_wandb(wandb_project, wandb_run_name, run_config)
+        
+
+    @property
+    def train_iterator(self):
+        if not self._train_iterator:
+            self._train_iterator = iter(InfiniteDatasetIterator(self.training_dataset, seed=self.seed))
+        
+        return self._train_iterator
+
+        
+
+
+    
+    @torch.no_grad
+    def _generate_rollouts(self) -> list[RejectionSample]:
+        self.policy.eval()
+        self.policy: GenerationMixin
+        # we must collect samples for inference, if we have no more samples then we need
+        # to re-create the iterator
+        self.tokenizer: PreTrainedTokenizer
+        collected_samples: list[RejectionSample] = []
+        while len(collected_samples) < self.samples_to_accept:
+            # create a new iterator and update the seed
+            sample = next(self.train_iterator)
+            
+            # inference batches from the model -- here we use model.generate which is super inefficient, 
+            # I really want to implement this in vLLM but we need it to be consistent w/ existing experiments! 
+            input_ids = self.tokenizer.apply_chat_template(sample["messages"], add_generation_prompt=True, return_tensors="pt")
+            input_ids = input_ids.to(self.device)
+
+            # generate some output
+            output = self.policy.generate(
+                input_ids,
+                attention_mask=torch.ones_like(input_ids),
+                generation_config=GenerationConfig(
+                    max_length=self.max_seq_len,
+                    max_new_tokens=self.max_new_tokens,
+                    do_sample=True,
+                    temperature=self.temperature,
+                    top_k=self.top_k,
+                    top_p=self.top_p,
+                    return_dict_in_generate=True,
+                    num_return_sequences=self.inference_group_size,
+                ),
+            )
+                
+            # extract each of the assistant completions
+            completions: list[RejectionSample] = []
+            max_reward = 0.0
+            len_input_seq = input_ids.shape[-1]
+            for seq in output.sequences[:, len_input_seq:].tolist():
+                seq: list[int]
+                try:
+                    eos_token_idx = seq.index(self.tokenizer.eos_token_id) + 1
+                except ValueError:
+                    # when eos token id isnt present we default to using the entire seq
+                    eos_token_idx = len(seq)
+                
+                # now parse out the token ids
+                completion_ids = seq[:eos_token_idx]
+                response = self.tokenizer.decode(completion_ids)
+                reward = reward_response(response, sample["answer"])
+                max_reward = max(reward, max_reward)
+                completions.append(
+                    RejectionSample(
+                        prompt_ids=input_ids.squeeze(0).tolist(),
+                        response_ids=completion_ids,
+                        response=response,
+                        reward=reward,
+                    )
+                )
+
+            # now the fun part - here we select which sample will proceed to the dataset
+            # we only select completions with positive reward which are also equivalent to the max reward obtained
+            best_samples = [c for c in completions if c.reward == max_reward > 0.0]
+            if not best_samples:
+                logger.info("none of the sampled responses produced any reward")
+                continue
+
+            elected_sample = random.choice(best_samples)
+
+            # Probabilistic accept/reject sampling. We always accept samples in the format we want
+            # if the max reward is only 0.1 then we randomly accept one with probability 0.1/1.1
+            accept = False
+            if max_reward == 1.1:  # this is the highest reward that can be assigned
+                logger.info('collecting quality sample')
+                accept = True
+            elif random.random() * 1.1 <= 0.1:  # accept a subpar sample with probability 0.1/1.1
+                logger.info('collecting subpar sample')
+                accept = True 
+
+            if accept:
+                logger.info("produced a sample with positive reward")
+                collected_samples.append(elected_sample)
+            else:
+                logger.info("failed to produce any samples with positive reward")
+
+        return collected_samples
+    
+    @staticmethod
+    def _collate_samples(batch: list[RejectionSample], max_tokens_per_gpu: int):
+        """
+        Return a batch object from a given list of rejection samples. 
+        We assume that we're training in padding-free mode.
+        """
+        processed_samples = []
+        for item in batch:
+            # input ids + labels
+            input_ids = item.prompt_ids + item.response_ids
+            labels = [-100] * len(item.prompt_ids) + item.response_ids
+            # causal shift << so we predict as n -> n+1 
+            input_ids = input_ids[:-1]
+            labels = labels[1:]
+            position_ids = [range(len(input_ids))]
+            num_loss_tokens = len(item.response_ids)
+            processed_samples.append({
+                "input_ids": input_ids,
+                "labels": labels,
+                "position_ids": position_ids,
+                "num_loss_tokens": num_loss_tokens,
+                "num_tokens": len(input_ids),
+            })
+ 
+        # now collate them into microbathes
+        total_loss_tokens = sum(s["num_loss_tokens"] for s in processed_samples)
+        total_tokens = sum(s["num_tokens"] for s in processed_samples)
+        microbatches = []
+        current_microbatch = []
+        for sample in processed_samples:
+            # make sure not to exceed max tokens per gpu
+            if sum(s["num_tokens"] for s in current_microbatch) + sample["num_tokens"] > max_tokens_per_gpu:  # collate so we don't OOM
+                microbatches.append(current_microbatch)
+                current_microbatch = []
+            current_microbatch.append(sample)
+ 
+        # now we collate
+        final_microbatches = []
+        for mb in microbatches:
+            input_ids = torch.cat([s["input_ids"] for s in mb], dtype=torch.long)
+            labels = torch.cat([s["labels"] for s in mb], dtype=torch.long)
+            position_ids = torch.cat([s["position_ids"]  for s in mb], dtype=torch.long)
+            final_microbatches.append({
+                "input_ids": input_ids.unsqueeze(0),
+                "labels": labels.unsqueeze(0),
+                "position_ids": position_ids.unsqueeze(0),
+            })
+ 
+        # return the collated batch
+        return {
+            "microbatches": final_microbatches,
+            "num_loss_tokens": total_loss_tokens,
+            "total_tokens": total_tokens,
+        }
+
+
+    @torch.no_grad()
+    def _optimizer_step(self, num_loss_tokens: int):
+        self.stats_tracker.accumulate_tokens(num_loss_tokens)
+        # clip gradnorm
+        gradnorm = clip_grad_norm_(self.policy.parameters(), max_norm=1.0)
+        self.optimizer.step()
+        self.optimizer.zero_grad()
+        return gradnorm
+
+
+    def _train_policy(self, samples: list[RejectionSample]):
+        """
+        Inner training loop
+        """
+        logger.info("starting training")
+        _collate_fn = functools.partialmethod(self._collate_samples, max_tokens_per_gpu=self.max_tokens_per_gpu)
+        self.policy.train()
+
+        for epoch in range(self.inner_epochs):
+            logger.info("training epoch 1")
+            train_loader = torch.utils.data.DataLoader(
+                samples,
+                batch_size=self.inner_batch_size,
+                shuffle=True,
+                collate_fn=_collate_fn,
+                generator=torch.Generator().manual_seed(self.seed + epoch),
+            )
+            for batch in train_loader:
+                total_loss_tokens = batch["num_loss_tokens"]
+                total_loss = 0.0
+                for mb in batch["microbatches"]:
+                    input_ids = mb["input_ids"].to(self.device)
+                    labels = mb["labels"].to(self.device)
+                    position_ids = mb["position_ids"].to(self.device)
+
+                    # forward and cross-entropy loss
+                    outputs, _ = self.policy(input_ids=input_ids, position_ids=position_ids)
+
+                    # we dont reduce so that we can properly accumulate the gradient
+                    loss = F.cross_entropy(outputs.logits, target=labels, reduction="sum")
+                    loss /= total_loss_tokens
+
+                    # cross-entropy and we do our own reduction
+                    logger.info(f"obtained loss: {loss.item():,.4f}")
+                    
+                    # fsdp2 averages by world size so we multiply the loss to get rid of the average
+                    loss *= dist.get_world_size()
+                    assert dist.get_world_size() == 1  # in our case it should be fine since we expect it to be a world size of 1 though
+                    loss.backward()
+                    total_loss += loss.detach().item()
+
+                    # TODO: add KL divergence term here
+
+                # finally we would backprop here
+                gradnorm = self._optimizer_step(total_loss_tokens)
+                logger.info('loss: %s, gradnorm: %s', total_loss, gradnorm)
+
+
+
+
+        
+
+
+    def train(self):
+        """
+        This is the rejection sampling training loop
+        """
+        logger.info('starting training')
+        self.stats_tracker.reset()
+        self.policy.eval()  
+
+        # create an iterator for our dataset
+        train_ds = self.training_dataset.to_iterable_dataset()
+
+        # keep looping
+        while not self.stats_tracker.completed_training():
+            # we must collect samples for inference, if we have no more samples then we need
+            # to re-create the iterator
+            rollouts = self._generate_rollouts()
+
+            # now we must optimize the model
+            self._train_policy(rollouts)
+        
+        logger.info('completed training')
+            
+
+
+                    
+
+
+
+
+
+
+            
+
+
+    
+    
+    

@@ -3,6 +3,7 @@ import os
 
 os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
 
+from trainer import RSTrainer
 
 from typing import Any
 import requests
@@ -26,6 +27,7 @@ import os
 from IPython import embed
 from tqdm import tqdm
 import numpy as np
+import torch.distributed as dist
 
 try:
     import wandb
@@ -57,6 +59,24 @@ from type_defs import (
     TrainingComponents,
     Hyperparameters,
 )
+
+import logging
+from rich.logging import RichHandler
+from rich.console import Console
+
+# Create a rich console for consistent formatting
+console = Console()
+
+# Configure rich logging handler
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(message)s",
+    datefmt="[%X]",
+    handlers=[RichHandler(console=console, rich_tracebacks=True, markup=True)]
+)
+
+# Create a logger that can be imported by other modules
+logger = logging.getLogger("mini-grpo")
 
 
 # Regex pattern to match <answer>...</answer> tags
@@ -1439,26 +1459,7 @@ def train(
         False, "--verbose-rollouts", help="Show detailed best/worst group rollouts after each batch"
     ),
 ):
-    # seeds all related libraries at the start of training
-    random.seed(seed)
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)
-    np.random.seed(seed)
-
-    # Enable deterministic CUDA operations for reproducibility
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False  # benchmark mode is non-deterministic
-
-    # Set CUBLAS workspace config for deterministic behavior
-    os.environ.setdefault("CUBLAS_WORKSPACE_CONFIG", ":4096:8")
-
-    # Enable PyTorch's deterministic algorithms mode
-    # Use warn_only=True to avoid errors from ops without deterministic implementations
-    try:
-        torch.use_deterministic_algorithms(True, warn_only=True)
-    except TypeError:
-        # Older PyTorch versions don't support warn_only
-        torch.use_deterministic_algorithms(True)
+    set_determinism(seed)
 
     # load the raw dataset
     # train_dataset = JsonlDataset(data_path)
@@ -1910,7 +1911,88 @@ def train(
     if use_wandb:
         wandb.finish()
         typer.secho("✓ Wandb run finished", fg=typer.colors.GREEN)
+        
 
+@app.command()
+def rs_train(
+    data_path: str = typer.Option(..., "--data-path", help="Path to the training data"),
+    output_dir: str = typer.Option(..., "--output-dir", help="Path to the output directory"),
+    model_name: str = typer.Option("Qwen/Qwen2-1.5B-Instruct", "--model", "-m", help="Model name or path"),
+
+    max_tokens: int = typer.Option(..., "--max-tokens", help="Maximum loss-counted tokens to train on (tokens backpropped on, 0 = use epochs or steps)"),
+    num_inner_epochs: int = typer.Option(1, "--inner-epochs", help="Number of inner epochs"),
+
+    max_seq_len: int = typer.Option(8192, "--msl", "--max-seq-len", help="Maximum sequence length for a single sample"),
+    max_tokens_per_gpu: int = typer.Option(8192, "--max-tokens-per-gpu", help="Max tokens per GPU"),
+    save_every_n_tokens: int = typer.Option(
+        0, "--save-every-n-tokens", help="Save checkpoint every N loss-counted tokens (tokens backpropped on, 0 = disabled)"
+    ),
+
+    # number of samples that we'd accept in a given batch
+    samples_to_accept: int = typer.Option(1, "--samples-to-accept", help="Number of samples to accept per rollout batch"),
+    inference_batch_size: int = typer.Option(32, "--inference-batch-size", help="Number of prompts to batch together when generating GRPO rollouts."),
+    inference_group_size: int = typer.Option(16, "--inference-group-size", help="Group size / number of rollouts to generate from a single prompt"),
+
+    # sampling params
+    temperature: float = typer.Option(0.7, "-t", "--temp", help="sampling temperature"),
+    max_new_tokens: int = typer.Option(512, "--max-new-tokens", help="Maximum number of new tokens to generate"),
+    top_p: float = typer.Option(1.0, "--top-p", help="The proportion of the probability mass which we should consider for sampling."),
+    top_k: int = typer.Option(0, "--top-k", help="sample only the top k highest probability tokens"),
+    
+    # wandb run name
+    wandb_project: str = typer.Option("gsm8k-comparison", "--wandb-project", help="Wandb project name"),
+    wandb_run_name: str = typer.Option(None, "--wandb-run", help="Wandb run name (auto-generated if not set)"),
+    
+    seed: int = typer.Option(67, "--seed", help="Random seed"),
+
+    optimizer_type: str = typer.Option("adamw", "-O", "--optimizer", help="Optimizer type: 'adamw' or 'muon'"),
+    lr: float = typer.Option(1e-5, "--lr", help="Learning rate (used for all parameters)"),
+    beta1: float = typer.Option(0.9, help="Adam beta1 parameter"),
+    beta2: float = typer.Option(0.95, help="Adam beta2 parameter"),
+    wd: float = typer.Option(0.0, "--wd", help="Weight decay"),
+
+    # device selection
+    gpu: int = typer.Option(0, "--gpu", "-g", help="CUDA GPU index to use for training"),
+):
+    """
+    Train a model with Rejection Sampling on the given dataset.
+    """
+
+    # loads the trainer
+    trainer = RSTrainer(
+        data_path=data_path,
+        model_name=model_name,
+        output_dir=output_dir,
+        token_budget=max_tokens,
+        inner_epochs=num_inner_epochs,
+        inner_batch_size=samples_to_accept,  # this isn't exactly correct
+        save_every_n_tokens=save_every_n_tokens,
+        samples_to_accept=samples_to_accept,
+        inference_batch_size=inference_batch_size,
+        inference_group_size=inference_group_size,
+        temperature=temperature,
+        top_k=top_k,
+        top_p=top_p,
+        max_new_tokens=max_new_tokens,
+        max_seq_len=max_seq_len,
+        max_tokens_per_gpu=max_tokens_per_gpu,
+        wandb_project=wandb_project,
+        wandb_run_name=wandb_run_name,
+        seed=seed,
+        optimizer_type=optimizer_type,
+        lr=lr,
+        beta1=beta1,
+        beta2=beta2,
+        weight_decay=wd,
+        gpu=gpu,
+    )
+    # runs the training loop
+    trainer.train()
+    dist.barrier()
+    dist.destroy_process_group()
+    
+    
+    
 
 @app.command()
 def sft_train(

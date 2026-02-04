@@ -87,7 +87,7 @@ def create_fsdp2_muon_optimizer(
     return Muon(param_groups)
 
 
-def get_muon_param_groups(model: PreTrainedModel, muon_lr: float, adamw_lr: float, weight_decay: float):
+def get_muon_param_groups(model: PreTrainedModel):
     """
     Create parameter groups for Muon optimizer.
 
@@ -171,7 +171,7 @@ def create_optimizer(
 
         if has_native_muon:
             # Native PyTorch Muon
-            muon_params, adamw_params = get_muon_param_groups(model, muon_lr, lr, weight_decay)
+            muon_params, adamw_params = get_muon_param_groups(model)
 
             # PyTorch Muon requires separate handling of param groups
             # For simplicity, we create a combined optimizer approach

@@ -1,4 +1,51 @@
 import typer
+import random
+import torch
+import numpy as np
+import os
+import torch.distributed as dist
+
+import logging
+
+# Create logger for utils module
+logger = logging.getLogger(__name__)
+
+
+WANDB_AVAILABLE = False
+try:
+    import wandb
+    WANDB_AVAILABLE = True
+except ImportError as IE:
+    pass
+
+def initialize_wandb(project: str, run_name: str, config: dict):
+    if not WANDB_AVAILABLE:
+        typer.secho("Warning: wandb is not installed. Install with 'pip install wandb'", fg=typer.colors.YELLOW)
+        raise ValueError("Warning: wandb is not installed. Install with 'pip install wandb'")
+
+    wandb.init(
+        project=project,
+        name=run_name,
+        config=config,
+    )
+    typer.secho("✓ Wandb initialized", fg=typer.colors.GREEN)
+
+def init_distributed(gpu: int = 0):
+    # we initialize a mock distributed environment so we can train with FSDP2 mixed precision
+    # on a single node 
+
+    # Initialize process group for single-GPU FSDP2 (if not already initialized by torchrun)
+    if not dist.is_initialized():
+        os.environ.setdefault("MASTER_ADDR", "localhost")
+        os.environ.setdefault("MASTER_PORT", "29500")
+        os.environ.setdefault("RANK", "0")
+        os.environ.setdefault("WORLD_SIZE", "1")
+        dist.init_process_group(backend="nccl")
+        logger.info("✓ Initialized single-GPU distributed process group")
+        default_device = torch.device('cuda', gpu)
+        torch.set_default_device(default_device)
+
+
 
 
 def preview_tokenization(dataset, tokenizer):
@@ -105,3 +152,25 @@ def display_scorecard(
             "total_rollouts": total_rollouts,
         }
     return None
+
+def set_determinism(seed: int):
+    # seeds all related libraries at the start of training
+    random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    np.random.seed(seed)
+
+    # Enable deterministic CUDA operations for reproducibility
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False  # benchmark mode is non-deterministic
+
+    # Set CUBLAS workspace config for deterministic behavior
+    os.environ.setdefault("CUBLAS_WORKSPACE_CONFIG", ":4096:8")
+
+    # Enable PyTorch's deterministic algorithms mode
+    # Use warn_only=True to avoid errors from ops without deterministic implementations
+    try:
+        torch.use_deterministic_algorithms(True, warn_only=True)
+    except TypeError:
+        # Older PyTorch versions don't support warn_only
+        torch.use_deterministic_algorithms(True)
