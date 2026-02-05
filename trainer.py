@@ -18,6 +18,8 @@ from torch.nn.utils.clip_grad import clip_grad_norm_
 
 # vllm server for fast inference on separate GPU
 import subprocess
+import sys
+import tempfile
 import time
 import httpx
 import asyncio
@@ -412,26 +414,29 @@ class RSTrainer:
     def _setup_vllm_checkpoint_dir(self):
         """
         Set up a shared memory directory for fast weight syncing with vLLM.
-        
+
         Uses /dev/shm for fast read/write operations.
         Returns the path to the checkpoint directory.
         """
-        import uuid
-        # use /dev/shm for fast IO
-        shm_base = "/dev/shm"
-        checkpoint_dir = os.path.join(shm_base, f"vllm_checkpoint_{uuid.uuid4().hex[:8]}")
+        # use fixed path so vLLM can reload from the same location
+        checkpoint_dir = "/dev/shm/active-policy"
+
+        # clean up any existing directory and create fresh
+        import shutil
+        if os.path.exists(checkpoint_dir):
+            shutil.rmtree(checkpoint_dir)
         os.makedirs(checkpoint_dir, exist_ok=True)
         self._vllm_checkpoint_dir = checkpoint_dir
-        
+
         # save initial model config and tokenizer
         from transformers import AutoConfig
         config = AutoConfig.from_pretrained(self.model_name)
         config.save_pretrained(checkpoint_dir)
         self.tokenizer.save_pretrained(checkpoint_dir)
-        
+
         # save initial weights
         self._save_weights_to_checkpoint()
-        
+
         logger.info("vLLM checkpoint directory: %s", checkpoint_dir)
         return checkpoint_dir
     
@@ -480,7 +485,7 @@ class RSTrainer:
         checkpoint_dir = self._setup_vllm_checkpoint_dir()
         
         logger.info(
-            "starting vLLM server on GPU(s) %s (tp=%d) with checkpoint %s...", 
+            "starting vLLM server on GPU(s) %s (dp=%d) with checkpoint %s...", 
             self.vllm_gpus, self.vllm_gpu_count, checkpoint_dir
         )
         
@@ -495,7 +500,7 @@ class RSTrainer:
         
         # build server command
         cmd = [
-            "python", "-m", "vllm.entrypoints.openai.api_server",
+            sys.executable, "-m", "vllm.entrypoints.openai.api_server",
             "--model", checkpoint_dir,
             "--served-model-name", self._vllm_served_model_name,
             "--port", str(self._vllm_port),
@@ -505,18 +510,29 @@ class RSTrainer:
             "--dtype", "bfloat16",
             "--trust-remote-code",
             "--disable-log-requests",
-            "--tensor-parallel-size", str(self.vllm_gpu_count),
+            "--data-parallel-size", str(self.vllm_gpu_count),
+            "--enable-sleep-mode",
         ]
-        
-        # set environment to isolate GPUs
+
+
+        # set environment to isolate GPUs and enable dev mode for collective_rpc API
         env = os.environ.copy()
         env["CUDA_VISIBLE_DEVICES"] = self.vllm_gpus
+        env["VLLM_SERVER_DEV_MODE"] = "1"
         
+        # Don't use stdout=PIPE without draining it. vLLM can deadlock if the OS
+        # pipe buffer fills (especially with multi-process backends).
+        log_dir = self.output_dir or tempfile.gettempdir()
+        os.makedirs(log_dir, exist_ok=True)
+        self._vllm_log_path = os.path.join(log_dir, f"vllm_api_server_{self._vllm_port}.log")
+        self._vllm_log_file = open(self._vllm_log_path, "wb")
+        logger.info("vLLM server logs: %s", self._vllm_log_path)
+
         # start server process
         self._vllm_process = subprocess.Popen(
             cmd,
             env=env,
-            stdout=subprocess.PIPE,
+            stdout=self._vllm_log_file,
             stderr=subprocess.STDOUT,
         )
         
@@ -530,6 +546,21 @@ class RSTrainer:
         
         logger.info("vLLM server ready at %s on GPU(s) %s", self._vllm_base_url, self.vllm_gpus)
     
+    def _read_vllm_log_tail(self, max_bytes: int = 20_000) -> str:
+        """Return the last `max_bytes` of the vLLM server log, if available."""
+        path = getattr(self, "_vllm_log_path", None)
+        if not path or not os.path.exists(path):
+            return ""
+        try:
+            with open(path, "rb") as f:
+                f.seek(0, os.SEEK_END)
+                size = f.tell()
+                f.seek(max(size - max_bytes, 0), os.SEEK_SET)
+                data = f.read()
+            return data.decode("utf-8", errors="replace")
+        except OSError:
+            return ""
+
     def _wait_for_vllm_server(self, timeout: int = 300):
         """Wait for vLLM server to become ready with model loaded."""
         start = time.time()
@@ -561,9 +592,11 @@ class RSTrainer:
             
             # check if process died
             if self._vllm_process.poll() is not None:
-                # read output for debugging
-                output = self._vllm_process.stdout.read().decode() if self._vllm_process.stdout else ""
-                raise RuntimeError(f"vLLM server process died. Output:\n{output[-2000:]}")
+                output = self._read_vllm_log_tail()
+                raise RuntimeError(
+                    "vLLM server process died. Recent output:\n"
+                    f"{output}"
+                )
             
             time.sleep(2)
         
@@ -585,73 +618,76 @@ class RSTrainer:
     def _sync_weights_to_vllm(self):
         """
         Sync weights from the FSDP2 training model to vLLM server.
-        
-        Since vLLM's sleep/wake doesn't reload weights from disk, we:
+
         1. Save updated weights to /dev/shm checkpoint
-        2. Restart the vLLM server to pick up new weights
+        2. Call /collective_rpc with reload_weights to load new weights
+        3. Call /reset_prefix_cache to clear stale cache
         """
         logger.info("syncing weights to vLLM server...")
-        
+
         # save updated weights to checkpoint directory (in /dev/shm)
+        logger.info("saving weights to checkpoint...")
         self._save_weights_to_checkpoint()
-        
-        # restart server to pick up new weights
-        self._restart_vllm_server()
-        
-        logger.info("weight sync complete (server restarted)")
-    
-    def _restart_vllm_server(self):
-        """Restart vLLM server to reload weights from checkpoint."""
-        logger.info("restarting vLLM server to load updated weights...")
-        
-        # shutdown current server
-        if hasattr(self, '_vllm_process') and self._vllm_process.poll() is None:
-            self._vllm_process.terminate()
-            try:
-                self._vllm_process.wait(timeout=30)
-            except subprocess.TimeoutExpired:
-                self._vllm_process.kill()
-                self._vllm_process.wait(timeout=5)
-        
-        # find a new port (in case the old one is still in use)
-        import socket
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.bind(('', 0))
-            self._vllm_port = s.getsockname()[1]
-        
-        # rebuild server command
-        cmd = [
-            "python", "-m", "vllm.entrypoints.openai.api_server",
-            "--model", self._vllm_checkpoint_dir,
-            "--served-model-name", self._vllm_served_model_name,
-            "--port", str(self._vllm_port),
-            "--gpu-memory-utilization", str(self.vllm_gpu_memory_utilization),
-            "--max-model-len", str(self.max_seq_len),
-            "--seed", str(self.seed),
-            "--dtype", "bfloat16",
-            "--trust-remote-code",
-            "--disable-log-requests",
-            "--tensor-parallel-size", str(self.vllm_gpu_count),
-        ]
-        
-        # set environment
-        env = os.environ.copy()
-        env["CUDA_VISIBLE_DEVICES"] = self.vllm_gpus
-        
-        # start new server
-        self._vllm_process = subprocess.Popen(
-            cmd,
-            env=env,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-        )
-        
-        # update base URL and wait for server
-        self._vllm_base_url = f"http://localhost:{self._vllm_port}"
-        self._wait_for_vllm_server()
-        
-        logger.info("vLLM server restarted at %s", self._vllm_base_url)
-    
+        logger.info("weights saved to checkpoint")
+
+        # use sleep/wake API to reload weights (per vLLM docs)
+        # https://docs.vllm.ai/en/latest/features/sleep_mode/
+        # with data-parallel mode, these operations need to coordinate across all workers
+        # so we use a generous timeout (10 minutes) to avoid premature timeouts
+        timeout = httpx.Timeout(timeout=600.0, connect=30.0)
+
+        # brief delay to ensure any in-flight requests have completed
+        time.sleep(2)
+
+        with httpx.Client(timeout=timeout) as client:
+            # pause generation to abort in-flight requests and clear caches
+            logger.info("calling /pause...")
+            resp = client.post(
+                f"{self._vllm_base_url}/pause?wait_for_inflight_requests=false&clear_cache=true"
+            )
+            resp.raise_for_status()
+            logger.info("/pause complete")
+
+            # step 1: sleep level 2 - discard weights and KV cache
+            logger.info("calling /sleep?level=2 (this may take a while with data-parallel)...")
+            resp = client.post(f"{self._vllm_base_url}/sleep?level=2")
+            resp.raise_for_status()
+            logger.info("/sleep complete")
+
+            # step 2: wake_up weights only - reallocate weight memory
+            logger.info("calling /wake_up?tags=weights...")
+            resp = client.post(f"{self._vllm_base_url}/wake_up?tags=weights")
+            resp.raise_for_status()
+            logger.info("/wake_up weights complete")
+
+            # step 3: reload_weights - load new weights from checkpoint
+            logger.info("calling /collective_rpc reload_weights...")
+            resp = client.post(
+                f"{self._vllm_base_url}/collective_rpc",
+                json={"method": "reload_weights"}
+            )
+            resp.raise_for_status()
+            logger.info("/collective_rpc complete")
+
+            # step 4: wake_up kv_cache - reallocate KV cache memory
+            logger.info("calling /wake_up?tags=kv_cache...")
+            resp = client.post(f"{self._vllm_base_url}/wake_up?tags=kv_cache")
+            resp.raise_for_status()
+            logger.info("/wake_up kv_cache complete")
+
+            # step 5: reset prefix cache
+            logger.info("calling /reset_prefix_cache...")
+            resp = client.post(f"{self._vllm_base_url}/reset_prefix_cache")
+            resp.raise_for_status()
+            logger.info("/reset_prefix_cache complete")
+
+            logger.info("calling /resume...")
+            resp = client.post(f"{self._vllm_base_url}/resume")
+            resp.raise_for_status()
+            logger.info("/resume complete")
+
+        logger.info("weight sync complete")
+
     @torch.no_grad
     def _generate_rollouts(self) -> list[RejectionSample]:
         """Generate rollouts using vLLM server with async batched requests."""
@@ -661,122 +697,167 @@ class RSTrainer:
         return result
     
     async def _generate_rollouts_async(self) -> list[RejectionSample]:
-        """Async implementation of rollout generation with batched requests."""
+        """Async implementation of rollout generation using independent tasks."""
         collected_samples: list[RejectionSample] = []
-        
+
         # track statistics
         prompts_tried = 0
         total_completions = 0
         reward_counts = {0.0: 0, 0.1: 0, 1.1: 0}
-        
+
         pbar = tqdm(
-            total=self.samples_to_accept, 
+            total=self.samples_to_accept,
             desc="collecting rollouts",
             unit="samples",
         )
-        
+
         completions_url = f"{self._vllm_base_url}/v1/completions"
-        
-        async with httpx.AsyncClient(timeout=120) as client:
-            while len(collected_samples) < self.samples_to_accept:
-                # collect a batch of prompts
-                batch_size = min(
-                    self.inference_batch_size,
-                    self.samples_to_accept - len(collected_samples) + 10  # overfetch slightly
+
+        # track pending tasks
+        pending_tasks: set[asyncio.Task] = set()
+        max_concurrent = self.inference_batch_size  # max concurrent requests
+
+        def get_next_prompt_data() -> dict:
+            """Get next prompt from training iterator."""
+            nonlocal prompts_tried
+            sample = next(self.train_iterator)
+            prompt_ids = self.tokenizer.apply_chat_template(
+                sample["messages"],
+                add_generation_prompt=True,
+                return_tensors="pt"
+            ).squeeze(0).tolist()
+            prompt_text = self.tokenizer.decode(prompt_ids)
+            prompts_tried += 1
+            return {
+                "prompt_ids": prompt_ids,
+                "prompt_text": prompt_text,
+                "answer": sample["answer"],
+            }
+
+        async def generate_for_prompt(prompt_data: dict) -> list[RejectionSample]:
+            """Generate completions for a single prompt."""
+            request_body = {
+                "model": self._vllm_served_model_name,
+                "prompt": prompt_data["prompt_text"],
+                "max_tokens": self.max_new_tokens,
+                "temperature": self.temperature,
+                "top_p": self.top_p,
+                "n": self.inference_group_size,
+                "echo": False,
+            }
+            if self.top_k > 0:
+                request_body["top_k"] = self.top_k
+
+            # each request gets its own client to avoid connection issues
+            timeout = httpx.Timeout(timeout=60.0, connect=10.0)
+            try:
+                async with httpx.AsyncClient(timeout=timeout, http2=False) as client:
+                    resp = await client.post(completions_url, json=request_body)
+                    resp.raise_for_status()
+                    result = resp.json()
+            except Exception as e:
+                logger.warning("vLLM generation failed: %s: %s", type(e).__name__, e)
+                return []
+
+            completions = []
+            for choice in result.get("choices", []):
+                completion_text = choice.get("text", "")
+                completion_ids = self.tokenizer.encode(completion_text, add_special_tokens=False)
+
+                # truncate at EOS if present
+                try:
+                    eos_idx = completion_ids.index(self.tokenizer.eos_token_id) + 1
+                    completion_ids = completion_ids[:eos_idx]
+                    completion_text = self.tokenizer.decode(completion_ids)
+                except ValueError:
+                    pass
+
+                reward = reward_response(completion_text, prompt_data["answer"])
+
+                completions.append(
+                    RejectionSample(
+                        prompt_ids=prompt_data["prompt_ids"],
+                        response_ids=completion_ids,
+                        response=completion_text,
+                        reward=reward,
+                    )
                 )
-                
-                batch_data = []
-                for _ in range(batch_size):
-                    sample = next(self.train_iterator)
-                    prompt_ids = self.tokenizer.apply_chat_template(
-                        sample["messages"], 
-                        add_generation_prompt=True, 
-                        return_tensors="pt"
-                    ).squeeze(0).tolist()
-                    prompt_text = self.tokenizer.decode(prompt_ids)
-                    batch_data.append({
-                        "prompt_ids": prompt_ids,
-                        "prompt_text": prompt_text,
-                        "answer": sample["answer"],
-                    })
-                
-                prompts_tried += len(batch_data)
-                
-                # build request bodies for all prompts
-                async def generate_for_prompt(prompt_data: dict) -> list[RejectionSample]:
-                    """Generate completions for a single prompt."""
-                    request_body = {
-                        "model": self._vllm_served_model_name,
-                        "prompt": prompt_data["prompt_text"],
-                        "max_tokens": self.max_new_tokens,
-                        "temperature": self.temperature,
-                        "top_p": self.top_p,
-                        "n": self.inference_group_size,
-                        "echo": False,
-                    }
-                    if self.top_k > 0:
-                        request_body["top_k"] = self.top_k
-                    
-                    try:
-                        resp = await client.post(completions_url, json=request_body)
-                        resp.raise_for_status()
-                        result = resp.json()
-                    except Exception as e:
-                        logger.warning("vLLM generation failed for prompt: %s", e)
-                        return []
-                    
-                    completions = []
-                    for choice in result.get("choices", []):
-                        completion_text = choice.get("text", "")
-                        completion_ids = self.tokenizer.encode(completion_text, add_special_tokens=False)
-                        
-                        # truncate at EOS if present
-                        try:
-                            eos_idx = completion_ids.index(self.tokenizer.eos_token_id) + 1
-                            completion_ids = completion_ids[:eos_idx]
-                            completion_text = self.tokenizer.decode(completion_ids)
-                        except ValueError:
-                            pass
-                        
-                        reward = reward_response(completion_text, prompt_data["answer"])
-                        
-                        completions.append(
-                            RejectionSample(
-                                prompt_ids=prompt_data["prompt_ids"],
-                                response_ids=completion_ids,
-                                response=completion_text,
-                                reward=reward,
-                            )
-                        )
-                    
-                    return completions
-                
-                # send all requests concurrently
-                tasks = [generate_for_prompt(pd) for pd in batch_data]
-                batch_results = await asyncio.gather(*tasks)
-                
-                # process results
-                for completions in batch_results:
+
+            return completions
+
+        def process_completions(completions: list[RejectionSample]) -> RejectionSample | None:
+            """Process completions and return accepted sample if any."""
+            nonlocal total_completions
+
+            if not completions:
+                return None
+
+            total_completions += len(completions)
+
+            # update reward counts
+            for comp in completions:
+                reward_counts[comp.reward] = reward_counts.get(comp.reward, 0) + 1
+
+            # find best samples
+            max_reward = max(c.reward for c in completions)
+            best_samples = [c for c in completions if c.reward == max_reward > 0.0]
+
+            if not best_samples:
+                return None
+
+            elected_sample = random.choice(best_samples)
+
+            if self._should_accept_sample(max_reward):
+                return elected_sample
+            return None
+
+        # seed initial batch of tasks
+        for _ in range(max_concurrent):
+            prompt_data = get_next_prompt_data()
+            task = asyncio.create_task(generate_for_prompt(prompt_data))
+            pending_tasks.add(task)
+
+        logger.info("started %d concurrent requests to vLLM", len(pending_tasks))
+
+        # process tasks as they complete
+        while len(collected_samples) < self.samples_to_accept and pending_tasks:
+            # log when we're close to finishing (>90% done) to help debug hangs
+            if len(collected_samples) >= self.samples_to_accept * 0.9:
+                logger.info(
+                    "near completion: %d/%d samples, %d pending tasks",
+                    len(collected_samples), self.samples_to_accept, len(pending_tasks)
+                )
+            
+            # wait for at least one task to complete (with timeout to avoid indefinite hangs)
+            done, pending_tasks = await asyncio.wait(
+                pending_tasks,
+                return_when=asyncio.FIRST_COMPLETED,
+                timeout=120.0,
+            )
+            
+            # log when we're close to finishing
+            if len(collected_samples) >= self.samples_to_accept * 0.9:
+                logger.info("asyncio.wait returned: %d done, %d pending", len(done), len(pending_tasks))
+            
+            if not done:
+                logger.warning(
+                    "asyncio.wait timed out after 120s with %d pending tasks, %d/%d samples collected",
+                    len(pending_tasks), len(collected_samples), self.samples_to_accept
+                )
+                continue
+
+            # process completed tasks
+            accepted_this_round = 0
+            empty_results = 0
+            for task in done:
+                try:
+                    completions = task.result()
                     if not completions:
-                        continue
-                    
-                    total_completions += len(completions)
-                    
-                    # update reward counts
-                    for comp in completions:
-                        reward_counts[comp.reward] = reward_counts.get(comp.reward, 0) + 1
-                    
-                    # find best samples
-                    max_reward = max(c.reward for c in completions)
-                    best_samples = [c for c in completions if c.reward == max_reward > 0.0]
-                    
-                    if not best_samples:
-                        continue
-                    
-                    elected_sample = random.choice(best_samples)
-                    
-                    if self._should_accept_sample(max_reward):
-                        collected_samples.append(elected_sample)
+                        empty_results += 1
+                    accepted = process_completions(completions)
+                    if accepted:
+                        accepted_this_round += 1
+                        collected_samples.append(accepted)
                         pbar.update(1)
                         pbar.set_postfix({
                             "prompts": prompts_tried,
@@ -784,13 +865,35 @@ class RSTrainer:
                             "format_only": reward_counts.get(0.1, 0),
                             "no_reward": reward_counts.get(0.0, 0),
                         })
-                        
-                        # stop if we have enough
-                        if len(collected_samples) >= self.samples_to_accept:
-                            break
-        
+                except Exception as e:
+                    logger.warning("task failed with exception: %s", e)
+            
+            # warn if we're getting empty results near completion
+            if len(collected_samples) >= self.samples_to_accept * 0.9 and empty_results > 0:
+                logger.warning(
+                    "got %d empty results out of %d completed tasks (accepted %d)",
+                    empty_results, len(done), accepted_this_round
+                )
+
+            # replenish tasks if we need more samples
+            tasks_created = 0
+            while len(pending_tasks) < max_concurrent and len(collected_samples) < self.samples_to_accept:
+                prompt_data = get_next_prompt_data()
+                task = asyncio.create_task(generate_for_prompt(prompt_data))
+                pending_tasks.add(task)
+                tasks_created += 1
+            
+            if tasks_created > 0 and len(collected_samples) >= self.samples_to_accept * 0.9:
+                logger.info("replenished %d tasks, now %d pending", tasks_created, len(pending_tasks))
+
+        # cancel any remaining tasks
+        for task in pending_tasks:
+            task.cancel()
+        if pending_tasks:
+            await asyncio.gather(*pending_tasks, return_exceptions=True)
+
         pbar.close()
-        
+
         # log final summary
         logger.info(
             "rollout generation complete: %d samples from %d prompts (%d completions) | "
@@ -835,7 +938,10 @@ class RSTrainer:
 
         completions_url = f"{self._vllm_base_url}/v1/completions"
 
-        async with httpx.AsyncClient(timeout=120) as client:
+        # use longer timeout, disable HTTP/2 and keepalive for data parallel
+        timeout = httpx.Timeout(timeout=120.0, connect=10.0)
+        limits = httpx.Limits(max_connections=50, max_keepalive_connections=0, keepalive_expiry=0)
+        async with httpx.AsyncClient(timeout=timeout, limits=limits, http2=False) as client:
             # process in batches
             for i in range(0, len(self.validation_dataset), self.inference_batch_size):
                 batch = self.validation_dataset[i:i + self.inference_batch_size]
@@ -1168,6 +1274,14 @@ class RSTrainer:
                 logger.warning("vLLM server did not shutdown gracefully, killing...")
                 self._vllm_process.kill()
                 self._vllm_process.wait(timeout=5)
+
+        vllm_log_file = getattr(self, "_vllm_log_file", None)
+        if vllm_log_file is not None:
+            try:
+                vllm_log_file.close()
+            except OSError:
+                pass
+            self._vllm_log_file = None
         
         # cleanup /dev/shm checkpoint directory
         if hasattr(self, '_vllm_checkpoint_dir') and os.path.exists(self._vllm_checkpoint_dir):
