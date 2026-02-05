@@ -54,7 +54,7 @@ def create_fsdp2_muon_optimizer(
     except ImportError:
         raise ImportError("FSDP2 Muon requires the 'muon-fsdp2' package. Install with: pip install muon-fsdp2")
 
-    muon_params, adamw_params = get_muon_param_groups(model, muon_lr, adamw_lr, weight_decay)
+    muon_params, adamw_params = get_muon_param_groups(model)
 
     param_groups = []
 

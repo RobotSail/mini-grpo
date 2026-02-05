@@ -1939,9 +1939,11 @@ def rs_train(
     top_p: float = typer.Option(1.0, "--top-p", help="The proportion of the probability mass which we should consider for sampling."),
     top_k: int = typer.Option(0, "--top-k", help="sample only the top k highest probability tokens"),
     
-    # wandb run name
+    # wandb options
+    use_wandb: bool = typer.Option(False, "--wandb", help="Enable wandb logging"),
     wandb_project: str = typer.Option("gsm8k-comparison", "--wandb-project", help="Wandb project name"),
     wandb_run_name: str = typer.Option(None, "--wandb-run", help="Wandb run name (auto-generated if not set)"),
+    wandb_entity: str = typer.Option(None, "--wandb-entity", help="Wandb entity/team name"),
     
     seed: int = typer.Option(67, "--seed", help="Random seed"),
 
@@ -1953,7 +1955,10 @@ def rs_train(
 
     # device selection
     gpu: int = typer.Option(0, "--gpu", "-g", help="CUDA GPU index to use for training"),
-    vllm_gpu: int = typer.Option(1, "--vllm-gpu", help="CUDA GPU index to use for training"),
+    vllm_gpus: str = typer.Option("1", "--vllm-gpus", help="Comma-separated GPU indices for vLLM inference (e.g. '1,2,3' for data parallel)"),
+
+    # validation
+    validation_path: str = typer.Option(None, "--validation-path", help="Path to validation data (same schema as training)"),
 ):
     """
     Train a model with Rejection Sampling on the given dataset.
@@ -1977,8 +1982,10 @@ def rs_train(
         max_new_tokens=max_new_tokens,
         max_seq_len=max_seq_len,
         max_tokens_per_gpu=max_tokens_per_gpu,
+        use_wandb=use_wandb,
         wandb_project=wandb_project,
         wandb_run_name=wandb_run_name,
+        wandb_entity=wandb_entity,
         seed=seed,
         optimizer_type=optimizer_type,
         lr=lr,
@@ -1986,8 +1993,9 @@ def rs_train(
         beta2=beta2,
         weight_decay=wd,
         gpu=gpu,
-        vllm_gpu=vllm_gpu,
+        vllm_gpus=vllm_gpus,
         vllm_gpu_memory_utilization=0.9,
+        validation_path=validation_path,
     )
     # runs the training loop
     trainer.train()

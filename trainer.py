@@ -20,9 +20,18 @@ from torch.nn.utils.clip_grad import clip_grad_norm_
 import subprocess
 import time
 import httpx
+import asyncio
 import signal
 
 import logging
+
+# wandb import
+try:
+    import wandb
+    WANDB_AVAILABLE = True
+except ImportError:
+    WANDB_AVAILABLE = False
+    wandb = None
 
 class RejectionSample(pd.BaseModel):
     prompt_ids: list[int]
@@ -32,6 +41,9 @@ class RejectionSample(pd.BaseModel):
 
 # Create logger for trainer module
 logger = logging.getLogger(__name__)
+
+# Suppress httpx HTTP request logs
+logging.getLogger("httpx").setLevel(logging.WARNING)
 
 # Regex pattern to match <answer>...</answer> tags
 answer_pattern = re.compile(r"<answer>(.*?)</answer>", re.DOTALL | re.IGNORECASE)
@@ -127,11 +139,20 @@ class StatsTracker:
         self._train_tokens_seen = 0
         self._last_checkpoint_save = 0
         self._inference_iteration = 0
-    
+        self._optim_steps = 0
+
     def reset(self):
         self._train_tokens_seen = 0
         self._last_checkpoint_save = 0
         self._inference_iteration = 0
+        self._optim_steps = 0
+
+    def increment_optim_step(self):
+        self._optim_steps += 1
+
+    @property
+    def optim_steps(self) -> int:
+        return self._optim_steps
         
     def accumulate_tokens(self, tokens: int):
         self._train_tokens_seen += tokens
@@ -254,8 +275,10 @@ class RSTrainer:
         max_new_tokens: int,
         max_seq_len: int,
         max_tokens_per_gpu: int,
+        use_wandb: bool,
         wandb_project: str,
         wandb_run_name: str,
+        wandb_entity: str,
         seed: int,
         optimizer_type: str,
         lr: float,
@@ -264,8 +287,10 @@ class RSTrainer:
         weight_decay: float,
         # device configuration
         gpu: int = 0,
-        vllm_gpu: int = 1,
+        vllm_gpus: str = "1",  # comma-separated GPU IDs for vLLM data parallel
         vllm_gpu_memory_utilization: float = 0.9,
+        # validation
+        validation_path: str = None,
     ):
 
         # first we must set the seed
@@ -290,7 +315,7 @@ class RSTrainer:
         self.output_dir = output_dir
         self.top_k = top_k
         self.top_p = top_p
-
+        self.use_wandb = use_wandb
 
         # check basic validation
         if self.output_dir and not self._valid_save_dir(self.output_dir):
@@ -299,8 +324,14 @@ class RSTrainer:
         # then we load the training dataset
         self.training_dataset = datasets.load_dataset("json", data_files=data_path, split="train")
         self._train_iterator = None
-    
+
         logger.info('loaded %d unique samples for training from %s', len(self.training_dataset), data_path)
+
+        # load validation dataset if provided
+        self.validation_dataset = None
+        if validation_path:
+            self.validation_dataset = datasets.load_dataset("json", data_files=validation_path, split="train")
+            logger.info('loaded %d validation samples from %s', len(self.validation_dataset), validation_path)
 
         # next we load the model
         self.device = torch.device('cuda', gpu)
@@ -342,29 +373,31 @@ class RSTrainer:
         
 
         # next we load wandb and populate whatever we need
-        run_config = {
-            "model_name": model_name,
-            "token_train_budget": token_budget,
-            "samples_to_accept": samples_to_accept,
-            "inference_batch_size": inference_batch_size,
-            "group_size": inference_group_size,
-            "inner_batch_size": inner_batch_size,
-            "inner_epochs": inner_epochs,
-            "lr": lr,
-            "max_new_tokens": max_new_tokens,
-            "max_seq_len": max_seq_len,
-            "temperature": temperature,
-            "optimizer": optimizer,
-            "max_tokens_per_microbatch": max_tokens_per_gpu,
-            "save_every_n_tokens": save_every_n_tokens,
-            "beta1": beta1,
-            "beta2": beta2,
-            "wd": weight_decay,
-        }
-        utils.initialize_wandb(wandb_project, wandb_run_name, run_config)
+        if self.use_wandb:
+            run_config = {
+                "model_name": model_name,
+                "token_train_budget": token_budget,
+                "samples_to_accept": samples_to_accept,
+                "inference_batch_size": inference_batch_size,
+                "group_size": inference_group_size,
+                "inner_batch_size": inner_batch_size,
+                "inner_epochs": inner_epochs,
+                "lr": lr,
+                "max_new_tokens": max_new_tokens,
+                "max_seq_len": max_seq_len,
+                "temperature": temperature,
+                "optimizer": optimizer_type,
+                "max_tokens_per_microbatch": max_tokens_per_gpu,
+                "save_every_n_tokens": save_every_n_tokens,
+                "beta1": beta1,
+                "beta2": beta2,
+                "wd": weight_decay,
+            }
+            utils.initialize_wandb(wandb_project, wandb_run_name, run_config, entity=wandb_entity)
 
-        # initialize vllm for fast inference on a separate GPU
-        self.vllm_gpu = vllm_gpu
+        # initialize vllm for fast inference on separate GPU(s)
+        self.vllm_gpus = vllm_gpus  # comma-separated string like "1,2,3"
+        self.vllm_gpu_count = len(vllm_gpus.split(","))
         self.vllm_gpu_memory_utilization = vllm_gpu_memory_utilization
         self._start_vllm_server()
         
@@ -376,15 +409,80 @@ class RSTrainer:
         
         return self._train_iterator
 
-    def _start_vllm_server(self, model_path: str | None = None):
+    def _setup_vllm_checkpoint_dir(self):
         """
-        Start vLLM as an OpenAI-compatible server on a dedicated GPU.
+        Set up a shared memory directory for fast weight syncing with vLLM.
         
-        Args:
-            model_path: Path to model weights. If None, uses self.model_name.
+        Uses /dev/shm for fast read/write operations.
+        Returns the path to the checkpoint directory.
         """
-        model_to_load = model_path or self.model_name
-        logger.info("starting vLLM server on GPU %d with model %s...", self.vllm_gpu, model_to_load)
+        import uuid
+        # use /dev/shm for fast IO
+        shm_base = "/dev/shm"
+        checkpoint_dir = os.path.join(shm_base, f"vllm_checkpoint_{uuid.uuid4().hex[:8]}")
+        os.makedirs(checkpoint_dir, exist_ok=True)
+        self._vllm_checkpoint_dir = checkpoint_dir
+        
+        # save initial model config and tokenizer
+        from transformers import AutoConfig
+        config = AutoConfig.from_pretrained(self.model_name)
+        config.save_pretrained(checkpoint_dir)
+        self.tokenizer.save_pretrained(checkpoint_dir)
+        
+        # save initial weights
+        self._save_weights_to_checkpoint()
+        
+        logger.info("vLLM checkpoint directory: %s", checkpoint_dir)
+        return checkpoint_dir
+    
+    def _save_weights_to_checkpoint(self):
+        """
+        Save current policy weights to the vLLM checkpoint directory.
+        
+        Saves as safetensors with proper index file for vLLM to load.
+        """
+        from safetensors.torch import save_file
+        import json
+        
+        state_dict = self._get_policy_state_dict()
+        
+        # move to CPU for saving
+        state_dict_cpu = {k: v.cpu() for k, v in state_dict.items()}
+        
+        # save weights as safetensors
+        safetensors_path = os.path.join(self._vllm_checkpoint_dir, "model.safetensors")
+        save_file(state_dict_cpu, safetensors_path)
+        
+        # create safetensors index file
+        weight_map = {name: "model.safetensors" for name in state_dict_cpu.keys()}
+        total_size = sum(t.numel() * t.element_size() for t in state_dict_cpu.values())
+        
+        index = {
+            "metadata": {"total_size": total_size},
+            "weight_map": weight_map,
+        }
+        
+        index_path = os.path.join(self._vllm_checkpoint_dir, "model.safetensors.index.json")
+        with open(index_path, "w") as f:
+            json.dump(index, f, indent=2)
+        
+        logger.debug("saved weights to %s (%d params, %.2f MB)", 
+                     safetensors_path, len(state_dict_cpu), total_size / 1024 / 1024)
+    
+    def _start_vllm_server(self):
+        """
+        Start vLLM as an OpenAI-compatible server on dedicated GPU(s).
+        
+        Enables sleep mode for efficient weight reloading without server restart.
+        Supports data parallel mode with multiple GPUs via tensor parallelism.
+        """
+        # set up checkpoint directory in shared memory
+        checkpoint_dir = self._setup_vllm_checkpoint_dir()
+        
+        logger.info(
+            "starting vLLM server on GPU(s) %s (tp=%d) with checkpoint %s...", 
+            self.vllm_gpus, self.vllm_gpu_count, checkpoint_dir
+        )
         
         # find an available port
         import socket
@@ -392,10 +490,14 @@ class RSTrainer:
             s.bind(('', 0))
             self._vllm_port = s.getsockname()[1]
         
+        # use a consistent model name for API requests
+        self._vllm_served_model_name = "policy"
+        
         # build server command
         cmd = [
             "python", "-m", "vllm.entrypoints.openai.api_server",
-            "--model", model_to_load,
+            "--model", checkpoint_dir,
+            "--served-model-name", self._vllm_served_model_name,
             "--port", str(self._vllm_port),
             "--gpu-memory-utilization", str(self.vllm_gpu_memory_utilization),
             "--max-model-len", str(self.max_seq_len),
@@ -403,11 +505,12 @@ class RSTrainer:
             "--dtype", "bfloat16",
             "--trust-remote-code",
             "--disable-log-requests",
+            "--tensor-parallel-size", str(self.vllm_gpu_count),
         ]
         
-        # set environment to isolate GPU
+        # set environment to isolate GPUs
         env = os.environ.copy()
-        env["CUDA_VISIBLE_DEVICES"] = str(self.vllm_gpu)
+        env["CUDA_VISIBLE_DEVICES"] = self.vllm_gpus
         
         # start server process
         self._vllm_process = subprocess.Popen(
@@ -425,19 +528,34 @@ class RSTrainer:
         self._vllm_base_url = f"http://localhost:{self._vllm_port}"
         self._wait_for_vllm_server()
         
-        logger.info("vLLM server ready at %s on GPU %d", self._vllm_base_url, self.vllm_gpu)
+        logger.info("vLLM server ready at %s on GPU(s) %s", self._vllm_base_url, self.vllm_gpus)
     
     def _wait_for_vllm_server(self, timeout: int = 300):
-        """Wait for vLLM server to become ready."""
+        """Wait for vLLM server to become ready with model loaded."""
         start = time.time()
         health_url = f"{self._vllm_base_url}/health"
+        models_url = f"{self._vllm_base_url}/v1/models"
+        
+        health_ok = False
         
         while time.time() - start < timeout:
             try:
-                with httpx.Client(timeout=5) as client:
-                    resp = client.get(health_url)
-                    if resp.status_code == 200:
-                        return
+                with httpx.Client(timeout=10) as client:
+                    # first check health endpoint
+                    if not health_ok:
+                        resp = client.get(health_url)
+                        if resp.status_code == 200:
+                            health_ok = True
+                            logger.debug("vLLM health check passed")
+                    
+                    # then check if model is loaded via /v1/models
+                    if health_ok:
+                        resp = client.get(models_url)
+                        if resp.status_code == 200:
+                            models = resp.json().get("data", [])
+                            if models:
+                                logger.debug("vLLM model loaded: %s", [m.get("id") for m in models])
+                                return
             except (httpx.ConnectError, httpx.ReadTimeout):
                 pass
             
@@ -468,46 +586,82 @@ class RSTrainer:
         """
         Sync weights from the FSDP2 training model to vLLM server.
         
-        Since vLLM server doesn't support online weight updates, we:
-        1. Save current weights to a checkpoint
-        2. Shutdown the old server
-        3. Start a new server with the updated weights
+        Since vLLM's sleep/wake doesn't reload weights from disk, we:
+        1. Save updated weights to /dev/shm checkpoint
+        2. Restart the vLLM server to pick up new weights
         """
         logger.info("syncing weights to vLLM server...")
         
-        # create checkpoint directory for vLLM
-        vllm_checkpoint_dir = os.path.join(self.output_dir or "/tmp", "vllm_checkpoint")
-        os.makedirs(vllm_checkpoint_dir, exist_ok=True)
+        # save updated weights to checkpoint directory (in /dev/shm)
+        self._save_weights_to_checkpoint()
         
-        # get state dict from FSDP2 model
-        state_dict = self._get_policy_state_dict()
+        # restart server to pick up new weights
+        self._restart_vllm_server()
         
-        # save in HuggingFace format so vLLM can load it
-        from transformers import AutoConfig
-        config = AutoConfig.from_pretrained(self.model_name)
-        config.save_pretrained(vllm_checkpoint_dir)
-        self.tokenizer.save_pretrained(vllm_checkpoint_dir)
+        logger.info("weight sync complete (server restarted)")
+    
+    def _restart_vllm_server(self):
+        """Restart vLLM server to reload weights from checkpoint."""
+        logger.info("restarting vLLM server to load updated weights...")
         
-        # save model weights
-        torch.save(state_dict, os.path.join(vllm_checkpoint_dir, "pytorch_model.bin"))
+        # shutdown current server
+        if hasattr(self, '_vllm_process') and self._vllm_process.poll() is None:
+            self._vllm_process.terminate()
+            try:
+                self._vllm_process.wait(timeout=30)
+            except subprocess.TimeoutExpired:
+                self._vllm_process.kill()
+                self._vllm_process.wait(timeout=5)
         
-        # also save as safetensors for faster loading
-        try:
-            from safetensors.torch import save_file
-            save_file(state_dict, os.path.join(vllm_checkpoint_dir, "model.safetensors"))
-        except ImportError:
-            pass  # safetensors not available, pytorch_model.bin will be used
+        # find a new port (in case the old one is still in use)
+        import socket
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.bind(('', 0))
+            self._vllm_port = s.getsockname()[1]
         
-        # restart server with new weights
-        self._shutdown_vllm_server()
-        self._start_vllm_server(model_path=vllm_checkpoint_dir)
+        # rebuild server command
+        cmd = [
+            "python", "-m", "vllm.entrypoints.openai.api_server",
+            "--model", self._vllm_checkpoint_dir,
+            "--served-model-name", self._vllm_served_model_name,
+            "--port", str(self._vllm_port),
+            "--gpu-memory-utilization", str(self.vllm_gpu_memory_utilization),
+            "--max-model-len", str(self.max_seq_len),
+            "--seed", str(self.seed),
+            "--dtype", "bfloat16",
+            "--trust-remote-code",
+            "--disable-log-requests",
+            "--tensor-parallel-size", str(self.vllm_gpu_count),
+        ]
         
-        logger.info("weight sync complete (server restarted with updated weights)")
+        # set environment
+        env = os.environ.copy()
+        env["CUDA_VISIBLE_DEVICES"] = self.vllm_gpus
+        
+        # start new server
+        self._vllm_process = subprocess.Popen(
+            cmd,
+            env=env,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+        )
+        
+        # update base URL and wait for server
+        self._vllm_base_url = f"http://localhost:{self._vllm_port}"
+        self._wait_for_vllm_server()
+        
+        logger.info("vLLM server restarted at %s", self._vllm_base_url)
     
     @torch.no_grad
     def _generate_rollouts(self) -> list[RejectionSample]:
-        """Generate rollouts using vLLM server for fast inference."""
+        """Generate rollouts using vLLM server with async batched requests."""
         self.policy.eval()
+        result = asyncio.run(self._generate_rollouts_async())
+        logger.debug("_generate_rollouts returning %d samples", len(result))
+        return result
+    
+    async def _generate_rollouts_async(self) -> list[RejectionSample]:
+        """Async implementation of rollout generation with batched requests."""
         collected_samples: list[RejectionSample] = []
         
         # track statistics
@@ -521,89 +675,119 @@ class RSTrainer:
             unit="samples",
         )
         
-        # create HTTP client for vLLM server
         completions_url = f"{self._vllm_base_url}/v1/completions"
         
-        with httpx.Client(timeout=120) as client:
+        async with httpx.AsyncClient(timeout=120) as client:
             while len(collected_samples) < self.samples_to_accept:
-                sample = next(self.train_iterator)
-                prompts_tried += 1
+                # collect a batch of prompts
+                batch_size = min(
+                    self.inference_batch_size,
+                    self.samples_to_accept - len(collected_samples) + 10  # overfetch slightly
+                )
                 
-                # prepare prompt for vLLM
-                prompt_ids = self.tokenizer.apply_chat_template(
-                    sample["messages"], 
-                    add_generation_prompt=True, 
-                    return_tensors="pt"
-                ).squeeze(0).tolist()
-                prompt_text = self.tokenizer.decode(prompt_ids)
-                
-                # call vLLM server API
-                request_body = {
-                    "model": self.model_name,
-                    "prompt": prompt_text,
-                    "max_tokens": self.max_new_tokens,
-                    "temperature": self.temperature,
-                    "top_p": self.top_p,
-                    "n": self.inference_group_size,
-                    "echo": False,
-                }
-                if self.top_k > 0:
-                    request_body["top_k"] = self.top_k
-                
-                try:
-                    resp = client.post(completions_url, json=request_body)
-                    resp.raise_for_status()
-                    result = resp.json()
-                except Exception as e:
-                    logger.warning("vLLM generation failed: %s", e)
-                    continue
-                
-                completions: list[RejectionSample] = []
-                max_reward = 0.0
-                
-                for choice in result.get("choices", []):
-                    completion_text = choice.get("text", "")
-                    completion_ids = self.tokenizer.encode(completion_text, add_special_tokens=False)
-                    total_completions += 1
-                    
-                    # truncate at EOS if present
-                    try:
-                        eos_idx = completion_ids.index(self.tokenizer.eos_token_id) + 1
-                        completion_ids = completion_ids[:eos_idx]
-                        completion_text = self.tokenizer.decode(completion_ids)
-                    except ValueError:
-                        pass
-                    
-                    reward = reward_response(completion_text, sample["answer"])
-                    reward_counts[reward] = reward_counts.get(reward, 0) + 1
-                    max_reward = max(reward, max_reward)
-                    
-                    completions.append(
-                        RejectionSample(
-                            prompt_ids=prompt_ids,
-                            response_ids=completion_ids,
-                            response=completion_text,
-                            reward=reward,
-                        )
-                    )
-
-                best_samples = [c for c in completions if c.reward == max_reward > 0.0]
-                if not best_samples:
-                    continue
-
-                elected_sample = random.choice(best_samples)
-                accept = self._should_accept_sample(max_reward)
-
-                if accept:
-                    collected_samples.append(elected_sample)
-                    pbar.update(1)
-                    # update postfix with reward stats
-                    pbar.set_postfix({
-                        "prompts": prompts_tried,
-                        "correct": reward_counts.get(1.1, 0),
-                        "format_only": reward_counts.get(0.1, 0),
-                        "no_reward": reward_counts.get(0.0, 0),
+                batch_data = []
+                for _ in range(batch_size):
+                    sample = next(self.train_iterator)
+                    prompt_ids = self.tokenizer.apply_chat_template(
+                        sample["messages"], 
+                        add_generation_prompt=True, 
+                        return_tensors="pt"
+                    ).squeeze(0).tolist()
+                    prompt_text = self.tokenizer.decode(prompt_ids)
+                    batch_data.append({
+                        "prompt_ids": prompt_ids,
+                        "prompt_text": prompt_text,
+                        "answer": sample["answer"],
                     })
+                
+                prompts_tried += len(batch_data)
+                
+                # build request bodies for all prompts
+                async def generate_for_prompt(prompt_data: dict) -> list[RejectionSample]:
+                    """Generate completions for a single prompt."""
+                    request_body = {
+                        "model": self._vllm_served_model_name,
+                        "prompt": prompt_data["prompt_text"],
+                        "max_tokens": self.max_new_tokens,
+                        "temperature": self.temperature,
+                        "top_p": self.top_p,
+                        "n": self.inference_group_size,
+                        "echo": False,
+                    }
+                    if self.top_k > 0:
+                        request_body["top_k"] = self.top_k
+                    
+                    try:
+                        resp = await client.post(completions_url, json=request_body)
+                        resp.raise_for_status()
+                        result = resp.json()
+                    except Exception as e:
+                        logger.warning("vLLM generation failed for prompt: %s", e)
+                        return []
+                    
+                    completions = []
+                    for choice in result.get("choices", []):
+                        completion_text = choice.get("text", "")
+                        completion_ids = self.tokenizer.encode(completion_text, add_special_tokens=False)
+                        
+                        # truncate at EOS if present
+                        try:
+                            eos_idx = completion_ids.index(self.tokenizer.eos_token_id) + 1
+                            completion_ids = completion_ids[:eos_idx]
+                            completion_text = self.tokenizer.decode(completion_ids)
+                        except ValueError:
+                            pass
+                        
+                        reward = reward_response(completion_text, prompt_data["answer"])
+                        
+                        completions.append(
+                            RejectionSample(
+                                prompt_ids=prompt_data["prompt_ids"],
+                                response_ids=completion_ids,
+                                response=completion_text,
+                                reward=reward,
+                            )
+                        )
+                    
+                    return completions
+                
+                # send all requests concurrently
+                tasks = [generate_for_prompt(pd) for pd in batch_data]
+                batch_results = await asyncio.gather(*tasks)
+                
+                # process results
+                for completions in batch_results:
+                    if not completions:
+                        continue
+                    
+                    total_completions += len(completions)
+                    
+                    # update reward counts
+                    for comp in completions:
+                        reward_counts[comp.reward] = reward_counts.get(comp.reward, 0) + 1
+                    
+                    # find best samples
+                    max_reward = max(c.reward for c in completions)
+                    best_samples = [c for c in completions if c.reward == max_reward > 0.0]
+                    
+                    if not best_samples:
+                        continue
+                    
+                    elected_sample = random.choice(best_samples)
+                    
+                    if self._should_accept_sample(max_reward):
+                        collected_samples.append(elected_sample)
+                        pbar.update(1)
+                        pbar.set_postfix({
+                            "prompts": prompts_tried,
+                            "correct": reward_counts.get(1.1, 0),
+                            "format_only": reward_counts.get(0.1, 0),
+                            "no_reward": reward_counts.get(0.0, 0),
+                        })
+                        
+                        # stop if we have enough
+                        if len(collected_samples) >= self.samples_to_accept:
+                            break
         
         pbar.close()
         
@@ -619,6 +803,17 @@ class RSTrainer:
             100 * reward_counts.get(0.0, 0) / max(total_completions, 1),
         )
 
+        # log rollout metrics to wandb
+        if self.use_wandb and WANDB_AVAILABLE:
+            wandb.log({
+                "rollout/samples_collected": len(collected_samples),
+                "rollout/prompts_tried": prompts_tried,
+                "rollout/total_completions": total_completions,
+                "rollout/correct_rate": reward_counts.get(1.1, 0) / max(total_completions, 1),
+                "rollout/format_only_rate": reward_counts.get(0.1, 0) / max(total_completions, 1),
+                "rollout/no_reward_rate": reward_counts.get(0.0, 0) / max(total_completions, 1),
+            }, step=self.stats_tracker.optim_steps)
+
         return collected_samples
     
     def _should_accept_sample(self, max_reward: float) -> bool:
@@ -628,7 +823,99 @@ class RSTrainer:
         elif random.random() * 1.1 <= 0.1:  # accept subpar with probability 0.1/1.1
             return True
         return False
-    
+
+    async def _run_validation_async(self) -> dict:
+        """Async validation using vLLM server."""
+        if not self.validation_dataset:
+            return {}
+
+        correct = 0
+        parsable = 0
+        total = 0
+
+        completions_url = f"{self._vllm_base_url}/v1/completions"
+
+        async with httpx.AsyncClient(timeout=120) as client:
+            # process in batches
+            for i in range(0, len(self.validation_dataset), self.inference_batch_size):
+                batch = self.validation_dataset[i:i + self.inference_batch_size]
+
+                # prepare prompts
+                requests = []
+                for j in range(len(batch["messages"])):
+                    prompt_ids = self.tokenizer.apply_chat_template(
+                        batch["messages"][j],
+                        add_generation_prompt=True,
+                        return_tensors="pt"
+                    ).squeeze(0).tolist()
+                    prompt_text = self.tokenizer.decode(prompt_ids)
+                    requests.append({
+                        "prompt_text": prompt_text,
+                        "answer": batch["answer"][j],
+                    })
+
+                # generate completions (n=1 per prompt)
+                async def generate_one(req):
+                    body = {
+                        "model": self._vllm_served_model_name,
+                        "prompt": req["prompt_text"],
+                        "max_tokens": self.max_new_tokens,
+                        "temperature": self.temperature,
+                        "n": 1,
+                    }
+                    resp = await client.post(completions_url, json=body)
+                    resp.raise_for_status()
+                    return resp.json(), req["answer"]
+
+                results = await asyncio.gather(*[generate_one(r) for r in requests])
+
+                for result, answer in results:
+                    completion = result["choices"][0]["text"]
+                    reward = reward_response(completion, answer)
+                    total += 1
+                    if reward >= 0.1:
+                        parsable += 1
+                    if reward == 1.1:
+                        correct += 1
+
+        return {
+            "correct_rate": correct / max(total, 1),
+            "format_rate": parsable / max(total, 1),
+            "total_samples": total,
+        }
+
+    def _run_validation(self) -> dict:
+        """Sync wrapper for async validation."""
+        if not self.validation_dataset:
+            return {}
+
+        logger.info("running validation on %d samples...", len(self.validation_dataset))
+        self.policy.eval()
+        try:
+            return asyncio.run(self._run_validation_async())
+        finally:
+            self.policy.train()
+
+    def _save_policy_checkpoint(self):
+        """Save policy model checkpoint to output directory."""
+        if not self.output_dir:
+            return
+
+        checkpoint_name = f"checkpoint-{self.stats_tracker.train_tokens_seen}"
+        checkpoint_path = os.path.join(self.output_dir, checkpoint_name)
+
+        logger.info("saving checkpoint to %s...", checkpoint_path)
+        os.makedirs(checkpoint_path, exist_ok=True)
+
+        # get full state dict from FSDP2 model
+        state_dict = self._get_policy_state_dict()
+
+        # save model and tokenizer
+        self.policy.save_pretrained(checkpoint_path, state_dict=state_dict)
+        self.tokenizer.save_pretrained(checkpoint_path)
+
+        logger.info("checkpoint saved: %s", checkpoint_path)
+
     @staticmethod
     def _collate_samples(batch: list[RejectionSample], max_tokens_per_gpu: int):
         """
@@ -653,18 +940,23 @@ class RSTrainer:
                 "num_tokens": len(input_ids),
             })
  
-        # now collate them into microbathes
+        # now collate them into microbatches
         total_loss_tokens = sum(s["num_loss_tokens"] for s in processed_samples)
         total_tokens = sum(s["num_tokens"] for s in processed_samples)
         microbatches = []
         current_microbatch = []
         for sample in processed_samples:
             # make sure not to exceed max tokens per gpu
-            if sum(s["num_tokens"] for s in current_microbatch) + sample["num_tokens"] > max_tokens_per_gpu:  # collate so we don't OOM
-                microbatches.append(current_microbatch)
+            if sum(s["num_tokens"] for s in current_microbatch) + sample["num_tokens"] > max_tokens_per_gpu:
+                if current_microbatch:
+                    microbatches.append(current_microbatch)
                 current_microbatch = []
             current_microbatch.append(sample)
- 
+        
+        # don't forget the last microbatch
+        if current_microbatch:
+            microbatches.append(current_microbatch)
+
         # now we collate
         final_microbatches = []
         for mb in microbatches:
@@ -688,6 +980,7 @@ class RSTrainer:
     @torch.no_grad()
     def _optimizer_step(self, num_loss_tokens: int):
         self.stats_tracker.accumulate_tokens(num_loss_tokens)
+        self.stats_tracker.increment_optim_step()
         # clip gradnorm
         gradnorm = clip_grad_norm_(self.policy.parameters(), max_norm=1.0)
         self.optimizer.step()
@@ -710,11 +1003,13 @@ class RSTrainer:
                 batch_size=self.inner_batch_size,
                 shuffle=True,
                 collate_fn=_collate_fn,
-                generator=torch.Generator(self.device).manual_seed(self.seed + epoch),
+                generator=torch.Generator(device="cuda").manual_seed(self.seed + epoch),
             )
             for batch in train_loader:
                 total_loss_tokens = batch["num_loss_tokens"]
                 total_loss = 0.0
+                total_kl_div = 0.0
+                kl_token_count = 0
                 for mb in batch["microbatches"]:
                     input_ids = mb["input_ids"].to(self.device)
                     labels = mb["labels"].to(self.device)
@@ -729,18 +1024,68 @@ class RSTrainer:
 
                     # cross-entropy and we do our own reduction
                     logger.info(f"obtained loss: {loss.item():,.4f}")
-                    
+
                     # fsdp2 averages by world size so we multiply the loss to get rid of the average
                     loss *= dist.get_world_size()
                     assert dist.get_world_size() == 1  # in our case it should be fine since we expect it to be a world size of 1 though
                     loss.backward()
                     total_loss += loss.detach().item()
 
-                    # TODO: add KL divergence term here
+                    # Compute KL divergence for logging (policy vs reference)
+                    with torch.no_grad():
+                        # Get reference model logits
+                        ref_output = self.ref_policy(input_ids=input_ids, position_ids=position_ids)
+
+                        # Compute log probabilities for the target tokens
+                        # Shift logits to align with labels (next token prediction)
+                        policy_logits = output.logits.squeeze(0)  # (seq_len, vocab)
+                        ref_logits = ref_output.logits.squeeze(0)  # (seq_len, vocab)
+
+                        # Get log probs for the actual tokens
+                        policy_logprobs = F.log_softmax(policy_logits, dim=-1)
+                        ref_logprobs = F.log_softmax(ref_logits, dim=-1)
+
+                        # Gather log probs for the label tokens
+                        # Create mask for valid labels (labels != -100)
+                        valid_mask = labels.squeeze(0) != -100
+                        if valid_mask.any():
+                            valid_labels = labels.squeeze(0)[valid_mask]
+                            valid_policy_logprobs = policy_logprobs[valid_mask]
+                            valid_ref_logprobs = ref_logprobs[valid_mask]
+
+                            # Gather the log probs for the specific tokens
+                            policy_token_logprobs = valid_policy_logprobs.gather(1, valid_labels.unsqueeze(-1)).squeeze(-1)
+                            ref_token_logprobs = valid_ref_logprobs.gather(1, valid_labels.unsqueeze(-1)).squeeze(-1)
+
+                            # Approximate KL divergence: exp(ref - policy) - (ref - policy) - 1
+                            log_diff = (ref_token_logprobs - policy_token_logprobs).clamp(-20, 20)
+                            kl_approx = log_diff.exp() - log_diff - 1
+                            kl_approx = kl_approx.clamp(min=0, max=100)
+
+                            total_kl_div += kl_approx.sum().item()
+                            kl_token_count += valid_mask.sum().item()
 
                 # finally we would backprop here
                 gradnorm = self._optimizer_step(total_loss_tokens)
-                logger.info('loss: %s, gradnorm: %s', total_loss, gradnorm)
+                avg_kl_div = total_kl_div / max(kl_token_count, 1)
+                logger.info(
+                    'loss: %.4f | gradnorm: %.4f | kl_div: %.4f | tokens: %d/%d',
+                    total_loss,
+                    gradnorm.item() if hasattr(gradnorm, 'item') else gradnorm,
+                    avg_kl_div,
+                    self.stats_tracker.train_tokens_seen,
+                    self.stats_tracker.token_training_budget
+                )
+
+                # log to wandb
+                if self.use_wandb and WANDB_AVAILABLE:
+                    wandb.log({
+                        "train/loss": total_loss,
+                        "train/grad_norm": gradnorm.item() if hasattr(gradnorm, 'item') else gradnorm,
+                        "train/kl_divergence": avg_kl_div,
+                        "train/optim_step": self.stats_tracker.optim_steps,
+                        "train/tokens_trained": self.stats_tracker.train_tokens_seen,
+                    }, step=self.stats_tracker.optim_steps)
 
 
 
@@ -751,47 +1096,84 @@ class RSTrainer:
         """
         Rejection sampling training loop with vLLM for fast inference.
         
-        vLLM runs as a separate server on its own GPU:
-        1. Generate rollouts with vLLM server
+        vLLM runs as a separate server on its own GPU(s):
+        1. Generate rollouts with vLLM server (async batched)
         2. Train policy model on training GPU
         3. Sync updated weights to vLLM (restarts server with new weights)
         """
-        logger.info('starting training on cuda:%d (vLLM server on cuda:%d)', self.device.index, self.vllm_gpu)
+        logger.info('starting training on cuda:%d (vLLM server on GPU(s) %s)', self.device.index, self.vllm_gpus)
         self.stats_tracker.reset()
         self.policy.eval()
 
         while not self.stats_tracker.completed_training():
             # generate rollouts with vLLM server
+            logger.info("generating rollouts...")
             rollouts = self._generate_rollouts()
+            logger.info("rollouts generated: %d samples", len(rollouts))
 
             # train the policy model
+            logger.info("starting policy training...")
             self._train_policy(rollouts)
-            
-            # sync updated weights to vLLM (restarts server)
+            logger.info("policy training complete")
+
+            # check if checkpoint is due
+            if self.stats_tracker.should_save() and self.stats_tracker.checkpoint_frequency > 0:
+                # run validation before saving checkpoint
+                if self.validation_dataset is not None:
+                    val_metrics = self._run_validation()
+                    logger.info(
+                        'validation: correct=%.1f%%, format=%.1f%% (%d samples)',
+                        val_metrics.get('correct_rate', 0) * 100,
+                        val_metrics.get('format_rate', 0) * 100,
+                        val_metrics.get('total_samples', 0)
+                    )
+
+                    if self.use_wandb and WANDB_AVAILABLE:
+                        wandb.log({
+                            "val/correct_rate": val_metrics.get('correct_rate', 0),
+                            "val/format_rate": val_metrics.get('format_rate', 0),
+                            "val/total_samples": val_metrics.get('total_samples', 0),
+                        }, step=self.stats_tracker.optim_steps)
+
+                # save checkpoint
+                self._save_policy_checkpoint()
+                self.stats_tracker.mark_checkpointed()
+
+            # sync updated weights to vLLM (via sleep/wake for fast reload)
+            logger.info("syncing weights...")
             self._sync_weights_to_vllm()
+            logger.info("weight sync complete")
         
         logger.info('completed training')
-        
+
+        # finish wandb run
+        if self.use_wandb and WANDB_AVAILABLE:
+            wandb.finish()
+            logger.info("Wandb run finished")
+
         # cleanup vLLM server
         self._shutdown_vllm_server()
     
     def _shutdown_vllm_server(self):
-        """Gracefully shutdown the vLLM server."""
-        if not hasattr(self, '_vllm_process'):
-            return
-        if self._vllm_process.poll() is not None:
-            return  # already terminated
+        """Gracefully shutdown the vLLM server and cleanup checkpoint directory."""
+        # shutdown server process
+        if hasattr(self, '_vllm_process') and self._vllm_process.poll() is None:
+            logger.info("shutting down vLLM server...")
             
-        logger.info("shutting down vLLM server...")
+            # send SIGTERM for graceful shutdown
+            self._vllm_process.terminate()
+            try:
+                self._vllm_process.wait(timeout=30)
+            except subprocess.TimeoutExpired:
+                logger.warning("vLLM server did not shutdown gracefully, killing...")
+                self._vllm_process.kill()
+                self._vllm_process.wait(timeout=5)
         
-        # send SIGTERM for graceful shutdown
-        self._vllm_process.terminate()
-        try:
-            self._vllm_process.wait(timeout=30)
-        except subprocess.TimeoutExpired:
-            logger.warning("vLLM server did not shutdown gracefully, killing...")
-            self._vllm_process.kill()
-            self._vllm_process.wait(timeout=5)
+        # cleanup /dev/shm checkpoint directory
+        if hasattr(self, '_vllm_checkpoint_dir') and os.path.exists(self._vllm_checkpoint_dir):
+            import shutil
+            logger.info("cleaning up vLLM checkpoint directory: %s", self._vllm_checkpoint_dir)
+            shutil.rmtree(self._vllm_checkpoint_dir, ignore_errors=True)
             
 
 

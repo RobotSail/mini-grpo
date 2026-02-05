@@ -18,13 +18,14 @@ try:
 except ImportError as IE:
     pass
 
-def initialize_wandb(project: str, run_name: str, config: dict):
+def initialize_wandb(project: str, run_name: str, config: dict, entity: str = None):
     if not WANDB_AVAILABLE:
         typer.secho("Warning: wandb is not installed. Install with 'pip install wandb'", fg=typer.colors.YELLOW)
         raise ValueError("Warning: wandb is not installed. Install with 'pip install wandb'")
 
     wandb.init(
         project=project,
+        entity=entity,
         name=run_name,
         config=config,
     )
