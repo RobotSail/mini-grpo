@@ -37,26 +37,37 @@ from transformers import AutoModelForCausalLM
 
 BASELINE_MODEL = "Qwen/Qwen2-1.5B-Instruct"
 
+# Fixed budget checkpoints at ~1.1M tokens for fair comparison
 EXPERIMENTS = {
     "adamw_sft": {
-        "path": "/mnt/nvme2n1/checkpoints/qwen2-1.5b-gsm8k-sft-adamw_verify_1/hf_format/samples_15796.0_tokens_1501867",
+        "path": "/mnt/nvme2n1/checkpoints/verify-exps-variable-seeds/qwen2-1.5b-gsm8k-sft-adamw_verify_1_fp32/hf_format/samples_11098.0_tokens_1053913",
         "label": "AdamW + SFT",
         "color": "#1f77b4",
     },
     "muon_sft": {
-        "path": "/mnt/nvme2n1/checkpoints/qwen2-1.5b-gsm8k-sft-muon_verify_1/hf_format/samples_22158.0_tokens_2104838",
+        "path": "/mnt/nvme2n1/checkpoints/verify-exps-variable-seeds/qwen2-1.5b-gsm8k-sft-muon_verify_1_fp32/hf_format/samples_11098.0_tokens_1053913",
         "label": "Muon + SFT",
         "color": "#ff7f0e",
     },
     "adamw_grpo": {
-        "path": "/mnt/nvme2n1/checkpoints/qwen2-1.5b-gsm8k-grpo-adamw_verify_1/tokens_1812776",
+        "path": "/mnt/nvme2n1/checkpoints/verify-exps-variable-seeds/qwen2-1.5b-gsm8k-grpo-adamw_verify_1/tokens_1055958",
         "label": "AdamW + GRPO",
         "color": "#2ca02c",
     },
     "muon_grpo": {
-        "path": "/mnt/nvme2n1/checkpoints/qwen2-1.5b-gsm8k-grpo-muon_verify_1/tokens_1363556",
+        "path": "/mnt/nvme2n1/checkpoints/verify-exps-variable-seeds/qwen2-1.5b-gsm8k-grpo-muon_verify_1/tokens_1066148",
         "label": "Muon + GRPO",
         "color": "#d62728",
+    },
+    "adamw_rs": {
+        "path": "/mnt/nvme2n1/checkpoints/rs-train-exps/qwen2-1.5b-gsm8k-rs-adamw/checkpoint-1083102",
+        "label": "AdamW + RS",
+        "color": "#9467bd",
+    },
+    "muon_rs": {
+        "path": "/mnt/nvme2n1/checkpoints/rs-train-exps/qwen2-1.5b-gsm8k-rs-muon/checkpoint-1075660",
+        "label": "Muon + RS",
+        "color": "#8c564b",
     },
 }
 
@@ -563,7 +574,10 @@ def plot_rank_and_magnitude_by_component(
 
 def plot_spectral_decay(all_results: dict, component: str, output_path: Path):
     """Plot singular value decay curves (log scale) for a component type."""
-    fig, axes = plt.subplots(2, 2, figsize=(14, 12))
+    n_exp = len(EXPERIMENTS)
+    n_cols = 3
+    n_rows = (n_exp + n_cols - 1) // n_cols
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=(6 * n_cols, 5 * n_rows))
     axes = axes.flatten()
 
     # Sample layers
@@ -592,6 +606,10 @@ def plot_spectral_decay(all_results: dict, component: str, output_path: Path):
         ax.legend(loc="upper right", fontsize=9)
         ax.grid(True, alpha=0.3)
 
+    # Hide unused axes
+    for idx in range(len(EXPERIMENTS), len(axes)):
+        axes[idx].set_visible(False)
+
     plt.suptitle(
         f"Spectral Decay of Weight Updates: {component}\n"
         r"$\sigma_i(\Delta W)$ where $\Delta W = W_{exp} - W_{base}$",
@@ -605,7 +623,10 @@ def plot_spectral_decay(all_results: dict, component: str, output_path: Path):
 
 def plot_cumulative_energy(all_results: dict, component: str, output_path: Path):
     """Plot cumulative energy curves for a component type."""
-    fig, axes = plt.subplots(2, 2, figsize=(14, 12))
+    n_exp = len(EXPERIMENTS)
+    n_cols = 3
+    n_rows = (n_exp + n_cols - 1) // n_cols
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=(6 * n_cols, 5 * n_rows))
     axes = axes.flatten()
 
     sample_layers = [2, 13, 25]
@@ -639,6 +660,10 @@ def plot_cumulative_energy(all_results: dict, component: str, output_path: Path)
         ax.set_xlim(0, 200)
         ax.set_ylim(0, 1.05)
 
+    # Hide unused axes
+    for idx in range(len(EXPERIMENTS), len(axes)):
+        axes[idx].set_visible(False)
+
     plt.suptitle(
         f"Cumulative Energy of Weight Updates: {component}\n"
         r"$\sum_{j=1}^{k} \sigma_j^2(\Delta W) \;/\; \|\Delta W\|_F^2$",
@@ -660,7 +685,10 @@ def plot_component_heatmap(df: pd.DataFrame, metric: str, title: str, output_pat
     layer_df = df[(df["layer"] >= 0) & (df["layer"] < 28)].copy()
     layer_df = layer_df[layer_df["component"].isin(COMPONENT_ORDER)]
 
-    fig, axes = plt.subplots(2, 2, figsize=(14, 12))
+    n_exp = len(EXPERIMENTS)
+    n_cols = 3
+    n_rows = (n_exp + n_cols - 1) // n_cols
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=(6 * n_cols, 5 * n_rows))
     axes = axes.flatten()
 
     vmin = layer_df[metric].min()
@@ -677,6 +705,10 @@ def plot_component_heatmap(df: pd.DataFrame, metric: str, title: str, output_pat
         ax.set_title(exp_config["label"])
         ax.set_xlabel("Component")
         ax.set_ylabel("Layer")
+
+    # Hide unused axes
+    for idx in range(n_exp, len(axes)):
+        axes[idx].set_visible(False)
 
     plt.suptitle(title, fontsize=14, fontweight="bold")
     plt.tight_layout()
@@ -1025,7 +1057,10 @@ def plot_condition_number_diff_heatmap(df: pd.DataFrame, output_path: Path):
     layer_df = df[(df["layer"] >= 0) & (df["layer"] < 28)].copy()
     layer_df = layer_df[layer_df["component"].isin(COMPONENT_ORDER)]
 
-    fig, axes = plt.subplots(2, 2, figsize=(14, 12))
+    n_exp = len(EXPERIMENTS)
+    n_cols = 3
+    n_rows = (n_exp + n_cols - 1) // n_cols
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=(6 * n_cols, 5 * n_rows))
     axes = axes.flatten()
 
     # Symmetric color scale around 0
@@ -1053,6 +1088,10 @@ def plot_condition_number_diff_heatmap(df: pd.DataFrame, output_path: Path):
         ax.set_title(exp_config["label"])
         ax.set_xlabel("Component")
         ax.set_ylabel("Layer")
+
+    # Hide unused axes
+    for idx in range(n_exp, len(axes)):
+        axes[idx].set_visible(False)
 
     plt.suptitle(
         r"Condition Number Change: $\log_{10}(\kappa_{exp} / \kappa_{base})$ by Layer and Component",
@@ -1309,6 +1348,285 @@ def plot_optimizer_scatter(df: pd.DataFrame, metric: str, title: str, output_pat
     ax.grid(True, alpha=0.3)
     ax.set_aspect("equal", adjustable="box")
 
+    plt.tight_layout()
+    plt.savefig(output_path, dpi=150, bbox_inches="tight")
+    plt.close(fig)
+
+
+# =============================================================================
+# SPARSITY ANALYSIS: sparsity(θ₀, θ_f) = 1 - ||θ_f - θ₀||₀ / n
+# =============================================================================
+
+
+def compute_param_sparsity(base_w: torch.Tensor, exp_w: torch.Tensor) -> dict:
+    """Compute sparsity of the update ΔW = W_exp - W_base.
+
+    sparsity = 1 - ||ΔW||₀ / n
+    where ||ΔW||₀ counts non-zero elements and n is total elements.
+
+    Computes both full-precision (float32) and bfloat16 sparsity.
+    Full-precision captures all changes; bfloat16 captures changes
+    that survive inference-time quantization.
+    """
+    n = base_w.numel()
+
+    # Full precision (float32)
+    delta_fp32 = exp_w.float() - base_w.float()
+    n_changed_fp32 = torch.count_nonzero(delta_fp32).item()
+
+    # bfloat16 precision (inference-time)
+    delta_bf16 = exp_w.bfloat16() - base_w.bfloat16()
+    n_changed_bf16 = torch.count_nonzero(delta_bf16).item()
+
+    return {
+        "n_params": n,
+        "n_changed": n_changed_fp32,
+        "n_unchanged": n - n_changed_fp32,
+        "sparsity": 1.0 - n_changed_fp32 / n,
+        "n_changed_bf16": n_changed_bf16,
+        "n_unchanged_bf16": n - n_changed_bf16,
+        "sparsity_bf16": 1.0 - n_changed_bf16 / n,
+    }
+
+
+def compute_all_sparsity(
+    baseline_weights: dict[str, torch.Tensor],
+    exp_name: str,
+    exp_path: str,
+    device: torch.device,
+    cache_dir: Path | None,
+) -> dict:
+    """Compute sparsity for all parameters between baseline and experiment."""
+    if cache_dir:
+        cache_path = cache_dir / f"sparsity_{exp_name}.json"
+        if cache_path.exists():
+            print(f"  Loaded cached sparsity: {exp_name}")
+            with open(cache_path) as f:
+                return json.load(f)
+
+    print(f"  Computing sparsity: {exp_name}")
+    exp_weights = load_weights(exp_path, device)
+
+    common_params = set(baseline_weights.keys()) & set(exp_weights.keys())
+
+    result = {"experiment": exp_name, "parameters": {}}
+    total_params = 0
+    total_changed = 0
+    total_changed_bf16 = 0
+
+    for param_name in sorted(common_params):
+        base_w = baseline_weights[param_name]
+        exp_w = exp_weights[param_name]
+
+        metrics = compute_param_sparsity(base_w, exp_w)
+        result["parameters"][param_name] = metrics
+        total_params += metrics["n_params"]
+        total_changed += metrics["n_changed"]
+        total_changed_bf16 += metrics["n_changed_bf16"]
+
+    result["total_params"] = total_params
+    result["total_changed"] = total_changed
+    result["total_sparsity"] = 1.0 - total_changed / total_params if total_params > 0 else 0.0
+    result["total_changed_bf16"] = total_changed_bf16
+    result["total_sparsity_bf16"] = 1.0 - total_changed_bf16 / total_params if total_params > 0 else 0.0
+
+    del exp_weights
+    torch.cuda.empty_cache()
+
+    if cache_dir:
+        cache_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(cache_path, "w") as f:
+            json.dump(result, f)
+
+    return result
+
+
+def build_sparsity_dataframe(all_sparsity: dict[str, dict]) -> pd.DataFrame:
+    """Build DataFrame with sparsity metrics for visualization."""
+    rows = []
+
+    for exp_name, result in all_sparsity.items():
+        for param_name, data in result["parameters"].items():
+            parsed = parse_param_name(param_name)
+            if parsed is None:
+                continue
+
+            rows.append({
+                "experiment": exp_name,
+                "experiment_label": EXPERIMENTS[exp_name]["label"],
+                **parsed,
+                **data,
+            })
+
+    return pd.DataFrame(rows)
+
+
+def plot_overall_sparsity(
+    all_sparsity: dict[str, dict], output_path: Path, bf16: bool = False, show_changed: bool = False,
+):
+    """Plot overall sparsity (or % changed) for each experiment as a bar chart."""
+    fig, ax = plt.subplots(figsize=(10, 6))
+
+    key = "total_sparsity_bf16" if bf16 else "total_sparsity"
+    precision_label = "bfloat16" if bf16 else "full precision"
+
+    exp_names = list(EXPERIMENTS.keys())
+    labels = [EXPERIMENTS[e]["label"] for e in exp_names]
+    colors = [EXPERIMENTS[e]["color"] for e in exp_names]
+
+    if show_changed:
+        values = [(1.0 - all_sparsity[e][key]) * 100 for e in exp_names]
+        ylabel = "Parameters Changed (%)"
+        title = (
+            r"Parameters Changed: $\|\theta_f - \theta_0\|_0 / n$"
+            + f"\n({precision_label})"
+        )
+    else:
+        values = [all_sparsity[e][key] * 100 for e in exp_names]
+        ylabel = "Sparsity (%)"
+        title = (
+            r"Update Sparsity: $1 - \|\theta_f - \theta_0\|_0 / n$"
+            + f"\n(fraction of parameters unchanged, {precision_label})"
+        )
+
+    bars = ax.bar(range(len(exp_names)), values, color=colors, alpha=0.8, edgecolor="black", linewidth=0.5)
+
+    for bar, val in zip(bars, values):
+        ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.5,
+                f"{val:.1f}%", ha="center", va="bottom", fontsize=10)
+
+    ax.set_xticks(range(len(exp_names)))
+    ax.set_xticklabels(labels, rotation=30, ha="right")
+    ax.set_ylabel(ylabel)
+    ax.set_title(title)
+    ax.grid(axis="y", alpha=0.3)
+    ax.set_ylim(0, max(values) * 1.15 if max(values) > 0 else 10)
+
+    plt.tight_layout()
+    plt.savefig(output_path, dpi=150, bbox_inches="tight")
+    plt.close(fig)
+
+
+def plot_sparsity_by_layer(df: pd.DataFrame, output_path: Path, bf16: bool = False, show_changed: bool = False):
+    """Plot sparsity (or % changed) by layer for all experiments."""
+    metric = "sparsity_bf16" if bf16 else "sparsity"
+    precision_label = "bfloat16" if bf16 else "full precision"
+    layer_df = df[(df["layer"] >= 0) & (df["layer"] < 28)].copy()
+    agg_df = layer_df.groupby(["experiment", "layer"])[metric].mean().reset_index()
+    if show_changed:
+        agg_df["sparsity_pct"] = (1.0 - agg_df[metric]) * 100
+    else:
+        agg_df["sparsity_pct"] = agg_df[metric] * 100
+
+    fig, ax = plt.subplots(figsize=(16, 6))
+
+    n_experiments = len(EXPERIMENTS)
+    n_layers = 28
+    width = 0.8 / n_experiments
+    x = np.arange(n_layers)
+
+    for i, (exp_name, exp_config) in enumerate(EXPERIMENTS.items()):
+        exp_data = agg_df[agg_df["experiment"] == exp_name].set_index("layer")["sparsity_pct"]
+        values = [exp_data.get(l, 0) for l in range(n_layers)]
+        offset = (i - n_experiments / 2 + 0.5) * width
+        ax.bar(x + offset, values, width, label=exp_config["label"], color=exp_config["color"], alpha=0.8)
+
+    ax.set_xlabel("Layer Index")
+    if show_changed:
+        ax.set_ylabel("Parameters Changed (%)")
+        ax.set_title(r"Parameters Changed by Layer: $\|\Delta W\|_0 / n$" + f" ({precision_label})")
+    else:
+        ax.set_ylabel("Sparsity (%)")
+        ax.set_title(r"Update Sparsity by Layer: $1 - \|\Delta W\|_0 / n$" + f" ({precision_label})")
+    ax.set_xticks(x)
+    ax.set_xticklabels(x)
+    ax.legend(loc="upper right")
+    ax.grid(axis="y", alpha=0.3)
+
+    plt.tight_layout()
+    plt.savefig(output_path, dpi=150, bbox_inches="tight")
+    plt.close(fig)
+
+
+def plot_sparsity_by_component(df: pd.DataFrame, output_path: Path, bf16: bool = False, show_changed: bool = False):
+    """Plot sparsity (or % changed) by component for all experiments."""
+    metric = "sparsity_bf16" if bf16 else "sparsity"
+    precision_label = "bfloat16" if bf16 else "full precision"
+    layer_df = df[(df["layer"] >= 0) & (df["layer"] < 28)].copy()
+    layer_df = layer_df[layer_df["component"].isin(COMPONENT_ORDER)]
+    agg_df = layer_df.groupby(["experiment", "component"])[metric].mean().reset_index()
+    if show_changed:
+        agg_df["sparsity_pct"] = (1.0 - agg_df[metric]) * 100
+    else:
+        agg_df["sparsity_pct"] = agg_df[metric] * 100
+
+    fig, ax = plt.subplots(figsize=(12, 6))
+
+    n_experiments = len(EXPERIMENTS)
+    n_components = len(COMPONENT_ORDER)
+    width = 0.8 / n_experiments
+    x = np.arange(n_components)
+
+    for i, (exp_name, exp_config) in enumerate(EXPERIMENTS.items()):
+        exp_data = agg_df[agg_df["experiment"] == exp_name].set_index("component")["sparsity_pct"]
+        values = [exp_data.get(c, 0) for c in COMPONENT_ORDER]
+        offset = (i - n_experiments / 2 + 0.5) * width
+        ax.bar(x + offset, values, width, label=exp_config["label"], color=exp_config["color"], alpha=0.8)
+
+    ax.set_xlabel("Component Type")
+    if show_changed:
+        ax.set_ylabel("Parameters Changed (%)")
+        ax.set_title(r"Parameters Changed by Component: $\|\Delta W\|_0 / n$" + f" ({precision_label})")
+    else:
+        ax.set_ylabel("Sparsity (%)")
+        ax.set_title(r"Update Sparsity by Component: $1 - \|\Delta W\|_0 / n$" + f" ({precision_label})")
+    ax.set_xticks(x)
+    ax.set_xticklabels(COMPONENT_ORDER, rotation=45, ha="right")
+    ax.legend(loc="upper right")
+    ax.grid(axis="y", alpha=0.3)
+
+    plt.tight_layout()
+    plt.savefig(output_path, dpi=150, bbox_inches="tight")
+    plt.close(fig)
+
+
+def plot_sparsity_heatmap(df: pd.DataFrame, output_path: Path, bf16: bool = False):
+    """Plot heatmaps of sparsity by layer x component for each experiment."""
+    metric = "sparsity_bf16" if bf16 else "sparsity"
+    precision_label = "bfloat16" if bf16 else "full precision"
+    layer_df = df[(df["layer"] >= 0) & (df["layer"] < 28)].copy()
+    layer_df = layer_df[layer_df["component"].isin(COMPONENT_ORDER)]
+    layer_df["sparsity_pct"] = layer_df[metric] * 100
+
+    n_exp = len(EXPERIMENTS)
+    n_cols = 3
+    n_rows = (n_exp + n_cols - 1) // n_cols
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=(6 * n_cols, 5 * n_rows))
+    axes = axes.flatten()
+
+    vmin = layer_df["sparsity_pct"].min()
+    vmax = layer_df["sparsity_pct"].max()
+
+    for idx, (exp_name, exp_config) in enumerate(EXPERIMENTS.items()):
+        ax = axes[idx]
+        exp_df = layer_df[layer_df["experiment"] == exp_name]
+
+        pivot = exp_df.pivot_table(index="layer", columns="component", values="sparsity_pct", aggfunc="mean")
+        pivot = pivot.reindex(columns=[c for c in COMPONENT_ORDER if c in pivot.columns])
+
+        sns.heatmap(pivot, ax=ax, cmap="YlGn", vmin=vmin, vmax=vmax, cbar_kws={"label": "Sparsity (%)"})
+        ax.set_title(exp_config["label"])
+        ax.set_xlabel("Component")
+        ax.set_ylabel("Layer")
+
+    for idx in range(n_exp, len(axes)):
+        axes[idx].set_visible(False)
+
+    plt.suptitle(
+        r"Update Sparsity: $1 - \|\Delta W\|_0 / n$ by Layer and Component"
+        + f" ({precision_label})",
+        fontsize=14, fontweight="bold",
+    )
     plt.tight_layout()
     plt.savefig(output_path, dpi=150, bbox_inches="tight")
     plt.close(fig)
@@ -1597,6 +1915,40 @@ def main():
     plot_condition_number_diff_by_layer(cond_diff_df, output_dir / "condition_number_diff_by_layer.png")
     plot_condition_number_diff_by_component(cond_diff_df, output_dir / "condition_number_diff_by_component.png")
     plot_condition_number_diff_heatmap(cond_diff_df, output_dir / "heatmap_condition_number_diff.png")
+
+    # Sparsity analysis: 1 - ||θ_f - θ_0||_0 / n
+    print("  - Sparsity analysis...")
+    all_sparsity = {}
+    for exp_name, exp_config in EXPERIMENTS.items():
+        all_sparsity[exp_name] = compute_all_sparsity(
+            baseline_weights, exp_name, exp_config["path"], device, cache_dir,
+        )
+        total_s = all_sparsity[exp_name]["total_sparsity"]
+        print(f"    {exp_config['label']}: {total_s:.4%} unchanged params")
+
+    sparsity_df = build_sparsity_dataframe(all_sparsity)
+    sparsity_path = output_dir / "sparsity.csv"
+    sparsity_df.to_csv(sparsity_path, index=False)
+    print(f"    Saved sparsity to: {sparsity_path}")
+
+    plot_overall_sparsity(all_sparsity, output_dir / "sparsity_overall.png")
+    plot_sparsity_by_layer(sparsity_df, output_dir / "sparsity_by_layer.png")
+    plot_sparsity_by_component(sparsity_df, output_dir / "sparsity_by_component.png")
+    plot_sparsity_heatmap(sparsity_df, output_dir / "heatmap_sparsity.png")
+
+    print("  - Sparsity analysis (bfloat16 precision)...")
+    plot_overall_sparsity(all_sparsity, output_dir / "sparsity_overall_bf16.png", bf16=True)
+    plot_sparsity_by_layer(sparsity_df, output_dir / "sparsity_by_layer_bf16.png", bf16=True)
+    plot_sparsity_by_component(sparsity_df, output_dir / "sparsity_by_component_bf16.png", bf16=True)
+    plot_sparsity_heatmap(sparsity_df, output_dir / "heatmap_sparsity_bf16.png", bf16=True)
+
+    print("  - Parameters changed plots...")
+    plot_overall_sparsity(all_sparsity, output_dir / "changed_overall.png", show_changed=True)
+    plot_sparsity_by_layer(sparsity_df, output_dir / "changed_by_layer.png", show_changed=True)
+    plot_sparsity_by_component(sparsity_df, output_dir / "changed_by_component.png", show_changed=True)
+    plot_overall_sparsity(all_sparsity, output_dir / "changed_overall_bf16.png", bf16=True, show_changed=True)
+    plot_sparsity_by_layer(sparsity_df, output_dir / "changed_by_layer_bf16.png", bf16=True, show_changed=True)
+    plot_sparsity_by_component(sparsity_df, output_dir / "changed_by_component_bf16.png", bf16=True, show_changed=True)
 
     # Summary
     summary = {

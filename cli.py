@@ -2165,6 +2165,9 @@ def sft_train(
         seed=seed,
         use_liger=use_liger,
         nproc_per_node=num_gpus,
+
+        # Ensures training saves FP32 checkpoints
+        save_dtype='float32',
         **optional_kwargs,
     )
 

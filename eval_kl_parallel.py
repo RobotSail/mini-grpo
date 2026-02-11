@@ -231,6 +231,11 @@ def get_checkpoint_dirs(base_path: str) -> list[Path]:
                 return int(name.split("tokens_")[-1])
             except ValueError:
                 return 0
+        elif name.startswith("checkpoint-"):
+            try:
+                return int(name.split("-")[1])
+            except ValueError:
+                return 0
         return 0
 
     return sorted(checkpoint_dirs, key=get_tokens)
@@ -279,6 +284,11 @@ def worker_evaluate_checkpoint(args: tuple) -> tuple[str, dict]:
     if "tokens_" in ckpt_name:
         try:
             tokens = int(ckpt_name.split("tokens_")[-1])
+        except ValueError:
+            pass
+    elif ckpt_name.startswith("checkpoint-"):
+        try:
+            tokens = int(ckpt_name.split("-")[1])
         except ValueError:
             pass
 

@@ -28,6 +28,7 @@ def get_step_from_path(path: Path | str, include_parent: bool = False) -> tuple[
     - *_step_N (e.g., checkpoint_step_121)
     - tokens_N (e.g., tokens_100000)
     - *_tokens_N (e.g., checkpoint_tokens_100000)
+    - checkpoint-N (e.g., checkpoint-150943) - token count
 
     Args:
         path: Path to checkpoint
@@ -63,6 +64,10 @@ def get_step_from_path(path: Path | str, include_parent: bool = False) -> tuple[
     elif "_tokens_" in name:
         tokens = int(name.split("_tokens_")[1])
         return tokens, f"{parent_prefix}tokens_{tokens}"
+    # checkpoint-N format (rejection sampling)
+    elif name.startswith("checkpoint-"):
+        tokens = int(name.split("-")[1])
+        return tokens, f"{parent_prefix}checkpoint-{tokens}"
     else:
         return 0, f"{parent_prefix}{name}"
 
@@ -82,7 +87,7 @@ def get_checkpoint_dirs(base_path: str) -> list[Path | str]:
     if (base / "config.json").exists():
         return [base]
 
-    # Find checkpoint directories (step-based or token-based)
+    # Find checkpoint directories (step-based, token-based, or checkpoint-N format)
     checkpoint_dirs = []
     for d in base.iterdir():
         if not d.is_dir():
@@ -90,7 +95,8 @@ def get_checkpoint_dirs(base_path: str) -> list[Path | str]:
         name = d.name
         is_step_ckpt = name.startswith("step_") or "_step_" in name
         is_token_ckpt = name.startswith("tokens_") or "_tokens_" in name
-        if is_step_ckpt or is_token_ckpt:
+        is_checkpoint_ckpt = name.startswith("checkpoint-")
+        if is_step_ckpt or is_token_ckpt or is_checkpoint_ckpt:
             checkpoint_dirs.append(d)
 
     def get_sort_key(path: Path) -> int:
@@ -104,6 +110,8 @@ def get_checkpoint_dirs(base_path: str) -> list[Path | str]:
             return int(name.split("_")[1])
         elif "_tokens_" in name:
             return int(name.split("_tokens_")[1])
+        elif name.startswith("checkpoint-"):
+            return int(name.split("-")[1])
         return 0
 
     checkpoint_dirs = sorted(checkpoint_dirs, key=get_sort_key)

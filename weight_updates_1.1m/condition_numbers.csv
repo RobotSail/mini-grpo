@@ -1,0 +1,1382 @@
+experiment,experiment_label,layer,component,type,param_name,condition_number,log_condition_number
+baseline,Baseline,-1,embed,embed,model.embed_tokens.weight,69.18641058154057,1.840020799817734
+baseline,Baseline,0,down_proj,mlp,model.layers.0.mlp.down_proj.weight,10.546793843948734,1.0231204570268504
+baseline,Baseline,0,gate_proj,mlp,model.layers.0.mlp.gate_proj.weight,50.790417231602824,1.7057817804725928
+baseline,Baseline,0,up_proj,mlp,model.layers.0.mlp.up_proj.weight,30.557746350661454,1.4851213216457155
+baseline,Baseline,0,k_proj,attn,model.layers.0.self_attn.k_proj.weight,18.73935745084044,1.2727546953917528
+baseline,Baseline,0,o_proj,attn,model.layers.0.self_attn.o_proj.weight,38555.79005042446,4.5860896067223305
+baseline,Baseline,0,q_proj,attn,model.layers.0.self_attn.q_proj.weight,184976.8751259078,5.267117438495178
+baseline,Baseline,0,v_proj,attn,model.layers.0.self_attn.v_proj.weight,7.7755061789352835,0.8907286708259358
+baseline,Baseline,1,down_proj,mlp,model.layers.1.mlp.down_proj.weight,8.998430005007657,0.9541667428126436
+baseline,Baseline,1,gate_proj,mlp,model.layers.1.mlp.gate_proj.weight,33.91668364456576,1.5304133805753164
+baseline,Baseline,1,up_proj,mlp,model.layers.1.mlp.up_proj.weight,37.735381088331756,1.5767487402747837
+baseline,Baseline,1,k_proj,attn,model.layers.1.self_attn.k_proj.weight,30.087513316132128,1.4783862954931877
+baseline,Baseline,1,o_proj,attn,model.layers.1.self_attn.o_proj.weight,49034.98587834326,4.69050605456297
+baseline,Baseline,1,q_proj,attn,model.layers.1.self_attn.q_proj.weight,1074758.1049613138,6.031310728901119
+baseline,Baseline,1,v_proj,attn,model.layers.1.self_attn.v_proj.weight,3.341969736117407,0.5240025127336974
+baseline,Baseline,10,down_proj,mlp,model.layers.10.mlp.down_proj.weight,13.491719978091211,1.1300673187881523
+baseline,Baseline,10,gate_proj,mlp,model.layers.10.mlp.gate_proj.weight,16.210019773701827,1.2097835446205294
+baseline,Baseline,10,up_proj,mlp,model.layers.10.mlp.up_proj.weight,8.538043575643336,0.9313583669838746
+baseline,Baseline,10,k_proj,attn,model.layers.10.self_attn.k_proj.weight,24.034098760920294,1.380827841442923
+baseline,Baseline,10,o_proj,attn,model.layers.10.self_attn.o_proj.weight,15508.710116684786,4.190575678374446
+baseline,Baseline,10,q_proj,attn,model.layers.10.self_attn.q_proj.weight,12813.850813777506,4.107679663379084
+baseline,Baseline,10,v_proj,attn,model.layers.10.self_attn.v_proj.weight,3.2994636012714755,0.5184433417134044
+baseline,Baseline,11,down_proj,mlp,model.layers.11.mlp.down_proj.weight,16.054627449194015,1.2056002321300818
+baseline,Baseline,11,gate_proj,mlp,model.layers.11.mlp.gate_proj.weight,13.225697438590451,1.1214185832210095
+baseline,Baseline,11,up_proj,mlp,model.layers.11.mlp.up_proj.weight,6.605510357941471,0.8199063779043859
+baseline,Baseline,11,k_proj,attn,model.layers.11.self_attn.k_proj.weight,21.610944081803808,1.334673739607074
+baseline,Baseline,11,o_proj,attn,model.layers.11.self_attn.o_proj.weight,139258.46738802953,5.143821611228874
+baseline,Baseline,11,q_proj,attn,model.layers.11.self_attn.q_proj.weight,28543.812668067454,4.455511982447586
+baseline,Baseline,11,v_proj,attn,model.layers.11.self_attn.v_proj.weight,2.8678401021237847,0.45755493336215697
+baseline,Baseline,12,down_proj,mlp,model.layers.12.mlp.down_proj.weight,14.145448240851502,1.1506167139311512
+baseline,Baseline,12,gate_proj,mlp,model.layers.12.mlp.gate_proj.weight,18.888272791501652,1.276192246359339
+baseline,Baseline,12,up_proj,mlp,model.layers.12.mlp.up_proj.weight,8.061255117094625,0.9064026656253801
+baseline,Baseline,12,k_proj,attn,model.layers.12.self_attn.k_proj.weight,20.867707840632306,1.3194747477316944
+baseline,Baseline,12,o_proj,attn,model.layers.12.self_attn.o_proj.weight,102000.14319866779,5.008600781471207
+baseline,Baseline,12,q_proj,attn,model.layers.12.self_attn.q_proj.weight,14798.684955393119,4.170223124719901
+baseline,Baseline,12,v_proj,attn,model.layers.12.self_attn.v_proj.weight,2.550671517667282,0.40665453260036144
+baseline,Baseline,13,down_proj,mlp,model.layers.13.mlp.down_proj.weight,30.005646690345184,1.4772029912428208
+baseline,Baseline,13,gate_proj,mlp,model.layers.13.mlp.gate_proj.weight,12.316046719506732,1.090471327680453
+baseline,Baseline,13,up_proj,mlp,model.layers.13.mlp.up_proj.weight,6.311217662216599,0.8001131584459681
+baseline,Baseline,13,k_proj,attn,model.layers.13.self_attn.k_proj.weight,41.906820743475016,1.6222847143786157
+baseline,Baseline,13,o_proj,attn,model.layers.13.self_attn.o_proj.weight,9641.296136551193,3.9841354226074945
+baseline,Baseline,13,q_proj,attn,model.layers.13.self_attn.q_proj.weight,57124.68510683214,4.756823819086797
+baseline,Baseline,13,v_proj,attn,model.layers.13.self_attn.v_proj.weight,3.7001013163270056,0.5682136160992435
+baseline,Baseline,14,down_proj,mlp,model.layers.14.mlp.down_proj.weight,12.14858893422566,1.0845258373032518
+baseline,Baseline,14,gate_proj,mlp,model.layers.14.mlp.gate_proj.weight,13.416229041756727,1.127630463933299
+baseline,Baseline,14,up_proj,mlp,model.layers.14.mlp.up_proj.weight,6.92702720942221,0.8405468935526339
+baseline,Baseline,14,k_proj,attn,model.layers.14.self_attn.k_proj.weight,23.136335100841148,1.3642945658717094
+baseline,Baseline,14,o_proj,attn,model.layers.14.self_attn.o_proj.weight,6453.263467239998,3.809779396399966
+baseline,Baseline,14,q_proj,attn,model.layers.14.self_attn.q_proj.weight,12016.462412922161,4.079776632336225
+baseline,Baseline,14,v_proj,attn,model.layers.14.self_attn.v_proj.weight,6.809948120874071,0.8331438034100043
+baseline,Baseline,15,down_proj,mlp,model.layers.15.mlp.down_proj.weight,12.83113835849419,1.1082651880102654
+baseline,Baseline,15,gate_proj,mlp,model.layers.15.mlp.gate_proj.weight,16.831657108500657,1.226126875194481
+baseline,Baseline,15,up_proj,mlp,model.layers.15.mlp.up_proj.weight,9.399973299687645,0.9731266200023806
+baseline,Baseline,15,k_proj,attn,model.layers.15.self_attn.k_proj.weight,25.442585553328566,1.405561243552064
+baseline,Baseline,15,o_proj,attn,model.layers.15.self_attn.o_proj.weight,29248.74824238646,4.466107284330782
+baseline,Baseline,15,q_proj,attn,model.layers.15.self_attn.q_proj.weight,23869.157071525828,4.377837082364573
+baseline,Baseline,15,v_proj,attn,model.layers.15.self_attn.v_proj.weight,3.3575600712900404,0.5260237915258322
+baseline,Baseline,16,down_proj,mlp,model.layers.16.mlp.down_proj.weight,9.686499227673869,0.9861668481749848
+baseline,Baseline,16,gate_proj,mlp,model.layers.16.mlp.gate_proj.weight,12.919883539201004,1.1112585989136845
+baseline,Baseline,16,up_proj,mlp,model.layers.16.mlp.up_proj.weight,6.159145316251316,0.789520450770166
+baseline,Baseline,16,k_proj,attn,model.layers.16.self_attn.k_proj.weight,20.671141321487564,1.3153644561115698
+baseline,Baseline,16,o_proj,attn,model.layers.16.self_attn.o_proj.weight,41529.00729033527,4.618351549855789
+baseline,Baseline,16,q_proj,attn,model.layers.16.self_attn.q_proj.weight,103943.38985456145,5.016796876149764
+baseline,Baseline,16,v_proj,attn,model.layers.16.self_attn.v_proj.weight,2.78870242790059,0.4454021747839655
+baseline,Baseline,17,down_proj,mlp,model.layers.17.mlp.down_proj.weight,6.7996349709306605,0.8324855988289264
+baseline,Baseline,17,gate_proj,mlp,model.layers.17.mlp.gate_proj.weight,17.968770886906377,1.2545183711940953
+baseline,Baseline,17,up_proj,mlp,model.layers.17.mlp.up_proj.weight,12.572357420855843,1.0994167191240123
+baseline,Baseline,17,k_proj,attn,model.layers.17.self_attn.k_proj.weight,15.488632202364206,1.1900130670042668
+baseline,Baseline,17,o_proj,attn,model.layers.17.self_attn.o_proj.weight,57591.66094582242,4.760359603780881
+baseline,Baseline,17,q_proj,attn,model.layers.17.self_attn.q_proj.weight,13024.993728263826,4.114777522852094
+baseline,Baseline,17,v_proj,attn,model.layers.17.self_attn.v_proj.weight,4.045377579425002,0.6069590631566644
+baseline,Baseline,18,down_proj,mlp,model.layers.18.mlp.down_proj.weight,6.643981466821017,0.822428412330141
+baseline,Baseline,18,gate_proj,mlp,model.layers.18.mlp.gate_proj.weight,18.455846043796296,1.266133958701561
+baseline,Baseline,18,up_proj,mlp,model.layers.18.mlp.up_proj.weight,10.672724442726581,1.0282752965950033
+baseline,Baseline,18,k_proj,attn,model.layers.18.self_attn.k_proj.weight,22.852605445749074,1.3589357215264757
+baseline,Baseline,18,o_proj,attn,model.layers.18.self_attn.o_proj.weight,21937.349567301397,4.341184155698679
+baseline,Baseline,18,q_proj,attn,model.layers.18.self_attn.q_proj.weight,33741.713223670544,4.528167129963148
+baseline,Baseline,18,v_proj,attn,model.layers.18.self_attn.v_proj.weight,2.1434580875579408,0.331114995884781
+baseline,Baseline,19,down_proj,mlp,model.layers.19.mlp.down_proj.weight,7.114441587440737,0.8521408179817388
+baseline,Baseline,19,gate_proj,mlp,model.layers.19.mlp.gate_proj.weight,18.805480505433707,1.2742844347109477
+baseline,Baseline,19,up_proj,mlp,model.layers.19.mlp.up_proj.weight,10.390484231630769,1.0166357876173127
+baseline,Baseline,19,k_proj,attn,model.layers.19.self_attn.k_proj.weight,22.401692950673606,1.3502808402695679
+baseline,Baseline,19,o_proj,attn,model.layers.19.self_attn.o_proj.weight,24022.826455842358,4.38062410389786
+baseline,Baseline,19,q_proj,attn,model.layers.19.self_attn.q_proj.weight,25682.89091427411,4.409643907148104
+baseline,Baseline,19,v_proj,attn,model.layers.19.self_attn.v_proj.weight,3.008918396896258,0.4784104096549268
+baseline,Baseline,2,down_proj,mlp,model.layers.2.mlp.down_proj.weight,13.20255066881167,1.1206578429011562
+baseline,Baseline,2,gate_proj,mlp,model.layers.2.mlp.gate_proj.weight,17.38657445257771,1.2402140246198345
+baseline,Baseline,2,up_proj,mlp,model.layers.2.mlp.up_proj.weight,8.916099391549464,0.950174901100359
+baseline,Baseline,2,k_proj,attn,model.layers.2.self_attn.k_proj.weight,17.246031056628958,1.236689163842224
+baseline,Baseline,2,o_proj,attn,model.layers.2.self_attn.o_proj.weight,31093.030750193404,4.492663056360776
+baseline,Baseline,2,q_proj,attn,model.layers.2.self_attn.q_proj.weight,24610.069351651575,4.391112837554779
+baseline,Baseline,2,v_proj,attn,model.layers.2.self_attn.v_proj.weight,3.1911166787384015,0.5039426838568885
+baseline,Baseline,20,down_proj,mlp,model.layers.20.mlp.down_proj.weight,7.516513788547348,0.8760164584833883
+baseline,Baseline,20,gate_proj,mlp,model.layers.20.mlp.gate_proj.weight,19.204884886797178,1.2834117083677086
+baseline,Baseline,20,up_proj,mlp,model.layers.20.mlp.up_proj.weight,11.187456334212877,1.048731353231463
+baseline,Baseline,20,k_proj,attn,model.layers.20.self_attn.k_proj.weight,22.072850031907265,1.343858412600631
+baseline,Baseline,20,o_proj,attn,model.layers.20.self_attn.o_proj.weight,123534.76145527787,5.091789180947741
+baseline,Baseline,20,q_proj,attn,model.layers.20.self_attn.q_proj.weight,9243.896257866112,3.9658550628467615
+baseline,Baseline,20,v_proj,attn,model.layers.20.self_attn.v_proj.weight,6.942409244310096,0.841510211079414
+baseline,Baseline,21,down_proj,mlp,model.layers.21.mlp.down_proj.weight,9.390981919055381,0.9727110043781777
+baseline,Baseline,21,gate_proj,mlp,model.layers.21.mlp.gate_proj.weight,17.629945642520745,1.2462509732641727
+baseline,Baseline,21,up_proj,mlp,model.layers.21.mlp.up_proj.weight,8.16699577216017,0.9120623307656808
+baseline,Baseline,21,k_proj,attn,model.layers.21.self_attn.k_proj.weight,29.992183020775197,1.4770080776092205
+baseline,Baseline,21,o_proj,attn,model.layers.21.self_attn.o_proj.weight,298850.6543733745,5.475454211116444
+baseline,Baseline,21,q_proj,attn,model.layers.21.self_attn.q_proj.weight,14032.644030663625,4.147139508500933
+baseline,Baseline,21,v_proj,attn,model.layers.21.self_attn.v_proj.weight,4.366601968716395,0.6401436062404645
+baseline,Baseline,22,down_proj,mlp,model.layers.22.mlp.down_proj.weight,9.904782336268656,0.9958449360889925
+baseline,Baseline,22,gate_proj,mlp,model.layers.22.mlp.gate_proj.weight,22.904187063530273,1.3599148820065219
+baseline,Baseline,22,up_proj,mlp,model.layers.22.mlp.up_proj.weight,12.79968858450657,1.1071994034232102
+baseline,Baseline,22,k_proj,attn,model.layers.22.self_attn.k_proj.weight,20.39377999771742,1.309497729946958
+baseline,Baseline,22,o_proj,attn,model.layers.22.self_attn.o_proj.weight,35374.77308841131,4.5486936627580175
+baseline,Baseline,22,q_proj,attn,model.layers.22.self_attn.q_proj.weight,47977.340735145204,4.68103617243426
+baseline,Baseline,22,v_proj,attn,model.layers.22.self_attn.v_proj.weight,5.233505964972921,0.7187927234982219
+baseline,Baseline,23,down_proj,mlp,model.layers.23.mlp.down_proj.weight,11.80645745879601,1.0721196065983587
+baseline,Baseline,23,gate_proj,mlp,model.layers.23.mlp.gate_proj.weight,19.84423847022627,1.297634437356341
+baseline,Baseline,23,up_proj,mlp,model.layers.23.mlp.up_proj.weight,10.79189058648552,1.0330975335943091
+baseline,Baseline,23,k_proj,attn,model.layers.23.self_attn.k_proj.weight,16.001526800630636,1.2041614232467743
+baseline,Baseline,23,o_proj,attn,model.layers.23.self_attn.o_proj.weight,13053.866526333686,4.115739167792078
+baseline,Baseline,23,q_proj,attn,model.layers.23.self_attn.q_proj.weight,764874.9518123881,5.883590438843876
+baseline,Baseline,23,v_proj,attn,model.layers.23.self_attn.v_proj.weight,4.042193780833294,0.6066171295477464
+baseline,Baseline,24,down_proj,mlp,model.layers.24.mlp.down_proj.weight,10.013056479364716,1.0005666658415224
+baseline,Baseline,24,gate_proj,mlp,model.layers.24.mlp.gate_proj.weight,21.0475855955308,1.3232022843675562
+baseline,Baseline,24,up_proj,mlp,model.layers.24.mlp.up_proj.weight,13.895235392599337,1.1428659083527615
+baseline,Baseline,24,k_proj,attn,model.layers.24.self_attn.k_proj.weight,31.211181081905732,1.4943102033865445
+baseline,Baseline,24,o_proj,attn,model.layers.24.self_attn.o_proj.weight,13596.107700858232,4.133414596165742
+baseline,Baseline,24,q_proj,attn,model.layers.24.self_attn.q_proj.weight,119825.2524376554,5.078548352599484
+baseline,Baseline,24,v_proj,attn,model.layers.24.self_attn.v_proj.weight,3.6003445004354857,0.556344058400606
+baseline,Baseline,25,down_proj,mlp,model.layers.25.mlp.down_proj.weight,9.428473935149443,0.9744414048076316
+baseline,Baseline,25,gate_proj,mlp,model.layers.25.mlp.gate_proj.weight,21.338091581274373,1.3291555747518031
+baseline,Baseline,25,up_proj,mlp,model.layers.25.mlp.up_proj.weight,18.112209505291784,1.25797143305422
+baseline,Baseline,25,k_proj,attn,model.layers.25.self_attn.k_proj.weight,22.462953951457504,1.3514668668169059
+baseline,Baseline,25,o_proj,attn,model.layers.25.self_attn.o_proj.weight,16296.613319126418,4.212097360868149
+baseline,Baseline,25,q_proj,attn,model.layers.25.self_attn.q_proj.weight,24555.210708810777,4.390143665174248
+baseline,Baseline,25,v_proj,attn,model.layers.25.self_attn.v_proj.weight,4.337190824833435,0.6372085303685043
+baseline,Baseline,26,down_proj,mlp,model.layers.26.mlp.down_proj.weight,8.741682232718533,0.9415950154818047
+baseline,Baseline,26,gate_proj,mlp,model.layers.26.mlp.gate_proj.weight,20.0336868429297,1.3017608808061607
+baseline,Baseline,26,up_proj,mlp,model.layers.26.mlp.up_proj.weight,18.54966977174175,1.2683361825447632
+baseline,Baseline,26,k_proj,attn,model.layers.26.self_attn.k_proj.weight,18.924022446774764,1.277013454516278
+baseline,Baseline,26,o_proj,attn,model.layers.26.self_attn.o_proj.weight,32723.99759321507,4.51486635204776
+baseline,Baseline,26,q_proj,attn,model.layers.26.self_attn.q_proj.weight,48120.87790718429,4.682333541917346
+baseline,Baseline,26,v_proj,attn,model.layers.26.self_attn.v_proj.weight,4.835564685889436,0.6844471972703048
+baseline,Baseline,27,down_proj,mlp,model.layers.27.mlp.down_proj.weight,11.983131396493501,1.0785703214350517
+baseline,Baseline,27,gate_proj,mlp,model.layers.27.mlp.gate_proj.weight,34.01131673372879,1.531623445785205
+baseline,Baseline,27,up_proj,mlp,model.layers.27.mlp.up_proj.weight,27.05991417573715,1.4323264148387336
+baseline,Baseline,27,k_proj,attn,model.layers.27.self_attn.k_proj.weight,16.960271595775623,1.2294328026142227
+baseline,Baseline,27,o_proj,attn,model.layers.27.self_attn.o_proj.weight,99634.79632267175,4.998411037337337
+baseline,Baseline,27,q_proj,attn,model.layers.27.self_attn.q_proj.weight,91711.44628086085,4.962423542282786
+baseline,Baseline,27,v_proj,attn,model.layers.27.self_attn.v_proj.weight,7.853791579470053,0.8950793719678732
+baseline,Baseline,3,down_proj,mlp,model.layers.3.mlp.down_proj.weight,10.758270959803003,1.0317424783047537
+baseline,Baseline,3,gate_proj,mlp,model.layers.3.mlp.gate_proj.weight,13.999766940935217,1.1461208058847896
+baseline,Baseline,3,up_proj,mlp,model.layers.3.mlp.up_proj.weight,7.592358408260811,0.8803767014023669
+baseline,Baseline,3,k_proj,attn,model.layers.3.self_attn.k_proj.weight,15.502942945207748,1.1904141487215418
+baseline,Baseline,3,o_proj,attn,model.layers.3.self_attn.o_proj.weight,16528.241725287102,4.21822665577227
+baseline,Baseline,3,q_proj,attn,model.layers.3.self_attn.q_proj.weight,75355.26316454641,4.877113590870874
+baseline,Baseline,3,v_proj,attn,model.layers.3.self_attn.v_proj.weight,3.891617107326821,0.5901301038585636
+baseline,Baseline,4,down_proj,mlp,model.layers.4.mlp.down_proj.weight,11.15720155550664,1.0475552787050282
+baseline,Baseline,4,gate_proj,mlp,model.layers.4.mlp.gate_proj.weight,17.495981170242754,1.2429383026276564
+baseline,Baseline,4,up_proj,mlp,model.layers.4.mlp.up_proj.weight,8.782003015120793,0.9435935818745063
+baseline,Baseline,4,k_proj,attn,model.layers.4.self_attn.k_proj.weight,23.93670634239095,1.379064391862702
+baseline,Baseline,4,o_proj,attn,model.layers.4.self_attn.o_proj.weight,8582.208719375358,3.9335990723698906
+baseline,Baseline,4,q_proj,attn,model.layers.4.self_attn.q_proj.weight,19385.367499083055,4.287474038580837
+baseline,Baseline,4,v_proj,attn,model.layers.4.self_attn.v_proj.weight,3.7875720759658726,0.5783609060374691
+baseline,Baseline,5,down_proj,mlp,model.layers.5.mlp.down_proj.weight,12.388049471794826,1.0930029310474068
+baseline,Baseline,5,gate_proj,mlp,model.layers.5.mlp.gate_proj.weight,20.634483011844836,1.3145935922870637
+baseline,Baseline,5,up_proj,mlp,model.layers.5.mlp.up_proj.weight,8.094579137228608,0.9081942733326557
+baseline,Baseline,5,k_proj,attn,model.layers.5.self_attn.k_proj.weight,22.35050954040556,1.3492874284999
+baseline,Baseline,5,o_proj,attn,model.layers.5.self_attn.o_proj.weight,14934.50156341116,4.174190732673501
+baseline,Baseline,5,q_proj,attn,model.layers.5.self_attn.q_proj.weight,14969.234018258956,4.175199577887845
+baseline,Baseline,5,v_proj,attn,model.layers.5.self_attn.v_proj.weight,3.3558693468749854,0.5258050442198982
+baseline,Baseline,6,down_proj,mlp,model.layers.6.mlp.down_proj.weight,9.162314837809912,0.9620052110347272
+baseline,Baseline,6,gate_proj,mlp,model.layers.6.mlp.gate_proj.weight,19.228406692239826,1.2839432991403894
+baseline,Baseline,6,up_proj,mlp,model.layers.6.mlp.up_proj.weight,7.421489572866498,0.8704910816066199
+baseline,Baseline,6,k_proj,attn,model.layers.6.self_attn.k_proj.weight,22.193674123897594,1.3462292048750273
+baseline,Baseline,6,o_proj,attn,model.layers.6.self_attn.o_proj.weight,70513.61868597266,4.848273002792532
+baseline,Baseline,6,q_proj,attn,model.layers.6.self_attn.q_proj.weight,18604.75910456698,4.26962405112538
+baseline,Baseline,6,v_proj,attn,model.layers.6.self_attn.v_proj.weight,3.2802787964379356,0.5159107567022393
+baseline,Baseline,7,down_proj,mlp,model.layers.7.mlp.down_proj.weight,7.967968298583799,0.9013475975319183
+baseline,Baseline,7,gate_proj,mlp,model.layers.7.mlp.gate_proj.weight,16.82272426896548,1.2258963267279708
+baseline,Baseline,7,up_proj,mlp,model.layers.7.mlp.up_proj.weight,8.451906164480205,0.9269546667434236
+baseline,Baseline,7,k_proj,attn,model.layers.7.self_attn.k_proj.weight,30.442592542837964,1.483481634928507
+baseline,Baseline,7,o_proj,attn,model.layers.7.self_attn.o_proj.weight,9457.463639954845,3.9757746802849163
+baseline,Baseline,7,q_proj,attn,model.layers.7.self_attn.q_proj.weight,9030.470682093728,3.955710387003289
+baseline,Baseline,7,v_proj,attn,model.layers.7.self_attn.v_proj.weight,4.6148320901395445,0.6641559039204422
+baseline,Baseline,8,down_proj,mlp,model.layers.8.mlp.down_proj.weight,8.059006885143106,0.9062815268080608
+baseline,Baseline,8,gate_proj,mlp,model.layers.8.mlp.gate_proj.weight,15.70276662952571,1.1959761763635572
+baseline,Baseline,8,up_proj,mlp,model.layers.8.mlp.up_proj.weight,11.03707620181019,1.0428540410024913
+baseline,Baseline,8,k_proj,attn,model.layers.8.self_attn.k_proj.weight,26.24428190856445,1.4190346941773355
+baseline,Baseline,8,o_proj,attn,model.layers.8.self_attn.o_proj.weight,8728.55329977634,3.9409422682200006
+baseline,Baseline,8,q_proj,attn,model.layers.8.self_attn.q_proj.weight,20459.276858621644,4.310890279334088
+baseline,Baseline,8,v_proj,attn,model.layers.8.self_attn.v_proj.weight,2.614956506444022,0.4174644698119181
+baseline,Baseline,9,down_proj,mlp,model.layers.9.mlp.down_proj.weight,11.96143651469935,1.077783339597508
+baseline,Baseline,9,gate_proj,mlp,model.layers.9.mlp.gate_proj.weight,17.04541620966512,1.2316076101618016
+baseline,Baseline,9,up_proj,mlp,model.layers.9.mlp.up_proj.weight,8.607523542303687,0.9348782192104144
+baseline,Baseline,9,k_proj,attn,model.layers.9.self_attn.k_proj.weight,29.979145885547403,1.4768192555143393
+baseline,Baseline,9,o_proj,attn,model.layers.9.self_attn.o_proj.weight,26480.436490575365,4.422925139524684
+baseline,Baseline,9,q_proj,attn,model.layers.9.self_attn.q_proj.weight,35295.52653603585,4.54771966505276
+baseline,Baseline,9,v_proj,attn,model.layers.9.self_attn.v_proj.weight,3.911800039733773,0.5923766467649157
+adamw_sft,AdamW + SFT,99,lm_head,head,lm_head.weight,69.23216095451251,1.8403078875261212
+adamw_sft,AdamW + SFT,-1,embed,embed,model.embed_tokens.weight,69.23216095451251,1.8403078875261212
+adamw_sft,AdamW + SFT,0,down_proj,mlp,model.layers.0.mlp.down_proj.weight,10.547536334352401,1.0231510301223303
+adamw_sft,AdamW + SFT,0,gate_proj,mlp,model.layers.0.mlp.gate_proj.weight,50.785736919014106,1.7057417586003474
+adamw_sft,AdamW + SFT,0,up_proj,mlp,model.layers.0.mlp.up_proj.weight,30.558548684868214,1.4851327244743213
+adamw_sft,AdamW + SFT,0,k_proj,attn,model.layers.0.self_attn.k_proj.weight,18.74699008501541,1.2729315496956943
+adamw_sft,AdamW + SFT,0,o_proj,attn,model.layers.0.self_attn.o_proj.weight,28150.390748642993,4.449484427563979
+adamw_sft,AdamW + SFT,0,q_proj,attn,model.layers.0.self_attn.q_proj.weight,193062.84677043132,5.285698705705608
+adamw_sft,AdamW + SFT,0,v_proj,attn,model.layers.0.self_attn.v_proj.weight,7.7816688749723,0.8910727467925871
+adamw_sft,AdamW + SFT,1,down_proj,mlp,model.layers.1.mlp.down_proj.weight,8.998735485276951,0.9541814860671154
+adamw_sft,AdamW + SFT,1,gate_proj,mlp,model.layers.1.mlp.gate_proj.weight,33.914483491141006,1.5303852072581705
+adamw_sft,AdamW + SFT,1,up_proj,mlp,model.layers.1.mlp.up_proj.weight,37.732654321705844,1.5767173569296853
+adamw_sft,AdamW + SFT,1,k_proj,attn,model.layers.1.self_attn.k_proj.weight,30.08564953523212,1.4783593921455074
+adamw_sft,AdamW + SFT,1,o_proj,attn,model.layers.1.self_attn.o_proj.weight,119232.80087650087,5.076395746008727
+adamw_sft,AdamW + SFT,1,q_proj,attn,model.layers.1.self_attn.q_proj.weight,387316.3611040371,5.588065842937857
+adamw_sft,AdamW + SFT,1,v_proj,attn,model.layers.1.self_attn.v_proj.weight,3.341458259881598,0.5239360404660517
+adamw_sft,AdamW + SFT,10,down_proj,mlp,model.layers.10.mlp.down_proj.weight,13.491165586325856,1.1300494727142796
+adamw_sft,AdamW + SFT,10,gate_proj,mlp,model.layers.10.mlp.gate_proj.weight,16.208397579466588,1.2097400810548744
+adamw_sft,AdamW + SFT,10,up_proj,mlp,model.layers.10.mlp.up_proj.weight,8.53717971880006,0.931314423984824
+adamw_sft,AdamW + SFT,10,k_proj,attn,model.layers.10.self_attn.k_proj.weight,24.01796932079155,1.3805362857456625
+adamw_sft,AdamW + SFT,10,o_proj,attn,model.layers.10.self_attn.o_proj.weight,14873.179544995464,4.172403820656317
+adamw_sft,AdamW + SFT,10,q_proj,attn,model.layers.10.self_attn.q_proj.weight,12671.49873443075,4.102827984543988
+adamw_sft,AdamW + SFT,10,v_proj,attn,model.layers.10.self_attn.v_proj.weight,3.2993100257636407,0.5184231267463849
+adamw_sft,AdamW + SFT,11,down_proj,mlp,model.layers.11.mlp.down_proj.weight,16.054225039036634,1.2055893463775695
+adamw_sft,AdamW + SFT,11,gate_proj,mlp,model.layers.11.mlp.gate_proj.weight,13.225064684332017,1.121397804864483
+adamw_sft,AdamW + SFT,11,up_proj,mlp,model.layers.11.mlp.up_proj.weight,6.60506011925572,0.8198767749168125
+adamw_sft,AdamW + SFT,11,k_proj,attn,model.layers.11.self_attn.k_proj.weight,21.609604806921244,1.3346468246461867
+adamw_sft,AdamW + SFT,11,o_proj,attn,model.layers.11.self_attn.o_proj.weight,203643.93688326792,5.308871484309871
+adamw_sft,AdamW + SFT,11,q_proj,attn,model.layers.11.self_attn.q_proj.weight,21584.398857108652,4.334139957709634
+adamw_sft,AdamW + SFT,11,v_proj,attn,model.layers.11.self_attn.v_proj.weight,2.8677148023753336,0.457535958044075
+adamw_sft,AdamW + SFT,12,down_proj,mlp,model.layers.12.mlp.down_proj.weight,14.145695389182743,1.1506243018291784
+adamw_sft,AdamW + SFT,12,gate_proj,mlp,model.layers.12.mlp.gate_proj.weight,18.888049951326835,1.2761871226071446
+adamw_sft,AdamW + SFT,12,up_proj,mlp,model.layers.12.mlp.up_proj.weight,8.061587897936535,0.906420593590468
+adamw_sft,AdamW + SFT,12,k_proj,attn,model.layers.12.self_attn.k_proj.weight,20.88793674401487,1.319895543621146
+adamw_sft,AdamW + SFT,12,o_proj,attn,model.layers.12.self_attn.o_proj.weight,39834.036983874066,4.600254322251053
+adamw_sft,AdamW + SFT,12,q_proj,attn,model.layers.12.self_attn.q_proj.weight,18561.312352470264,4.268608679172013
+adamw_sft,AdamW + SFT,12,v_proj,attn,model.layers.12.self_attn.v_proj.weight,2.5509039691616318,0.40669410955130014
+adamw_sft,AdamW + SFT,13,down_proj,mlp,model.layers.13.mlp.down_proj.weight,29.999991491659213,1.4771211315487964
+adamw_sft,AdamW + SFT,13,gate_proj,mlp,model.layers.13.mlp.gate_proj.weight,12.315749227222778,1.090460837234883
+adamw_sft,AdamW + SFT,13,up_proj,mlp,model.layers.13.mlp.up_proj.weight,6.310498224675891,0.8000636488932032
+adamw_sft,AdamW + SFT,13,k_proj,attn,model.layers.13.self_attn.k_proj.weight,41.94240421325378,1.622653321375462
+adamw_sft,AdamW + SFT,13,o_proj,attn,model.layers.13.self_attn.o_proj.weight,9419.40839003348,3.974023626676912
+adamw_sft,AdamW + SFT,13,q_proj,attn,model.layers.13.self_attn.q_proj.weight,152790.20749517635,5.184095520685414
+adamw_sft,AdamW + SFT,13,v_proj,attn,model.layers.13.self_attn.v_proj.weight,3.7002215590327414,0.5682277291979486
+adamw_sft,AdamW + SFT,14,down_proj,mlp,model.layers.14.mlp.down_proj.weight,12.148301150300385,1.0845155493223375
+adamw_sft,AdamW + SFT,14,gate_proj,mlp,model.layers.14.mlp.gate_proj.weight,13.4146878311411,1.1275805707992161
+adamw_sft,AdamW + SFT,14,up_proj,mlp,model.layers.14.mlp.up_proj.weight,6.927027872478607,0.8405469351233846
+adamw_sft,AdamW + SFT,14,k_proj,attn,model.layers.14.self_attn.k_proj.weight,23.137454567485456,1.3643155789847428
+adamw_sft,AdamW + SFT,14,o_proj,attn,model.layers.14.self_attn.o_proj.weight,6898.530069571668,3.838756561652925
+adamw_sft,AdamW + SFT,14,q_proj,attn,model.layers.14.self_attn.q_proj.weight,12144.113048486843,4.084365801379592
+adamw_sft,AdamW + SFT,14,v_proj,attn,model.layers.14.self_attn.v_proj.weight,6.808672739698443,0.8330624602234674
+adamw_sft,AdamW + SFT,15,down_proj,mlp,model.layers.15.mlp.down_proj.weight,12.831342707149869,1.1082721045272865
+adamw_sft,AdamW + SFT,15,gate_proj,mlp,model.layers.15.mlp.gate_proj.weight,16.830428041126336,1.2260951613433384
+adamw_sft,AdamW + SFT,15,up_proj,mlp,model.layers.15.mlp.up_proj.weight,9.400700764005583,0.973160228769614
+adamw_sft,AdamW + SFT,15,k_proj,attn,model.layers.15.self_attn.k_proj.weight,25.477779895606712,1.4061615813911479
+adamw_sft,AdamW + SFT,15,o_proj,attn,model.layers.15.self_attn.o_proj.weight,40628.4236000559,4.608829971844536
+adamw_sft,AdamW + SFT,15,q_proj,attn,model.layers.15.self_attn.q_proj.weight,27492.55739121089,4.4392151403248015
+adamw_sft,AdamW + SFT,15,v_proj,attn,model.layers.15.self_attn.v_proj.weight,3.357717683827037,0.5260441779514143
+adamw_sft,AdamW + SFT,16,down_proj,mlp,model.layers.16.mlp.down_proj.weight,9.686275106852246,0.9861567995950102
+adamw_sft,AdamW + SFT,16,gate_proj,mlp,model.layers.16.mlp.gate_proj.weight,12.918398913911563,1.1112086912177859
+adamw_sft,AdamW + SFT,16,up_proj,mlp,model.layers.16.mlp.up_proj.weight,6.158936131076829,0.7895057004265555
+adamw_sft,AdamW + SFT,16,k_proj,attn,model.layers.16.self_attn.k_proj.weight,20.659614176849622,1.3151222067078123
+adamw_sft,AdamW + SFT,16,o_proj,attn,model.layers.16.self_attn.o_proj.weight,57844.03714633021,4.7622585963401995
+adamw_sft,AdamW + SFT,16,q_proj,attn,model.layers.16.self_attn.q_proj.weight,107519.07310636662,5.031485511787452
+adamw_sft,AdamW + SFT,16,v_proj,attn,model.layers.16.self_attn.v_proj.weight,2.7889831151082554,0.4454458849948022
+adamw_sft,AdamW + SFT,17,down_proj,mlp,model.layers.17.mlp.down_proj.weight,6.799159594112846,0.8324552353245881
+adamw_sft,AdamW + SFT,17,gate_proj,mlp,model.layers.17.mlp.gate_proj.weight,17.968321746744127,1.2545075156084158
+adamw_sft,AdamW + SFT,17,up_proj,mlp,model.layers.17.mlp.up_proj.weight,12.572354790268312,1.09941662825404
+adamw_sft,AdamW + SFT,17,k_proj,attn,model.layers.17.self_attn.k_proj.weight,15.489779337458296,1.1900452309801988
+adamw_sft,AdamW + SFT,17,o_proj,attn,model.layers.17.self_attn.o_proj.weight,31924.095046801653,4.504118595152343
+adamw_sft,AdamW + SFT,17,q_proj,attn,model.layers.17.self_attn.q_proj.weight,12759.81011849811,4.105844211602849
+adamw_sft,AdamW + SFT,17,v_proj,attn,model.layers.17.self_attn.v_proj.weight,4.045401797103756,0.606961663055576
+adamw_sft,AdamW + SFT,18,down_proj,mlp,model.layers.18.mlp.down_proj.weight,6.643898087310433,0.8224229620607878
+adamw_sft,AdamW + SFT,18,gate_proj,mlp,model.layers.18.mlp.gate_proj.weight,18.453766073384454,1.2660850110360873
+adamw_sft,AdamW + SFT,18,up_proj,mlp,model.layers.18.mlp.up_proj.weight,10.672898629935796,1.0282823845627356
+adamw_sft,AdamW + SFT,18,k_proj,attn,model.layers.18.self_attn.k_proj.weight,22.88019490450427,1.3594597196660116
+adamw_sft,AdamW + SFT,18,o_proj,attn,model.layers.18.self_attn.o_proj.weight,14087.586791362723,4.148836604681052
+adamw_sft,AdamW + SFT,18,q_proj,attn,model.layers.18.self_attn.q_proj.weight,26844.93507912699,4.428862358017603
+adamw_sft,AdamW + SFT,18,v_proj,attn,model.layers.18.self_attn.v_proj.weight,2.143265737216218,0.33107602127597796
+adamw_sft,AdamW + SFT,19,down_proj,mlp,model.layers.19.mlp.down_proj.weight,7.114145928624982,0.8521227693887801
+adamw_sft,AdamW + SFT,19,gate_proj,mlp,model.layers.19.mlp.gate_proj.weight,18.804505774616747,1.2742619236569903
+adamw_sft,AdamW + SFT,19,up_proj,mlp,model.layers.19.mlp.up_proj.weight,10.390309400230837,1.0166284800703922
+adamw_sft,AdamW + SFT,19,k_proj,attn,model.layers.19.self_attn.k_proj.weight,22.3927542947675,1.3501075148140305
+adamw_sft,AdamW + SFT,19,o_proj,attn,model.layers.19.self_attn.o_proj.weight,21398.75649331677,4.330388536723871
+adamw_sft,AdamW + SFT,19,q_proj,attn,model.layers.19.self_attn.q_proj.weight,28727.543615136154,4.458298492681843
+adamw_sft,AdamW + SFT,19,v_proj,attn,model.layers.19.self_attn.v_proj.weight,3.0091416229661117,0.4784426279611846
+adamw_sft,AdamW + SFT,2,down_proj,mlp,model.layers.2.mlp.down_proj.weight,13.20442362596554,1.120719448971511
+adamw_sft,AdamW + SFT,2,gate_proj,mlp,model.layers.2.mlp.gate_proj.weight,17.386521321324807,1.2402126974667906
+adamw_sft,AdamW + SFT,2,up_proj,mlp,model.layers.2.mlp.up_proj.weight,8.912710280447458,0.950009789430543
+adamw_sft,AdamW + SFT,2,k_proj,attn,model.layers.2.self_attn.k_proj.weight,17.245534848724244,1.2366766680132146
+adamw_sft,AdamW + SFT,2,o_proj,attn,model.layers.2.self_attn.o_proj.weight,24575.741286010023,4.3905066264662596
+adamw_sft,AdamW + SFT,2,q_proj,attn,model.layers.2.self_attn.q_proj.weight,22277.96380901384,4.34787549409053
+adamw_sft,AdamW + SFT,2,v_proj,attn,model.layers.2.self_attn.v_proj.weight,3.191828480010593,0.5040395455275805
+adamw_sft,AdamW + SFT,20,down_proj,mlp,model.layers.20.mlp.down_proj.weight,7.516348091614572,0.8760068846225826
+adamw_sft,AdamW + SFT,20,gate_proj,mlp,model.layers.20.mlp.gate_proj.weight,19.205064035236685,1.283415759566989
+adamw_sft,AdamW + SFT,20,up_proj,mlp,model.layers.20.mlp.up_proj.weight,11.187600574948428,1.048736952587547
+adamw_sft,AdamW + SFT,20,k_proj,attn,model.layers.20.self_attn.k_proj.weight,22.08775378541507,1.3441515525305379
+adamw_sft,AdamW + SFT,20,o_proj,attn,model.layers.20.self_attn.o_proj.weight,87530.58466903168,4.942159829389302
+adamw_sft,AdamW + SFT,20,q_proj,attn,model.layers.20.self_attn.q_proj.weight,9454.557269826766,3.9756411968750838
+adamw_sft,AdamW + SFT,20,v_proj,attn,model.layers.20.self_attn.v_proj.weight,6.9405558312777655,0.8413942521249647
+adamw_sft,AdamW + SFT,21,down_proj,mlp,model.layers.21.mlp.down_proj.weight,9.38870556461791,0.9726057195403175
+adamw_sft,AdamW + SFT,21,gate_proj,mlp,model.layers.21.mlp.gate_proj.weight,17.63049744421702,1.2462645660843892
+adamw_sft,AdamW + SFT,21,up_proj,mlp,model.layers.21.mlp.up_proj.weight,8.16701572418207,0.9120633917485282
+adamw_sft,AdamW + SFT,21,k_proj,attn,model.layers.21.self_attn.k_proj.weight,30.024368167460135,1.4774738768818452
+adamw_sft,AdamW + SFT,21,o_proj,attn,model.layers.21.self_attn.o_proj.weight,100612.75324152417,5.002653033516896
+adamw_sft,AdamW + SFT,21,q_proj,attn,model.layers.21.self_attn.q_proj.weight,14348.85644860807,4.156817290766953
+adamw_sft,AdamW + SFT,21,v_proj,attn,model.layers.21.self_attn.v_proj.weight,4.363923627714542,0.6398771414689217
+adamw_sft,AdamW + SFT,22,down_proj,mlp,model.layers.22.mlp.down_proj.weight,9.904433683197992,0.9958296484466592
+adamw_sft,AdamW + SFT,22,gate_proj,mlp,model.layers.22.mlp.gate_proj.weight,22.90426050424602,1.3599162745399644
+adamw_sft,AdamW + SFT,22,up_proj,mlp,model.layers.22.mlp.up_proj.weight,12.799556703738908,1.1071949286749103
+adamw_sft,AdamW + SFT,22,k_proj,attn,model.layers.22.self_attn.k_proj.weight,20.395845782416366,1.3095417195094585
+adamw_sft,AdamW + SFT,22,o_proj,attn,model.layers.22.self_attn.o_proj.weight,31906.9924525092,4.503885869601325
+adamw_sft,AdamW + SFT,22,q_proj,attn,model.layers.22.self_attn.q_proj.weight,53804.68294836393,4.730820076598079
+adamw_sft,AdamW + SFT,22,v_proj,attn,model.layers.22.self_attn.v_proj.weight,5.23291003576636,0.7187432684094358
+adamw_sft,AdamW + SFT,23,down_proj,mlp,model.layers.23.mlp.down_proj.weight,11.80487067956291,1.0720612338154358
+adamw_sft,AdamW + SFT,23,gate_proj,mlp,model.layers.23.mlp.gate_proj.weight,19.843755768569952,1.2976238732212784
+adamw_sft,AdamW + SFT,23,up_proj,mlp,model.layers.23.mlp.up_proj.weight,10.79231522304981,1.0331146217668679
+adamw_sft,AdamW + SFT,23,k_proj,attn,model.layers.23.self_attn.k_proj.weight,15.993768586252624,1.2039508079222971
+adamw_sft,AdamW + SFT,23,o_proj,attn,model.layers.23.self_attn.o_proj.weight,11275.514238889855,4.05213635773576
+adamw_sft,AdamW + SFT,23,q_proj,attn,model.layers.23.self_attn.q_proj.weight,1540740.5057181695,6.18772950022104
+adamw_sft,AdamW + SFT,23,v_proj,attn,model.layers.23.self_attn.v_proj.weight,4.042256124792309,0.6066238277492806
+adamw_sft,AdamW + SFT,24,down_proj,mlp,model.layers.24.mlp.down_proj.weight,10.011246591789062,1.000488158820697
+adamw_sft,AdamW + SFT,24,gate_proj,mlp,model.layers.24.mlp.gate_proj.weight,21.048123712785006,1.3232133877012675
+adamw_sft,AdamW + SFT,24,up_proj,mlp,model.layers.24.mlp.up_proj.weight,13.894715322334696,1.142849653293623
+adamw_sft,AdamW + SFT,24,k_proj,attn,model.layers.24.self_attn.k_proj.weight,31.235971735774022,1.4946550211807135
+adamw_sft,AdamW + SFT,24,o_proj,attn,model.layers.24.self_attn.o_proj.weight,13231.547034898273,4.1216106249464275
+adamw_sft,AdamW + SFT,24,q_proj,attn,model.layers.24.self_attn.q_proj.weight,92824.96284556335,4.967664784066039
+adamw_sft,AdamW + SFT,24,v_proj,attn,model.layers.24.self_attn.v_proj.weight,3.598137001541539,0.5560776953855068
+adamw_sft,AdamW + SFT,25,down_proj,mlp,model.layers.25.mlp.down_proj.weight,9.427723164141538,0.9744068214073457
+adamw_sft,AdamW + SFT,25,gate_proj,mlp,model.layers.25.mlp.gate_proj.weight,21.3378767131532,1.3291512015158538
+adamw_sft,AdamW + SFT,25,up_proj,mlp,model.layers.25.mlp.up_proj.weight,18.11219804395534,1.2579711582342568
+adamw_sft,AdamW + SFT,25,k_proj,attn,model.layers.25.self_attn.k_proj.weight,22.4189146702618,1.3506145839893036
+adamw_sft,AdamW + SFT,25,o_proj,attn,model.layers.25.self_attn.o_proj.weight,15307.857724863468,4.184914417127465
+adamw_sft,AdamW + SFT,25,q_proj,attn,model.layers.25.self_attn.q_proj.weight,22038.533596110934,4.343182693977195
+adamw_sft,AdamW + SFT,25,v_proj,attn,model.layers.25.self_attn.v_proj.weight,4.337202651238508,0.6372097145763636
+adamw_sft,AdamW + SFT,26,down_proj,mlp,model.layers.26.mlp.down_proj.weight,8.74074859357786,0.9415486289888396
+adamw_sft,AdamW + SFT,26,gate_proj,mlp,model.layers.26.mlp.gate_proj.weight,20.032098757959968,1.301726452601189
+adamw_sft,AdamW + SFT,26,up_proj,mlp,model.layers.26.mlp.up_proj.weight,18.549165030279113,1.2683243651152833
+adamw_sft,AdamW + SFT,26,k_proj,attn,model.layers.26.self_attn.k_proj.weight,18.94138556971171,1.2774117446393032
+adamw_sft,AdamW + SFT,26,o_proj,attn,model.layers.26.self_attn.o_proj.weight,31241.311078178533,4.494729251263856
+adamw_sft,AdamW + SFT,26,q_proj,attn,model.layers.26.self_attn.q_proj.weight,55282.78080554422,4.742589880569621
+adamw_sft,AdamW + SFT,26,v_proj,attn,model.layers.26.self_attn.v_proj.weight,4.834063778633543,0.6843123760107891
+adamw_sft,AdamW + SFT,27,down_proj,mlp,model.layers.27.mlp.down_proj.weight,11.983932937550357,1.0785993700371908
+adamw_sft,AdamW + SFT,27,gate_proj,mlp,model.layers.27.mlp.gate_proj.weight,34.01241680638444,1.531637492514463
+adamw_sft,AdamW + SFT,27,up_proj,mlp,model.layers.27.mlp.up_proj.weight,27.06041955527789,1.4323345257844977
+adamw_sft,AdamW + SFT,27,k_proj,attn,model.layers.27.self_attn.k_proj.weight,16.94825333827303,1.2291249471033046
+adamw_sft,AdamW + SFT,27,o_proj,attn,model.layers.27.self_attn.o_proj.weight,120495.29712508852,5.080970096931798
+adamw_sft,AdamW + SFT,27,q_proj,attn,model.layers.27.self_attn.q_proj.weight,58886.970603974776,4.770019212940522
+adamw_sft,AdamW + SFT,27,v_proj,attn,model.layers.27.self_attn.v_proj.weight,7.853333178083204,0.8950540228099676
+adamw_sft,AdamW + SFT,3,down_proj,mlp,model.layers.3.mlp.down_proj.weight,10.756987190952174,1.0316906514826252
+adamw_sft,AdamW + SFT,3,gate_proj,mlp,model.layers.3.mlp.gate_proj.weight,13.999832379721926,1.1461228358926938
+adamw_sft,AdamW + SFT,3,up_proj,mlp,model.layers.3.mlp.up_proj.weight,7.592794054709892,0.8804016203288525
+adamw_sft,AdamW + SFT,3,k_proj,attn,model.layers.3.self_attn.k_proj.weight,15.481055006868756,1.1898005537660539
+adamw_sft,AdamW + SFT,3,o_proj,attn,model.layers.3.self_attn.o_proj.weight,18154.149608008716,4.258975910136868
+adamw_sft,AdamW + SFT,3,q_proj,attn,model.layers.3.self_attn.q_proj.weight,108944.04092846665,5.037203479991522
+adamw_sft,AdamW + SFT,3,v_proj,attn,model.layers.3.self_attn.v_proj.weight,3.89075947341648,0.5900343835673653
+adamw_sft,AdamW + SFT,4,down_proj,mlp,model.layers.4.mlp.down_proj.weight,11.15907789428683,1.04762830912053
+adamw_sft,AdamW + SFT,4,gate_proj,mlp,model.layers.4.mlp.gate_proj.weight,17.494467900572786,1.2429007378243937
+adamw_sft,AdamW + SFT,4,up_proj,mlp,model.layers.4.mlp.up_proj.weight,8.780899535335443,0.9435390083003579
+adamw_sft,AdamW + SFT,4,k_proj,attn,model.layers.4.self_attn.k_proj.weight,23.94834811126657,1.3792755623892712
+adamw_sft,AdamW + SFT,4,o_proj,attn,model.layers.4.self_attn.o_proj.weight,8959.208296965768,3.9522696338306043
+adamw_sft,AdamW + SFT,4,q_proj,attn,model.layers.4.self_attn.q_proj.weight,18610.19861816245,4.269751008182441
+adamw_sft,AdamW + SFT,4,v_proj,attn,model.layers.4.self_attn.v_proj.weight,3.7874413727756413,0.5783459189553538
+adamw_sft,AdamW + SFT,5,down_proj,mlp,model.layers.5.mlp.down_proj.weight,12.390060133035615,1.0930734141550928
+adamw_sft,AdamW + SFT,5,gate_proj,mlp,model.layers.5.mlp.gate_proj.weight,20.63517625303905,1.3146081827067895
+adamw_sft,AdamW + SFT,5,up_proj,mlp,model.layers.5.mlp.up_proj.weight,8.095319225085962,0.908233979088134
+adamw_sft,AdamW + SFT,5,k_proj,attn,model.layers.5.self_attn.k_proj.weight,22.356037012028192,1.3493948199502328
+adamw_sft,AdamW + SFT,5,o_proj,attn,model.layers.5.self_attn.o_proj.weight,13539.649569491356,4.131607424171455
+adamw_sft,AdamW + SFT,5,q_proj,attn,model.layers.5.self_attn.q_proj.weight,15086.208978803787,4.178580119402245
+adamw_sft,AdamW + SFT,5,v_proj,attn,model.layers.5.self_attn.v_proj.weight,3.3556309543704015,0.5257741919380939
+adamw_sft,AdamW + SFT,6,down_proj,mlp,model.layers.6.mlp.down_proj.weight,9.163005682506315,0.9620379558960582
+adamw_sft,AdamW + SFT,6,gate_proj,mlp,model.layers.6.mlp.gate_proj.weight,19.226290140508794,1.2838954918859269
+adamw_sft,AdamW + SFT,6,up_proj,mlp,model.layers.6.mlp.up_proj.weight,7.420742995406249,0.8704473908114405
+adamw_sft,AdamW + SFT,6,k_proj,attn,model.layers.6.self_attn.k_proj.weight,22.208657548512996,1.346522307450157
+adamw_sft,AdamW + SFT,6,o_proj,attn,model.layers.6.self_attn.o_proj.weight,226013.69816557094,5.354134761525442
+adamw_sft,AdamW + SFT,6,q_proj,attn,model.layers.6.self_attn.q_proj.weight,15753.11544696091,4.197366455752505
+adamw_sft,AdamW + SFT,6,v_proj,attn,model.layers.6.self_attn.v_proj.weight,3.280214850064792,0.5159022904012286
+adamw_sft,AdamW + SFT,7,down_proj,mlp,model.layers.7.mlp.down_proj.weight,7.968044946882152,0.9013517752308835
+adamw_sft,AdamW + SFT,7,gate_proj,mlp,model.layers.7.mlp.gate_proj.weight,16.82390710655286,1.225926861721603
+adamw_sft,AdamW + SFT,7,up_proj,mlp,model.layers.7.mlp.up_proj.weight,8.451004593689335,0.9269083377737576
+adamw_sft,AdamW + SFT,7,k_proj,attn,model.layers.7.self_attn.k_proj.weight,30.474644615698537,1.4839386497345208
+adamw_sft,AdamW + SFT,7,o_proj,attn,model.layers.7.self_attn.o_proj.weight,10647.892315407591,4.027263650368502
+adamw_sft,AdamW + SFT,7,q_proj,attn,model.layers.7.self_attn.q_proj.weight,9050.68370585335,3.9566813878752316
+adamw_sft,AdamW + SFT,7,v_proj,attn,model.layers.7.self_attn.v_proj.weight,4.613794936946466,0.6640582881192583
+adamw_sft,AdamW + SFT,8,down_proj,mlp,model.layers.8.mlp.down_proj.weight,8.060292755557095,0.9063508159755644
+adamw_sft,AdamW + SFT,8,gate_proj,mlp,model.layers.8.mlp.gate_proj.weight,15.703959424852572,1.196009164483863
+adamw_sft,AdamW + SFT,8,up_proj,mlp,model.layers.8.mlp.up_proj.weight,11.037108777034382,1.0428553227929742
+adamw_sft,AdamW + SFT,8,k_proj,attn,model.layers.8.self_attn.k_proj.weight,26.233203994024418,1.4188513364137365
+adamw_sft,AdamW + SFT,8,o_proj,attn,model.layers.8.self_attn.o_proj.weight,8530.920902384907,3.9309959152515432
+adamw_sft,AdamW + SFT,8,q_proj,attn,model.layers.8.self_attn.q_proj.weight,22914.963352350755,4.360119167018965
+adamw_sft,AdamW + SFT,8,v_proj,attn,model.layers.8.self_attn.v_proj.weight,2.6150043959481035,0.41747242327380907
+adamw_sft,AdamW + SFT,9,down_proj,mlp,model.layers.9.mlp.down_proj.weight,11.961434618736257,1.0777832707590893
+adamw_sft,AdamW + SFT,9,gate_proj,mlp,model.layers.9.mlp.gate_proj.weight,17.044853753947844,1.2315932793034885
+adamw_sft,AdamW + SFT,9,up_proj,mlp,model.layers.9.mlp.up_proj.weight,8.606933585434014,0.9348484517874559
+adamw_sft,AdamW + SFT,9,k_proj,attn,model.layers.9.self_attn.k_proj.weight,29.985502333405165,1.476911328771549
+adamw_sft,AdamW + SFT,9,o_proj,attn,model.layers.9.self_attn.o_proj.weight,21696.041762468114,4.336380508156364
+adamw_sft,AdamW + SFT,9,q_proj,attn,model.layers.9.self_attn.q_proj.weight,35856.11707719951,4.554563257249294
+adamw_sft,AdamW + SFT,9,v_proj,attn,model.layers.9.self_attn.v_proj.weight,3.91164904937689,0.5923598832433343
+muon_sft,Muon + SFT,99,lm_head,head,lm_head.weight,69.2426959294943,1.8403739685694727
+muon_sft,Muon + SFT,-1,embed,embed,model.embed_tokens.weight,69.2426959294943,1.8403739685694727
+muon_sft,Muon + SFT,0,down_proj,mlp,model.layers.0.mlp.down_proj.weight,10.548101142389264,1.0231742854531136
+muon_sft,Muon + SFT,0,gate_proj,mlp,model.layers.0.mlp.gate_proj.weight,50.78278486472259,1.7057165133596581
+muon_sft,Muon + SFT,0,up_proj,mlp,model.layers.0.mlp.up_proj.weight,30.559808962718645,1.4851506350248418
+muon_sft,Muon + SFT,0,k_proj,attn,model.layers.0.self_attn.k_proj.weight,18.74495124666365,1.272884315211958
+muon_sft,Muon + SFT,0,o_proj,attn,model.layers.0.self_attn.o_proj.weight,35358.344817684985,4.548491926777386
+muon_sft,Muon + SFT,0,q_proj,attn,model.layers.0.self_attn.q_proj.weight,184673.62168728438,5.266404866345574
+muon_sft,Muon + SFT,0,v_proj,attn,model.layers.0.self_attn.v_proj.weight,7.774600657945627,0.8906780907529337
+muon_sft,Muon + SFT,1,down_proj,mlp,model.layers.1.mlp.down_proj.weight,8.99886642013478,0.9541878051630198
+muon_sft,Muon + SFT,1,gate_proj,mlp,model.layers.1.mlp.gate_proj.weight,33.91691111217297,1.5304162932302325
+muon_sft,Muon + SFT,1,up_proj,mlp,model.layers.1.mlp.up_proj.weight,37.733468372285195,1.5767267263702234
+muon_sft,Muon + SFT,1,k_proj,attn,model.layers.1.self_attn.k_proj.weight,30.09114072304809,1.4784386516927166
+muon_sft,Muon + SFT,1,o_proj,attn,model.layers.1.self_attn.o_proj.weight,70069.8483835057,4.845531177772181
+muon_sft,Muon + SFT,1,q_proj,attn,model.layers.1.self_attn.q_proj.weight,1600850.5198651978,6.204350781370582
+muon_sft,Muon + SFT,1,v_proj,attn,model.layers.1.self_attn.v_proj.weight,3.3419905946917563,0.5240052233313945
+muon_sft,Muon + SFT,10,down_proj,mlp,model.layers.10.mlp.down_proj.weight,13.491431642505155,1.130058037251605
+muon_sft,Muon + SFT,10,gate_proj,mlp,model.layers.10.mlp.gate_proj.weight,16.209564598421004,1.2097713495158355
+muon_sft,Muon + SFT,10,up_proj,mlp,model.layers.10.mlp.up_proj.weight,8.538017765916145,0.9313570541492726
+muon_sft,Muon + SFT,10,k_proj,attn,model.layers.10.self_attn.k_proj.weight,24.040424245932996,1.3809421274755411
+muon_sft,Muon + SFT,10,o_proj,attn,model.layers.10.self_attn.o_proj.weight,16223.301521208305,4.210139239920562
+muon_sft,Muon + SFT,10,q_proj,attn,model.layers.10.self_attn.q_proj.weight,12511.665392331626,4.09731512124909
+muon_sft,Muon + SFT,10,v_proj,attn,model.layers.10.self_attn.v_proj.weight,3.29937428184978,0.5184315848153995
+muon_sft,Muon + SFT,11,down_proj,mlp,model.layers.11.mlp.down_proj.weight,16.053703686397427,1.2055752426603046
+muon_sft,Muon + SFT,11,gate_proj,mlp,model.layers.11.mlp.gate_proj.weight,13.22498726817798,1.1213952626079637
+muon_sft,Muon + SFT,11,up_proj,mlp,model.layers.11.mlp.up_proj.weight,6.6051491558132795,0.8198826291897966
+muon_sft,Muon + SFT,11,k_proj,attn,model.layers.11.self_attn.k_proj.weight,21.60783198943706,1.3346111943585848
+muon_sft,Muon + SFT,11,o_proj,attn,model.layers.11.self_attn.o_proj.weight,86201.05600421519,4.935512586172675
+muon_sft,Muon + SFT,11,q_proj,attn,model.layers.11.self_attn.q_proj.weight,26522.536977399057,4.423615063570899
+muon_sft,Muon + SFT,11,v_proj,attn,model.layers.11.self_attn.v_proj.weight,2.867916267667432,0.4575664674208535
+muon_sft,Muon + SFT,12,down_proj,mlp,model.layers.12.mlp.down_proj.weight,14.145043271272414,1.1506042803505274
+muon_sft,Muon + SFT,12,gate_proj,mlp,model.layers.12.mlp.gate_proj.weight,18.887482919234436,1.276174084596025
+muon_sft,Muon + SFT,12,up_proj,mlp,model.layers.12.mlp.up_proj.weight,8.061138748847261,0.9063963963221836
+muon_sft,Muon + SFT,12,k_proj,attn,model.layers.12.self_attn.k_proj.weight,20.878219378721305,1.3196934566400322
+muon_sft,Muon + SFT,12,o_proj,attn,model.layers.12.self_attn.o_proj.weight,61822.64036171141,4.791147549255824
+muon_sft,Muon + SFT,12,q_proj,attn,model.layers.12.self_attn.q_proj.weight,15789.774706232498,4.198375933394104
+muon_sft,Muon + SFT,12,v_proj,attn,model.layers.12.self_attn.v_proj.weight,2.5509323260941414,0.4066989373264776
+muon_sft,Muon + SFT,13,down_proj,mlp,model.layers.13.mlp.down_proj.weight,30.00159666897124,1.477144368255378
+muon_sft,Muon + SFT,13,gate_proj,mlp,model.layers.13.mlp.gate_proj.weight,12.316698191160521,1.0904942995859754
+muon_sft,Muon + SFT,13,up_proj,mlp,model.layers.13.mlp.up_proj.weight,6.310280555450281,0.8000486684319784
+muon_sft,Muon + SFT,13,k_proj,attn,model.layers.13.self_attn.k_proj.weight,41.90903101281295,1.6223076195393245
+muon_sft,Muon + SFT,13,o_proj,attn,model.layers.13.self_attn.o_proj.weight,10090.77298262302,4.003924435734391
+muon_sft,Muon + SFT,13,q_proj,attn,model.layers.13.self_attn.q_proj.weight,76298.7820594583,4.8825176054636845
+muon_sft,Muon + SFT,13,v_proj,attn,model.layers.13.self_attn.v_proj.weight,3.700398770558064,0.5682485279916076
+muon_sft,Muon + SFT,14,down_proj,mlp,model.layers.14.mlp.down_proj.weight,12.149490252836136,1.0845580569446591
+muon_sft,Muon + SFT,14,gate_proj,mlp,model.layers.14.mlp.gate_proj.weight,13.415838781288343,1.1276178306939189
+muon_sft,Muon + SFT,14,up_proj,mlp,model.layers.14.mlp.up_proj.weight,6.927346801743967,0.8405669301391604
+muon_sft,Muon + SFT,14,k_proj,attn,model.layers.14.self_attn.k_proj.weight,23.141947943616614,1.3643999123321555
+muon_sft,Muon + SFT,14,o_proj,attn,model.layers.14.self_attn.o_proj.weight,6552.904851305165,3.816433862011819
+muon_sft,Muon + SFT,14,q_proj,attn,model.layers.14.self_attn.q_proj.weight,12230.538834412668,4.087445590941201
+muon_sft,Muon + SFT,14,v_proj,attn,model.layers.14.self_attn.v_proj.weight,6.809417414110828,0.8331099570434742
+muon_sft,Muon + SFT,15,down_proj,mlp,model.layers.15.mlp.down_proj.weight,12.831635662483748,1.1082820198912104
+muon_sft,Muon + SFT,15,gate_proj,mlp,model.layers.15.mlp.gate_proj.weight,16.831621447577394,1.2261259550617514
+muon_sft,Muon + SFT,15,up_proj,mlp,model.layers.15.mlp.up_proj.weight,9.39990164325253,0.97312330934266
+muon_sft,Muon + SFT,15,k_proj,attn,model.layers.15.self_attn.k_proj.weight,25.444102959318084,1.4055871442764973
+muon_sft,Muon + SFT,15,o_proj,attn,model.layers.15.self_attn.o_proj.weight,30600.945216997472,4.485734841389627
+muon_sft,Muon + SFT,15,q_proj,attn,model.layers.15.self_attn.q_proj.weight,24530.608461606247,4.389708320658108
+muon_sft,Muon + SFT,15,v_proj,attn,model.layers.15.self_attn.v_proj.weight,3.3573835470865996,0.5260009578307631
+muon_sft,Muon + SFT,16,down_proj,mlp,model.layers.16.mlp.down_proj.weight,9.686649868942226,0.9861736021282289
+muon_sft,Muon + SFT,16,gate_proj,mlp,model.layers.16.mlp.gate_proj.weight,12.91966438687126,1.1112512321712185
+muon_sft,Muon + SFT,16,up_proj,mlp,model.layers.16.mlp.up_proj.weight,6.158605048528276,0.7894823536689797
+muon_sft,Muon + SFT,16,k_proj,attn,model.layers.16.self_attn.k_proj.weight,20.665444783989127,1.3152447570725214
+muon_sft,Muon + SFT,16,o_proj,attn,model.layers.16.self_attn.o_proj.weight,44048.594787915266,4.643932058364673
+muon_sft,Muon + SFT,16,q_proj,attn,model.layers.16.self_attn.q_proj.weight,103246.79274745577,5.013876569638693
+muon_sft,Muon + SFT,16,v_proj,attn,model.layers.16.self_attn.v_proj.weight,2.78892012571215,0.4454360763100807
+muon_sft,Muon + SFT,17,down_proj,mlp,model.layers.17.mlp.down_proj.weight,6.7995384996495165,0.8324794371390039
+muon_sft,Muon + SFT,17,gate_proj,mlp,model.layers.17.mlp.gate_proj.weight,17.969133777310546,1.254527141950295
+muon_sft,Muon + SFT,17,up_proj,mlp,model.layers.17.mlp.up_proj.weight,12.572033430650846,1.0994055271918584
+muon_sft,Muon + SFT,17,k_proj,attn,model.layers.17.self_attn.k_proj.weight,15.485115372355326,1.189914445430011
+muon_sft,Muon + SFT,17,o_proj,attn,model.layers.17.self_attn.o_proj.weight,49603.35285108179,4.695511032851291
+muon_sft,Muon + SFT,17,q_proj,attn,model.layers.17.self_attn.q_proj.weight,13043.739850771837,4.115402128488648
+muon_sft,Muon + SFT,17,v_proj,attn,model.layers.17.self_attn.v_proj.weight,4.0456238840738195,0.606985504568241
+muon_sft,Muon + SFT,18,down_proj,mlp,model.layers.18.mlp.down_proj.weight,6.643884000055834,0.8224220412123125
+muon_sft,Muon + SFT,18,gate_proj,mlp,model.layers.18.mlp.gate_proj.weight,18.455416035123193,1.2661238398173296
+muon_sft,Muon + SFT,18,up_proj,mlp,model.layers.18.mlp.up_proj.weight,10.674020649784213,1.0283280386473197
+muon_sft,Muon + SFT,18,k_proj,attn,model.layers.18.self_attn.k_proj.weight,22.860946644322436,1.359094210044101
+muon_sft,Muon + SFT,18,o_proj,attn,model.layers.18.self_attn.o_proj.weight,19178.333591050112,4.282810868546201
+muon_sft,Muon + SFT,18,q_proj,attn,model.layers.18.self_attn.q_proj.weight,37172.69655653163,4.570224066534097
+muon_sft,Muon + SFT,18,v_proj,attn,model.layers.18.self_attn.v_proj.weight,2.143498350732004,0.3311231536883751
+muon_sft,Muon + SFT,19,down_proj,mlp,model.layers.19.mlp.down_proj.weight,7.114335231325167,0.852134325522872
+muon_sft,Muon + SFT,19,gate_proj,mlp,model.layers.19.mlp.gate_proj.weight,18.80546458920717,1.2742840671408513
+muon_sft,Muon + SFT,19,up_proj,mlp,model.layers.19.mlp.up_proj.weight,10.389723003234389,1.0166039691384663
+muon_sft,Muon + SFT,19,k_proj,attn,model.layers.19.self_attn.k_proj.weight,22.392333729333195,1.3500993581147602
+muon_sft,Muon + SFT,19,o_proj,attn,model.layers.19.self_attn.o_proj.weight,21430.18658208536,4.3310259522465575
+muon_sft,Muon + SFT,19,q_proj,attn,model.layers.19.self_attn.q_proj.weight,25847.081537786566,4.41241151286172
+muon_sft,Muon + SFT,19,v_proj,attn,model.layers.19.self_attn.v_proj.weight,3.0089866814421375,0.478420265443973
+muon_sft,Muon + SFT,2,down_proj,mlp,model.layers.2.mlp.down_proj.weight,13.203132521167081,1.1206769823618141
+muon_sft,Muon + SFT,2,gate_proj,mlp,model.layers.2.mlp.gate_proj.weight,17.386266047101092,1.2402063209755672
+muon_sft,Muon + SFT,2,up_proj,mlp,model.layers.2.mlp.up_proj.weight,8.914465942627027,0.950095330111759
+muon_sft,Muon + SFT,2,k_proj,attn,model.layers.2.self_attn.k_proj.weight,17.2467094030942,1.236706245820796
+muon_sft,Muon + SFT,2,o_proj,attn,model.layers.2.self_attn.o_proj.weight,29726.574178041632,4.473144862070716
+muon_sft,Muon + SFT,2,q_proj,attn,model.layers.2.self_attn.q_proj.weight,23347.53697589862,4.3682410718744515
+muon_sft,Muon + SFT,2,v_proj,attn,model.layers.2.self_attn.v_proj.weight,3.1914841412228903,0.5039926907221141
+muon_sft,Muon + SFT,20,down_proj,mlp,model.layers.20.mlp.down_proj.weight,7.5164467244419715,0.8760125835885033
+muon_sft,Muon + SFT,20,gate_proj,mlp,model.layers.20.mlp.gate_proj.weight,19.205220256234284,1.283419292262384
+muon_sft,Muon + SFT,20,up_proj,mlp,model.layers.20.mlp.up_proj.weight,11.188208412837483,1.0487605477694075
+muon_sft,Muon + SFT,20,k_proj,attn,model.layers.20.self_attn.k_proj.weight,22.085893647408305,1.3441149765301692
+muon_sft,Muon + SFT,20,o_proj,attn,model.layers.20.self_attn.o_proj.weight,76646.62669649672,4.884493045826597
+muon_sft,Muon + SFT,20,q_proj,attn,model.layers.20.self_attn.q_proj.weight,9084.658369035726,3.9583086001930554
+muon_sft,Muon + SFT,20,v_proj,attn,model.layers.20.self_attn.v_proj.weight,6.943775720902541,0.841595684987064
+muon_sft,Muon + SFT,21,down_proj,mlp,model.layers.21.mlp.down_proj.weight,9.389095264603824,0.9726237455653078
+muon_sft,Muon + SFT,21,gate_proj,mlp,model.layers.21.mlp.gate_proj.weight,17.628376432892647,1.246212315776081
+muon_sft,Muon + SFT,21,up_proj,mlp,model.layers.21.mlp.up_proj.weight,8.167114199794833,0.9120686283194903
+muon_sft,Muon + SFT,21,k_proj,attn,model.layers.21.self_attn.k_proj.weight,29.988909750440698,1.4769606772308752
+muon_sft,Muon + SFT,21,o_proj,attn,model.layers.21.self_attn.o_proj.weight,299245.71362202533,5.476027938314425
+muon_sft,Muon + SFT,21,q_proj,attn,model.layers.21.self_attn.q_proj.weight,14548.046066761088,4.16280466758947
+muon_sft,Muon + SFT,21,v_proj,attn,model.layers.21.self_attn.v_proj.weight,4.365945371343927,0.6400782973208268
+muon_sft,Muon + SFT,22,down_proj,mlp,model.layers.22.mlp.down_proj.weight,9.9048233517192,0.9958467344876203
+muon_sft,Muon + SFT,22,gate_proj,mlp,model.layers.22.mlp.gate_proj.weight,22.903413032908794,1.3599002050870999
+muon_sft,Muon + SFT,22,up_proj,mlp,model.layers.22.mlp.up_proj.weight,12.799810984047378,1.1072035564297966
+muon_sft,Muon + SFT,22,k_proj,attn,model.layers.22.self_attn.k_proj.weight,20.39694069280847,1.3095650331186857
+muon_sft,Muon + SFT,22,o_proj,attn,model.layers.22.self_attn.o_proj.weight,31285.951976723358,4.495349374335042
+muon_sft,Muon + SFT,22,q_proj,attn,model.layers.22.self_attn.q_proj.weight,55216.435981441085,4.742068371090895
+muon_sft,Muon + SFT,22,v_proj,attn,model.layers.22.self_attn.v_proj.weight,5.232726227455763,0.7187280133531696
+muon_sft,Muon + SFT,23,down_proj,mlp,model.layers.23.mlp.down_proj.weight,11.806434587964628,1.0721187653057425
+muon_sft,Muon + SFT,23,gate_proj,mlp,model.layers.23.mlp.gate_proj.weight,19.842620471428095,1.2975990257380423
+muon_sft,Muon + SFT,23,up_proj,mlp,model.layers.23.mlp.up_proj.weight,10.792542461705436,1.0331237660008172
+muon_sft,Muon + SFT,23,k_proj,attn,model.layers.23.self_attn.k_proj.weight,15.99260502633755,1.2039192114895896
+muon_sft,Muon + SFT,23,o_proj,attn,model.layers.23.self_attn.o_proj.weight,13496.993338286366,4.13023703353047
+muon_sft,Muon + SFT,23,q_proj,attn,model.layers.23.self_attn.q_proj.weight,599208.5954904278,5.777578034576736
+muon_sft,Muon + SFT,23,v_proj,attn,model.layers.23.self_attn.v_proj.weight,4.042367540671699,0.6066357979543565
+muon_sft,Muon + SFT,24,down_proj,mlp,model.layers.24.mlp.down_proj.weight,10.011737498339553,1.0005094541486153
+muon_sft,Muon + SFT,24,gate_proj,mlp,model.layers.24.mlp.gate_proj.weight,21.048481277065747,1.3232207654075738
+muon_sft,Muon + SFT,24,up_proj,mlp,model.layers.24.mlp.up_proj.weight,13.894810392204727,1.1428526247959345
+muon_sft,Muon + SFT,24,k_proj,attn,model.layers.24.self_attn.k_proj.weight,31.214117468961366,1.494351060434105
+muon_sft,Muon + SFT,24,o_proj,attn,model.layers.24.self_attn.o_proj.weight,14590.302704832277,4.1640643022892405
+muon_sft,Muon + SFT,24,q_proj,attn,model.layers.24.self_attn.q_proj.weight,126414.64866006648,5.101797401981352
+muon_sft,Muon + SFT,24,v_proj,attn,model.layers.24.self_attn.v_proj.weight,3.5992412003852303,0.5562109515393582
+muon_sft,Muon + SFT,25,down_proj,mlp,model.layers.25.mlp.down_proj.weight,9.428699318244876,0.974451786282453
+muon_sft,Muon + SFT,25,gate_proj,mlp,model.layers.25.mlp.gate_proj.weight,21.33922498280245,1.329178642276623
+muon_sft,Muon + SFT,25,up_proj,mlp,model.layers.25.mlp.up_proj.weight,18.113005755861398,1.2579905251273054
+muon_sft,Muon + SFT,25,k_proj,attn,model.layers.25.self_attn.k_proj.weight,22.456760633200815,1.3513471098689616
+muon_sft,Muon + SFT,25,o_proj,attn,model.layers.25.self_attn.o_proj.weight,16106.981051364432,4.207014147768843
+muon_sft,Muon + SFT,25,q_proj,attn,model.layers.25.self_attn.q_proj.weight,25317.798438765465,4.403425938017297
+muon_sft,Muon + SFT,25,v_proj,attn,model.layers.25.self_attn.v_proj.weight,4.337177080929177,0.6372071541525439
+muon_sft,Muon + SFT,26,down_proj,mlp,model.layers.26.mlp.down_proj.weight,8.741469839411124,0.9415844634668106
+muon_sft,Muon + SFT,26,gate_proj,mlp,model.layers.26.mlp.gate_proj.weight,20.032969027555097,1.3017453195745343
+muon_sft,Muon + SFT,26,up_proj,mlp,model.layers.26.mlp.up_proj.weight,18.54981945308658,1.2683396869478405
+muon_sft,Muon + SFT,26,k_proj,attn,model.layers.26.self_attn.k_proj.weight,18.92884887566233,1.2771242039189679
+muon_sft,Muon + SFT,26,o_proj,attn,model.layers.26.self_attn.o_proj.weight,32635.93513951373,4.513696061343688
+muon_sft,Muon + SFT,26,q_proj,attn,model.layers.26.self_attn.q_proj.weight,51223.02375319105,4.709465211784987
+muon_sft,Muon + SFT,26,v_proj,attn,model.layers.26.self_attn.v_proj.weight,4.834139653015603,0.6843191925461838
+muon_sft,Muon + SFT,27,down_proj,mlp,model.layers.27.mlp.down_proj.weight,11.983442494971607,1.0785815961673508
+muon_sft,Muon + SFT,27,gate_proj,mlp,model.layers.27.mlp.gate_proj.weight,34.01220982702218,1.5316348496482146
+muon_sft,Muon + SFT,27,up_proj,mlp,model.layers.27.mlp.up_proj.weight,27.057694873669387,1.4322907949856332
+muon_sft,Muon + SFT,27,k_proj,attn,model.layers.27.self_attn.k_proj.weight,16.960845303153963,1.2294474930472887
+muon_sft,Muon + SFT,27,o_proj,attn,model.layers.27.self_attn.o_proj.weight,101196.8067561438,5.005166808649372
+muon_sft,Muon + SFT,27,q_proj,attn,model.layers.27.self_attn.q_proj.weight,80492.52762503925,4.905755565313966
+muon_sft,Muon + SFT,27,v_proj,attn,model.layers.27.self_attn.v_proj.weight,7.854205919011411,0.895102283274869
+muon_sft,Muon + SFT,3,down_proj,mlp,model.layers.3.mlp.down_proj.weight,10.759013427579875,1.0317724495272194
+muon_sft,Muon + SFT,3,gate_proj,mlp,model.layers.3.mlp.gate_proj.weight,13.999900883040265,1.146124960956734
+muon_sft,Muon + SFT,3,up_proj,mlp,model.layers.3.mlp.up_proj.weight,7.592351013442489,0.8803762784072732
+muon_sft,Muon + SFT,3,k_proj,attn,model.layers.3.self_attn.k_proj.weight,15.497300179001831,1.1902560453000206
+muon_sft,Muon + SFT,3,o_proj,attn,model.layers.3.self_attn.o_proj.weight,19004.700644692737,4.278861033140281
+muon_sft,Muon + SFT,3,q_proj,attn,model.layers.3.self_attn.q_proj.weight,90110.38565993763,4.95477484841377
+muon_sft,Muon + SFT,3,v_proj,attn,model.layers.3.self_attn.v_proj.weight,3.89111766839355,0.5900743641785371
+muon_sft,Muon + SFT,4,down_proj,mlp,model.layers.4.mlp.down_proj.weight,11.159893888113206,1.0476600652085504
+muon_sft,Muon + SFT,4,gate_proj,mlp,model.layers.4.mlp.gate_proj.weight,17.496051015975016,1.2429400363718381
+muon_sft,Muon + SFT,4,up_proj,mlp,model.layers.4.mlp.up_proj.weight,8.781234660531082,0.9435555829400465
+muon_sft,Muon + SFT,4,k_proj,attn,model.layers.4.self_attn.k_proj.weight,23.94113189622805,1.379144679264431
+muon_sft,Muon + SFT,4,o_proj,attn,model.layers.4.self_attn.o_proj.weight,8592.553943662699,3.9341222672988185
+muon_sft,Muon + SFT,4,q_proj,attn,model.layers.4.self_attn.q_proj.weight,19121.923743192245,4.281531581926781
+muon_sft,Muon + SFT,4,v_proj,attn,model.layers.4.self_attn.v_proj.weight,3.7879615016923647,0.5784055564749708
+muon_sft,Muon + SFT,5,down_proj,mlp,model.layers.5.mlp.down_proj.weight,12.389249139637382,1.093044986408866
+muon_sft,Muon + SFT,5,gate_proj,mlp,model.layers.5.mlp.gate_proj.weight,20.63562922553407,1.3146177160053412
+muon_sft,Muon + SFT,5,up_proj,mlp,model.layers.5.mlp.up_proj.weight,8.094672244896568,0.9081992687639409
+muon_sft,Muon + SFT,5,k_proj,attn,model.layers.5.self_attn.k_proj.weight,22.35818601887652,1.3494365651379272
+muon_sft,Muon + SFT,5,o_proj,attn,model.layers.5.self_attn.o_proj.weight,13264.970991666096,4.122706304587996
+muon_sft,Muon + SFT,5,q_proj,attn,model.layers.5.self_attn.q_proj.weight,14827.798750178554,4.171076682949645
+muon_sft,Muon + SFT,5,v_proj,attn,model.layers.5.self_attn.v_proj.weight,3.3556879153149173,0.5257815639090487
+muon_sft,Muon + SFT,6,down_proj,mlp,model.layers.6.mlp.down_proj.weight,9.162439113359191,0.9620111016661029
+muon_sft,Muon + SFT,6,gate_proj,mlp,model.layers.6.mlp.gate_proj.weight,19.226693162101643,1.2839045954736767
+muon_sft,Muon + SFT,6,up_proj,mlp,model.layers.6.mlp.up_proj.weight,7.420595402538279,0.8704387529424813
+muon_sft,Muon + SFT,6,k_proj,attn,model.layers.6.self_attn.k_proj.weight,22.189600571506283,1.3461494846947386
+muon_sft,Muon + SFT,6,o_proj,attn,model.layers.6.self_attn.o_proj.weight,91148.40178717715,4.959749058058521
+muon_sft,Muon + SFT,6,q_proj,attn,model.layers.6.self_attn.q_proj.weight,17433.07523914339,4.241374004527407
+muon_sft,Muon + SFT,6,v_proj,attn,model.layers.6.self_attn.v_proj.weight,3.2799071823841017,0.5158615538492496
+muon_sft,Muon + SFT,7,down_proj,mlp,model.layers.7.mlp.down_proj.weight,7.9681229481650275,0.9013560266327209
+muon_sft,Muon + SFT,7,gate_proj,mlp,model.layers.7.mlp.gate_proj.weight,16.82326647148388,1.2259103239714255
+muon_sft,Muon + SFT,7,up_proj,mlp,model.layers.7.mlp.up_proj.weight,8.450980845479092,0.9269071173589488
+muon_sft,Muon + SFT,7,k_proj,attn,model.layers.7.self_attn.k_proj.weight,30.43370186896883,1.4833547819172805
+muon_sft,Muon + SFT,7,o_proj,attn,model.layers.7.self_attn.o_proj.weight,9966.100313514447,3.9985252542364558
+muon_sft,Muon + SFT,7,q_proj,attn,model.layers.7.self_attn.q_proj.weight,9121.950044212786,3.9600876895249444
+muon_sft,Muon + SFT,7,v_proj,attn,model.layers.7.self_attn.v_proj.weight,4.614406273112087,0.6641158291107607
+muon_sft,Muon + SFT,8,down_proj,mlp,model.layers.8.mlp.down_proj.weight,8.059123327664715,0.906287801772207
+muon_sft,Muon + SFT,8,gate_proj,mlp,model.layers.8.mlp.gate_proj.weight,15.702697419751638,1.1959742622111076
+muon_sft,Muon + SFT,8,up_proj,mlp,model.layers.8.mlp.up_proj.weight,11.035827465344353,1.0428049020794732
+muon_sft,Muon + SFT,8,k_proj,attn,model.layers.8.self_attn.k_proj.weight,26.23757004010983,1.4189236109231909
+muon_sft,Muon + SFT,8,o_proj,attn,model.layers.8.self_attn.o_proj.weight,8962.120600119097,3.9524107837651337
+muon_sft,Muon + SFT,8,q_proj,attn,model.layers.8.self_attn.q_proj.weight,21127.295295218293,4.324843902468928
+muon_sft,Muon + SFT,8,v_proj,attn,model.layers.8.self_attn.v_proj.weight,2.6151104856783163,0.41749004207778073
+muon_sft,Muon + SFT,9,down_proj,mlp,model.layers.9.mlp.down_proj.weight,11.962068959642647,1.077806301729821
+muon_sft,Muon + SFT,9,gate_proj,mlp,model.layers.9.mlp.gate_proj.weight,17.046812372936234,1.2316431810839752
+muon_sft,Muon + SFT,9,up_proj,mlp,model.layers.9.mlp.up_proj.weight,8.607334044989733,0.9348686579767681
+muon_sft,Muon + SFT,9,k_proj,attn,model.layers.9.self_attn.k_proj.weight,29.978447333707468,1.4768091357882753
+muon_sft,Muon + SFT,9,o_proj,attn,model.layers.9.self_attn.o_proj.weight,25681.20170794991,4.409615341940458
+muon_sft,Muon + SFT,9,q_proj,attn,model.layers.9.self_attn.q_proj.weight,34120.83444498381,4.533019643551189
+muon_sft,Muon + SFT,9,v_proj,attn,model.layers.9.self_attn.v_proj.weight,3.912447172004839,0.5924484865131805
+adamw_grpo,AdamW + GRPO,-1,embed,embed,model.embed_tokens.weight,69.19110692825207,1.8400502785582027
+adamw_grpo,AdamW + GRPO,0,down_proj,mlp,model.layers.0.mlp.down_proj.weight,10.547327346594532,1.0231424249726215
+adamw_grpo,AdamW + GRPO,0,gate_proj,mlp,model.layers.0.mlp.gate_proj.weight,50.78397597211235,1.705726699593077
+adamw_grpo,AdamW + GRPO,0,up_proj,mlp,model.layers.0.mlp.up_proj.weight,30.55729019474619,1.4851148385931612
+adamw_grpo,AdamW + GRPO,0,k_proj,attn,model.layers.0.self_attn.k_proj.weight,18.743134676165358,1.2728422257574237
+adamw_grpo,AdamW + GRPO,0,o_proj,attn,model.layers.0.self_attn.o_proj.weight,37841.71531330783,4.577970814152066
+adamw_grpo,AdamW + GRPO,0,q_proj,attn,model.layers.0.self_attn.q_proj.weight,190921.37607818723,5.280854555911102
+adamw_grpo,AdamW + GRPO,0,v_proj,attn,model.layers.0.self_attn.v_proj.weight,7.77209508660119,0.8905381052748352
+adamw_grpo,AdamW + GRPO,1,down_proj,mlp,model.layers.1.mlp.down_proj.weight,8.99898402802743,0.9541934810029157
+adamw_grpo,AdamW + GRPO,1,gate_proj,mlp,model.layers.1.mlp.gate_proj.weight,33.91796669771431,1.53042980943283
+adamw_grpo,AdamW + GRPO,1,up_proj,mlp,model.layers.1.mlp.up_proj.weight,37.7359655441574,1.5767554666935193
+adamw_grpo,AdamW + GRPO,1,k_proj,attn,model.layers.1.self_attn.k_proj.weight,30.088538211743334,1.478401088969902
+adamw_grpo,AdamW + GRPO,1,o_proj,attn,model.layers.1.self_attn.o_proj.weight,52390.743005803655,4.719254557658338
+adamw_grpo,AdamW + GRPO,1,q_proj,attn,model.layers.1.self_attn.q_proj.weight,1393465.6674154997,6.144096272916076
+adamw_grpo,AdamW + GRPO,1,v_proj,attn,model.layers.1.self_attn.v_proj.weight,3.3416965889954886,0.5239670153638131
+adamw_grpo,AdamW + GRPO,10,down_proj,mlp,model.layers.10.mlp.down_proj.weight,13.491651022908263,1.130065099135504
+adamw_grpo,AdamW + GRPO,10,gate_proj,mlp,model.layers.10.mlp.gate_proj.weight,16.209374795143788,1.2097662641850082
+adamw_grpo,AdamW + GRPO,10,up_proj,mlp,model.layers.10.mlp.up_proj.weight,8.538239218563646,0.9313683184050056
+adamw_grpo,AdamW + GRPO,10,k_proj,attn,model.layers.10.self_attn.k_proj.weight,24.037345678178387,1.380886509047651
+adamw_grpo,AdamW + GRPO,10,o_proj,attn,model.layers.10.self_attn.o_proj.weight,15134.481359084808,4.179967542785362
+adamw_grpo,AdamW + GRPO,10,q_proj,attn,model.layers.10.self_attn.q_proj.weight,12397.268611232677,4.09332601115128
+adamw_grpo,AdamW + GRPO,10,v_proj,attn,model.layers.10.self_attn.v_proj.weight,3.2992587092185395,0.5184163717989824
+adamw_grpo,AdamW + GRPO,11,down_proj,mlp,model.layers.11.mlp.down_proj.weight,16.054046222185583,1.2055845090463377
+adamw_grpo,AdamW + GRPO,11,gate_proj,mlp,model.layers.11.mlp.gate_proj.weight,13.225372621666645,1.121407917021319
+adamw_grpo,AdamW + GRPO,11,up_proj,mlp,model.layers.11.mlp.up_proj.weight,6.60513009889632,0.8198813761786047
+adamw_grpo,AdamW + GRPO,11,k_proj,attn,model.layers.11.self_attn.k_proj.weight,21.6021938934136,1.3344978598277533
+adamw_grpo,AdamW + GRPO,11,o_proj,attn,model.layers.11.self_attn.o_proj.weight,70030.54943282304,4.845287533669242
+adamw_grpo,AdamW + GRPO,11,q_proj,attn,model.layers.11.self_attn.q_proj.weight,28630.094335948008,4.456822779021046
+adamw_grpo,AdamW + GRPO,11,v_proj,attn,model.layers.11.self_attn.v_proj.weight,2.8678333982529525,0.4575539181530069
+adamw_grpo,AdamW + GRPO,12,down_proj,mlp,model.layers.12.mlp.down_proj.weight,14.145532271505314,1.150619293838146
+adamw_grpo,AdamW + GRPO,12,gate_proj,mlp,model.layers.12.mlp.gate_proj.weight,18.888185167172164,1.2761902316250395
+adamw_grpo,AdamW + GRPO,12,up_proj,mlp,model.layers.12.mlp.up_proj.weight,8.061508188181364,0.9064162994391908
+adamw_grpo,AdamW + GRPO,12,k_proj,attn,model.layers.12.self_attn.k_proj.weight,20.864108635981214,1.3193998353576328
+adamw_grpo,AdamW + GRPO,12,o_proj,attn,model.layers.12.self_attn.o_proj.weight,84585.26325907349,4.9272947053232325
+adamw_grpo,AdamW + GRPO,12,q_proj,attn,model.layers.12.self_attn.q_proj.weight,15213.523224504555,4.182229801809149
+adamw_grpo,AdamW + GRPO,12,v_proj,attn,model.layers.12.self_attn.v_proj.weight,2.5507543562846973,0.4066686370312888
+adamw_grpo,AdamW + GRPO,13,down_proj,mlp,model.layers.13.mlp.down_proj.weight,30.006952829395033,1.477221895572464
+adamw_grpo,AdamW + GRPO,13,gate_proj,mlp,model.layers.13.mlp.gate_proj.weight,12.3169016688823,1.0905014742784493
+adamw_grpo,AdamW + GRPO,13,up_proj,mlp,model.layers.13.mlp.up_proj.weight,6.310742797665949,0.8000804803125272
+adamw_grpo,AdamW + GRPO,13,k_proj,attn,model.layers.13.self_attn.k_proj.weight,41.9136948626521,1.6223559473461453
+adamw_grpo,AdamW + GRPO,13,o_proj,attn,model.layers.13.self_attn.o_proj.weight,9527.487091254236,3.9789783690211293
+adamw_grpo,AdamW + GRPO,13,q_proj,attn,model.layers.13.self_attn.q_proj.weight,59921.60631760197,4.7775834469731215
+adamw_grpo,AdamW + GRPO,13,v_proj,attn,model.layers.13.self_attn.v_proj.weight,3.700391617164405,0.5682476884382004
+adamw_grpo,AdamW + GRPO,14,down_proj,mlp,model.layers.14.mlp.down_proj.weight,12.148495594038662,1.0845225005137613
+adamw_grpo,AdamW + GRPO,14,gate_proj,mlp,model.layers.14.mlp.gate_proj.weight,13.416308692823444,1.1276330422968586
+adamw_grpo,AdamW + GRPO,14,up_proj,mlp,model.layers.14.mlp.up_proj.weight,6.926488985653936,0.8405131479519624
+adamw_grpo,AdamW + GRPO,14,k_proj,attn,model.layers.14.self_attn.k_proj.weight,23.132663921089666,1.3642256483180475
+adamw_grpo,AdamW + GRPO,14,o_proj,attn,model.layers.14.self_attn.o_proj.weight,6685.204345378444,3.825114686798288
+adamw_grpo,AdamW + GRPO,14,q_proj,attn,model.layers.14.self_attn.q_proj.weight,11880.269038941833,4.074826275729758
+adamw_grpo,AdamW + GRPO,14,v_proj,attn,model.layers.14.self_attn.v_proj.weight,6.810780973463806,0.8331969141182353
+adamw_grpo,AdamW + GRPO,15,down_proj,mlp,model.layers.15.mlp.down_proj.weight,12.830844698801315,1.1082552484211157
+adamw_grpo,AdamW + GRPO,15,gate_proj,mlp,model.layers.15.mlp.gate_proj.weight,16.831962064311078,1.2261347436666743
+adamw_grpo,AdamW + GRPO,15,up_proj,mlp,model.layers.15.mlp.up_proj.weight,9.399794760723138,0.9731183711253899
+adamw_grpo,AdamW + GRPO,15,k_proj,attn,model.layers.15.self_attn.k_proj.weight,25.419534806773967,1.405167598432792
+adamw_grpo,AdamW + GRPO,15,o_proj,attn,model.layers.15.self_attn.o_proj.weight,21960.33241883119,4.34163890984779
+adamw_grpo,AdamW + GRPO,15,q_proj,attn,model.layers.15.self_attn.q_proj.weight,22456.912240995767,4.351350041823734
+adamw_grpo,AdamW + GRPO,15,v_proj,attn,model.layers.15.self_attn.v_proj.weight,3.3573758563092286,0.5259999629888117
+adamw_grpo,AdamW + GRPO,16,down_proj,mlp,model.layers.16.mlp.down_proj.weight,9.686780112417255,0.9861794414682492
+adamw_grpo,AdamW + GRPO,16,gate_proj,mlp,model.layers.16.mlp.gate_proj.weight,12.920194317178927,1.1112690454116916
+adamw_grpo,AdamW + GRPO,16,up_proj,mlp,model.layers.16.mlp.up_proj.weight,6.159250560487269,0.7895278717024667
+adamw_grpo,AdamW + GRPO,16,k_proj,attn,model.layers.16.self_attn.k_proj.weight,20.672902713634258,1.3154014608559337
+adamw_grpo,AdamW + GRPO,16,o_proj,attn,model.layers.16.self_attn.o_proj.weight,32442.42104502372,4.51111325636713
+adamw_grpo,AdamW + GRPO,16,q_proj,attn,model.layers.16.self_attn.q_proj.weight,76792.25880899608,4.885317442349417
+adamw_grpo,AdamW + GRPO,16,v_proj,attn,model.layers.16.self_attn.v_proj.weight,2.7888829237476367,0.44543028313030686
+adamw_grpo,AdamW + GRPO,17,down_proj,mlp,model.layers.17.mlp.down_proj.weight,6.799824118958421,0.8324976795954012
+adamw_grpo,AdamW + GRPO,17,gate_proj,mlp,model.layers.17.mlp.gate_proj.weight,17.969183465670543,1.2545283428624254
+adamw_grpo,AdamW + GRPO,17,up_proj,mlp,model.layers.17.mlp.up_proj.weight,12.57260294026046,1.0994252001652305
+adamw_grpo,AdamW + GRPO,17,k_proj,attn,model.layers.17.self_attn.k_proj.weight,15.491353458445928,1.1900893631340401
+adamw_grpo,AdamW + GRPO,17,o_proj,attn,model.layers.17.self_attn.o_proj.weight,60811.774403922995,4.783987675713108
+adamw_grpo,AdamW + GRPO,17,q_proj,attn,model.layers.17.self_attn.q_proj.weight,13830.838211793152,4.140848501130659
+adamw_grpo,AdamW + GRPO,17,v_proj,attn,model.layers.17.self_attn.v_proj.weight,4.045179912442115,0.60693784195404
+adamw_grpo,AdamW + GRPO,18,down_proj,mlp,model.layers.18.mlp.down_proj.weight,6.644014724092371,0.8224305862394686
+adamw_grpo,AdamW + GRPO,18,gate_proj,mlp,model.layers.18.mlp.gate_proj.weight,18.45543859547918,1.2661243707092968
+adamw_grpo,AdamW + GRPO,18,up_proj,mlp,model.layers.18.mlp.up_proj.weight,10.671937068809676,1.0282432555952175
+adamw_grpo,AdamW + GRPO,18,k_proj,attn,model.layers.18.self_attn.k_proj.weight,22.854818029504173,1.3589777677781905
+adamw_grpo,AdamW + GRPO,18,o_proj,attn,model.layers.18.self_attn.o_proj.weight,21811.029671161683,4.3386761685566055
+adamw_grpo,AdamW + GRPO,18,q_proj,attn,model.layers.18.self_attn.q_proj.weight,34444.53274156655,4.537120297692153
+adamw_grpo,AdamW + GRPO,18,v_proj,attn,model.layers.18.self_attn.v_proj.weight,2.1436675981266675,0.3311574435714792
+adamw_grpo,AdamW + GRPO,19,down_proj,mlp,model.layers.19.mlp.down_proj.weight,7.114213610994691,0.8521269011482574
+adamw_grpo,AdamW + GRPO,19,gate_proj,mlp,model.layers.19.mlp.gate_proj.weight,18.80563056530943,1.2742879001855973
+adamw_grpo,AdamW + GRPO,19,up_proj,mlp,model.layers.19.mlp.up_proj.weight,10.390484156412004,1.0166357844733693
+adamw_grpo,AdamW + GRPO,19,k_proj,attn,model.layers.19.self_attn.k_proj.weight,22.3900589610424,1.3500552372334138
+adamw_grpo,AdamW + GRPO,19,o_proj,attn,model.layers.19.self_attn.o_proj.weight,22016.643623242224,4.342751112682633
+adamw_grpo,AdamW + GRPO,19,q_proj,attn,model.layers.19.self_attn.q_proj.weight,25521.61135443834,4.4069080909052705
+adamw_grpo,AdamW + GRPO,19,v_proj,attn,model.layers.19.self_attn.v_proj.weight,3.009024533139157,0.47842572863856014
+adamw_grpo,AdamW + GRPO,2,down_proj,mlp,model.layers.2.mlp.down_proj.weight,13.202992068914122,1.120672362400394
+adamw_grpo,AdamW + GRPO,2,gate_proj,mlp,model.layers.2.mlp.gate_proj.weight,17.387272634425713,1.2402314639628693
+adamw_grpo,AdamW + GRPO,2,up_proj,mlp,model.layers.2.mlp.up_proj.weight,8.915023758837359,0.9501225049222777
+adamw_grpo,AdamW + GRPO,2,k_proj,attn,model.layers.2.self_attn.k_proj.weight,17.24627324721557,1.236695262711955
+adamw_grpo,AdamW + GRPO,2,o_proj,attn,model.layers.2.self_attn.o_proj.weight,41807.39957179619,4.62125315519113
+adamw_grpo,AdamW + GRPO,2,q_proj,attn,model.layers.2.self_attn.q_proj.weight,24318.225742824106,4.385931885641407
+adamw_grpo,AdamW + GRPO,2,v_proj,attn,model.layers.2.self_attn.v_proj.weight,3.191485950438356,0.5039929369185656
+adamw_grpo,AdamW + GRPO,20,down_proj,mlp,model.layers.20.mlp.down_proj.weight,7.516870665773416,0.8760370779001934
+adamw_grpo,AdamW + GRPO,20,gate_proj,mlp,model.layers.20.mlp.gate_proj.weight,19.20470310500168,1.2834075975800212
+adamw_grpo,AdamW + GRPO,20,up_proj,mlp,model.layers.20.mlp.up_proj.weight,11.188037667061915,1.0487539198526539
+adamw_grpo,AdamW + GRPO,20,k_proj,attn,model.layers.20.self_attn.k_proj.weight,22.071824962560967,1.343838243374748
+adamw_grpo,AdamW + GRPO,20,o_proj,attn,model.layers.20.self_attn.o_proj.weight,94703.97826990191,4.9763682229776816
+adamw_grpo,AdamW + GRPO,20,q_proj,attn,model.layers.20.self_attn.q_proj.weight,9673.130496474727,3.9855670467123088
+adamw_grpo,AdamW + GRPO,20,v_proj,attn,model.layers.20.self_attn.v_proj.weight,6.941587295183009,0.8414587895784506
+adamw_grpo,AdamW + GRPO,21,down_proj,mlp,model.layers.21.mlp.down_proj.weight,9.389545056334224,0.9726445502735527
+adamw_grpo,AdamW + GRPO,21,gate_proj,mlp,model.layers.21.mlp.gate_proj.weight,17.63028362999233,1.2462592991370836
+adamw_grpo,AdamW + GRPO,21,up_proj,mlp,model.layers.21.mlp.up_proj.weight,8.167812291960491,0.9121057484835441
+adamw_grpo,AdamW + GRPO,21,k_proj,attn,model.layers.21.self_attn.k_proj.weight,29.99509337973889,1.4770502183068859
+adamw_grpo,AdamW + GRPO,21,o_proj,attn,model.layers.21.self_attn.o_proj.weight,227284.8146900372,5.356570420693618
+adamw_grpo,AdamW + GRPO,21,q_proj,attn,model.layers.21.self_attn.q_proj.weight,14613.341208623075,4.16474952480277
+adamw_grpo,AdamW + GRPO,21,v_proj,attn,model.layers.21.self_attn.v_proj.weight,4.36689680774081,0.6401729294165888
+adamw_grpo,AdamW + GRPO,22,down_proj,mlp,model.layers.22.mlp.down_proj.weight,9.905142075023862,0.9958607092492616
+adamw_grpo,AdamW + GRPO,22,gate_proj,mlp,model.layers.22.mlp.gate_proj.weight,22.904176361289338,1.3599146790774568
+adamw_grpo,AdamW + GRPO,22,up_proj,mlp,model.layers.22.mlp.up_proj.weight,12.799695623298629,1.1071996422499355
+adamw_grpo,AdamW + GRPO,22,k_proj,attn,model.layers.22.self_attn.k_proj.weight,20.386093794753506,1.3093340180340407
+adamw_grpo,AdamW + GRPO,22,o_proj,attn,model.layers.22.self_attn.o_proj.weight,33108.387163913445,4.519938025123164
+adamw_grpo,AdamW + GRPO,22,q_proj,attn,model.layers.22.self_attn.q_proj.weight,54797.453934759666,4.73876038024035
+adamw_grpo,AdamW + GRPO,22,v_proj,attn,model.layers.22.self_attn.v_proj.weight,5.2338039211042835,0.7188174482279075
+adamw_grpo,AdamW + GRPO,23,down_proj,mlp,model.layers.23.mlp.down_proj.weight,11.806498722101551,1.0721211244452362
+adamw_grpo,AdamW + GRPO,23,gate_proj,mlp,model.layers.23.mlp.gate_proj.weight,19.84305863318209,1.297608615657441
+adamw_grpo,AdamW + GRPO,23,up_proj,mlp,model.layers.23.mlp.up_proj.weight,10.792150085235738,1.0331079763910958
+adamw_grpo,AdamW + GRPO,23,k_proj,attn,model.layers.23.self_attn.k_proj.weight,16.002778426708943,1.2041953920703832
+adamw_grpo,AdamW + GRPO,23,o_proj,attn,model.layers.23.self_attn.o_proj.weight,13114.010487936337,4.117735526657861
+adamw_grpo,AdamW + GRPO,23,q_proj,attn,model.layers.23.self_attn.q_proj.weight,118445.34180904044,5.07351798556187
+adamw_grpo,AdamW + GRPO,23,v_proj,attn,model.layers.23.self_attn.v_proj.weight,4.042733270354754,0.6066750885920467
+adamw_grpo,AdamW + GRPO,24,down_proj,mlp,model.layers.24.mlp.down_proj.weight,10.01278343840092,1.0005548231238732
+adamw_grpo,AdamW + GRPO,24,gate_proj,mlp,model.layers.24.mlp.gate_proj.weight,21.050531485727824,1.3232630654165745
+adamw_grpo,AdamW + GRPO,24,up_proj,mlp,model.layers.24.mlp.up_proj.weight,13.895288773017112,1.1428675767502874
+adamw_grpo,AdamW + GRPO,24,k_proj,attn,model.layers.24.self_attn.k_proj.weight,31.177206275305966,1.493837196369899
+adamw_grpo,AdamW + GRPO,24,o_proj,attn,model.layers.24.self_attn.o_proj.weight,13757.191020810697,4.138529767569778
+adamw_grpo,AdamW + GRPO,24,q_proj,attn,model.layers.24.self_attn.q_proj.weight,134515.9849064482,5.128773895819244
+adamw_grpo,AdamW + GRPO,24,v_proj,attn,model.layers.24.self_attn.v_proj.weight,3.600415980662747,0.5563526806755302
+adamw_grpo,AdamW + GRPO,25,down_proj,mlp,model.layers.25.mlp.down_proj.weight,9.427727519122717,0.9744070220224704
+adamw_grpo,AdamW + GRPO,25,gate_proj,mlp,model.layers.25.mlp.gate_proj.weight,21.33853549157558,1.3291646095705085
+adamw_grpo,AdamW + GRPO,25,up_proj,mlp,model.layers.25.mlp.up_proj.weight,18.111301321198827,1.2579496560739545
+adamw_grpo,AdamW + GRPO,25,k_proj,attn,model.layers.25.self_attn.k_proj.weight,22.45016953245441,1.3512196249264892
+adamw_grpo,AdamW + GRPO,25,o_proj,attn,model.layers.25.self_attn.o_proj.weight,16106.854150364172,4.207010726108317
+adamw_grpo,AdamW + GRPO,25,q_proj,attn,model.layers.25.self_attn.q_proj.weight,27057.49330586471,4.432287559672655
+adamw_grpo,AdamW + GRPO,25,v_proj,attn,model.layers.25.self_attn.v_proj.weight,4.3372294045789355,0.6372123934441085
+adamw_grpo,AdamW + GRPO,26,down_proj,mlp,model.layers.26.mlp.down_proj.weight,8.742040234863094,0.9416128009798532
+adamw_grpo,AdamW + GRPO,26,gate_proj,mlp,model.layers.26.mlp.gate_proj.weight,20.033971520744903,1.3017670520679372
+adamw_grpo,AdamW + GRPO,26,up_proj,mlp,model.layers.26.mlp.up_proj.weight,18.54927833016029,1.2683270178148978
+adamw_grpo,AdamW + GRPO,26,k_proj,attn,model.layers.26.self_attn.k_proj.weight,18.909513262072966,1.2766803500869002
+adamw_grpo,AdamW + GRPO,26,o_proj,attn,model.layers.26.self_attn.o_proj.weight,31730.337013389835,4.501474684841612
+adamw_grpo,AdamW + GRPO,26,q_proj,attn,model.layers.26.self_attn.q_proj.weight,45377.12681249702,4.656836993774974
+adamw_grpo,AdamW + GRPO,26,v_proj,attn,model.layers.26.self_attn.v_proj.weight,4.837402280353478,0.6846122049971161
+adamw_grpo,AdamW + GRPO,27,down_proj,mlp,model.layers.27.mlp.down_proj.weight,11.985049087451886,1.0786398171236007
+adamw_grpo,AdamW + GRPO,27,gate_proj,mlp,model.layers.27.mlp.gate_proj.weight,34.00878498799009,1.5315911164244254
+adamw_grpo,AdamW + GRPO,27,up_proj,mlp,model.layers.27.mlp.up_proj.weight,27.05546667599764,1.4322550294185783
+adamw_grpo,AdamW + GRPO,27,k_proj,attn,model.layers.27.self_attn.k_proj.weight,16.952102951222173,1.2292235812093408
+adamw_grpo,AdamW + GRPO,27,o_proj,attn,model.layers.27.self_attn.o_proj.weight,89403.67280652559,4.9513553604831975
+adamw_grpo,AdamW + GRPO,27,q_proj,attn,model.layers.27.self_attn.q_proj.weight,88365.3748021402,4.946282123857607
+adamw_grpo,AdamW + GRPO,27,v_proj,attn,model.layers.27.self_attn.v_proj.weight,7.854993883717728,0.8951458512132073
+adamw_grpo,AdamW + GRPO,3,down_proj,mlp,model.layers.3.mlp.down_proj.weight,10.758132335295445,1.0317368822153086
+adamw_grpo,AdamW + GRPO,3,gate_proj,mlp,model.layers.3.mlp.gate_proj.weight,14.000545725982029,1.1461449643327704
+adamw_grpo,AdamW + GRPO,3,up_proj,mlp,model.layers.3.mlp.up_proj.weight,7.592176335256175,0.8803662864238961
+adamw_grpo,AdamW + GRPO,3,k_proj,attn,model.layers.3.self_attn.k_proj.weight,15.506278392179862,1.1905075768153657
+adamw_grpo,AdamW + GRPO,3,o_proj,attn,model.layers.3.self_attn.o_proj.weight,15754.678111362071,4.197409534397526
+adamw_grpo,AdamW + GRPO,3,q_proj,attn,model.layers.3.self_attn.q_proj.weight,104669.77368193977,5.019821285132797
+adamw_grpo,AdamW + GRPO,3,v_proj,attn,model.layers.3.self_attn.v_proj.weight,3.8915672806224806,0.5901245432906346
+adamw_grpo,AdamW + GRPO,4,down_proj,mlp,model.layers.4.mlp.down_proj.weight,11.158518809612634,1.047606549843114
+adamw_grpo,AdamW + GRPO,4,gate_proj,mlp,model.layers.4.mlp.gate_proj.weight,17.495812182269777,1.2429341078987133
+adamw_grpo,AdamW + GRPO,4,up_proj,mlp,model.layers.4.mlp.up_proj.weight,8.780831077275952,0.9435356224202148
+adamw_grpo,AdamW + GRPO,4,k_proj,attn,model.layers.4.self_attn.k_proj.weight,23.91537643326352,1.3786772211520564
+adamw_grpo,AdamW + GRPO,4,o_proj,attn,model.layers.4.self_attn.o_proj.weight,8824.26251911929,3.9456784197527366
+adamw_grpo,AdamW + GRPO,4,q_proj,attn,model.layers.4.self_attn.q_proj.weight,20703.988359447605,4.316054014812162
+adamw_grpo,AdamW + GRPO,4,v_proj,attn,model.layers.4.self_attn.v_proj.weight,3.787352801801509,0.578335762670064
+adamw_grpo,AdamW + GRPO,5,down_proj,mlp,model.layers.5.mlp.down_proj.weight,12.388315167227052,1.093012245574519
+adamw_grpo,AdamW + GRPO,5,gate_proj,mlp,model.layers.5.mlp.gate_proj.weight,20.635302506872666,1.3146108398769947
+adamw_grpo,AdamW + GRPO,5,up_proj,mlp,model.layers.5.mlp.up_proj.weight,8.095356171939317,0.9082359611937771
+adamw_grpo,AdamW + GRPO,5,k_proj,attn,model.layers.5.self_attn.k_proj.weight,22.35169388198231,1.3493104409231012
+adamw_grpo,AdamW + GRPO,5,o_proj,attn,model.layers.5.self_attn.o_proj.weight,13485.960995110376,4.1298818992503925
+adamw_grpo,AdamW + GRPO,5,q_proj,attn,model.layers.5.self_attn.q_proj.weight,15650.719776690148,4.194534315547419
+adamw_grpo,AdamW + GRPO,5,v_proj,attn,model.layers.5.self_attn.v_proj.weight,3.3561149517536193,0.5258368276206992
+adamw_grpo,AdamW + GRPO,6,down_proj,mlp,model.layers.6.mlp.down_proj.weight,9.161665455300591,0.9619744291591685
+adamw_grpo,AdamW + GRPO,6,gate_proj,mlp,model.layers.6.mlp.gate_proj.weight,19.225743062130107,1.2838831339895422
+adamw_grpo,AdamW + GRPO,6,up_proj,mlp,model.layers.6.mlp.up_proj.weight,7.420026074013646,0.8704054313949774
+adamw_grpo,AdamW + GRPO,6,k_proj,attn,model.layers.6.self_attn.k_proj.weight,22.186396564825287,1.3460867714031508
+adamw_grpo,AdamW + GRPO,6,o_proj,attn,model.layers.6.self_attn.o_proj.weight,49945.14920928102,4.6984933149055195
+adamw_grpo,AdamW + GRPO,6,q_proj,attn,model.layers.6.self_attn.q_proj.weight,20306.37883450291,4.307632484093734
+adamw_grpo,AdamW + GRPO,6,v_proj,attn,model.layers.6.self_attn.v_proj.weight,3.280745275384151,0.5159725120716417
+adamw_grpo,AdamW + GRPO,7,down_proj,mlp,model.layers.7.mlp.down_proj.weight,7.967990558135425,0.9013488107881181
+adamw_grpo,AdamW + GRPO,7,gate_proj,mlp,model.layers.7.mlp.gate_proj.weight,16.823329951332937,1.225911962707648
+adamw_grpo,AdamW + GRPO,7,up_proj,mlp,model.layers.7.mlp.up_proj.weight,8.45169972746099,0.9269440590116907
+adamw_grpo,AdamW + GRPO,7,k_proj,attn,model.layers.7.self_attn.k_proj.weight,30.43343699002216,1.4833510020299039
+adamw_grpo,AdamW + GRPO,7,o_proj,attn,model.layers.7.self_attn.o_proj.weight,8848.177880946918,3.9468538449661774
+adamw_grpo,AdamW + GRPO,7,q_proj,attn,model.layers.7.self_attn.q_proj.weight,9344.813163883295,3.9705706227072897
+adamw_grpo,AdamW + GRPO,7,v_proj,attn,model.layers.7.self_attn.v_proj.weight,4.614942302312047,0.6641662756882284
+adamw_grpo,AdamW + GRPO,8,down_proj,mlp,model.layers.8.mlp.down_proj.weight,8.059263189417399,0.9062953386540602
+adamw_grpo,AdamW + GRPO,8,gate_proj,mlp,model.layers.8.mlp.gate_proj.weight,15.703142225199842,1.1959865641622014
+adamw_grpo,AdamW + GRPO,8,up_proj,mlp,model.layers.8.mlp.up_proj.weight,11.03716472453975,1.0428575242419014
+adamw_grpo,AdamW + GRPO,8,k_proj,attn,model.layers.8.self_attn.k_proj.weight,26.249791787975383,1.4191258629537098
+adamw_grpo,AdamW + GRPO,8,o_proj,attn,model.layers.8.self_attn.o_proj.weight,8626.286599491192,3.9358238830366714
+adamw_grpo,AdamW + GRPO,8,q_proj,attn,model.layers.8.self_attn.q_proj.weight,20078.00313923181,4.3027205177988606
+adamw_grpo,AdamW + GRPO,8,v_proj,attn,model.layers.8.self_attn.v_proj.weight,2.6150997020151125,0.4174882512184248
+adamw_grpo,AdamW + GRPO,9,down_proj,mlp,model.layers.9.mlp.down_proj.weight,11.961869526217484,1.0777990610460924
+adamw_grpo,AdamW + GRPO,9,gate_proj,mlp,model.layers.9.mlp.gate_proj.weight,17.045792269868794,1.2316171915687748
+adamw_grpo,AdamW + GRPO,9,up_proj,mlp,model.layers.9.mlp.up_proj.weight,8.607574360047414,0.9348807832232139
+adamw_grpo,AdamW + GRPO,9,k_proj,attn,model.layers.9.self_attn.k_proj.weight,29.98335721395915,1.4768802588614036
+adamw_grpo,AdamW + GRPO,9,o_proj,attn,model.layers.9.self_attn.o_proj.weight,29432.822210396167,4.468831907075395
+adamw_grpo,AdamW + GRPO,9,q_proj,attn,model.layers.9.self_attn.q_proj.weight,41308.558228002315,4.616040037277487
+adamw_grpo,AdamW + GRPO,9,v_proj,attn,model.layers.9.self_attn.v_proj.weight,3.9117264101317115,0.5923684722083176
+muon_grpo,Muon + GRPO,-1,embed,embed,model.embed_tokens.weight,69.1860779520456,1.84001871184265
+muon_grpo,Muon + GRPO,0,down_proj,mlp,model.layers.0.mlp.down_proj.weight,10.547044416299494,1.0231307749394005
+muon_grpo,Muon + GRPO,0,gate_proj,mlp,model.layers.0.mlp.gate_proj.weight,50.78802531327433,1.7057613273743686
+muon_grpo,Muon + GRPO,0,up_proj,mlp,model.layers.0.mlp.up_proj.weight,30.558366767592226,1.485130139079802
+muon_grpo,Muon + GRPO,0,k_proj,attn,model.layers.0.self_attn.k_proj.weight,18.73787627302514,1.2727203669588179
+muon_grpo,Muon + GRPO,0,o_proj,attn,model.layers.0.self_attn.o_proj.weight,36311.75695578388,4.560047262896415
+muon_grpo,Muon + GRPO,0,q_proj,attn,model.layers.0.self_attn.q_proj.weight,181353.15080203512,5.258525105348217
+muon_grpo,Muon + GRPO,0,v_proj,attn,model.layers.0.self_attn.v_proj.weight,7.773844598713219,0.8906358547161511
+muon_grpo,Muon + GRPO,1,down_proj,mlp,model.layers.1.mlp.down_proj.weight,8.998443559123988,0.9541673969793696
+muon_grpo,Muon + GRPO,1,gate_proj,mlp,model.layers.1.mlp.gate_proj.weight,33.914946721202845,1.5303911391452314
+muon_grpo,Muon + GRPO,1,up_proj,mlp,model.layers.1.mlp.up_proj.weight,37.73476975101269,1.576741704369295
+muon_grpo,Muon + GRPO,1,k_proj,attn,model.layers.1.self_attn.k_proj.weight,30.08297395040305,1.478320767637896
+muon_grpo,Muon + GRPO,1,o_proj,attn,model.layers.1.self_attn.o_proj.weight,52181.906617595865,4.717519943265035
+muon_grpo,Muon + GRPO,1,q_proj,attn,model.layers.1.self_attn.q_proj.weight,410451.4329541275,5.613261776198786
+muon_grpo,Muon + GRPO,1,v_proj,attn,model.layers.1.self_attn.v_proj.weight,3.3419464778061516,0.523999490267253
+muon_grpo,Muon + GRPO,10,down_proj,mlp,model.layers.10.mlp.down_proj.weight,13.491708283769228,1.130066942351218
+muon_grpo,Muon + GRPO,10,gate_proj,mlp,model.layers.10.mlp.gate_proj.weight,16.209161205434917,1.2097605414816786
+muon_grpo,Muon + GRPO,10,up_proj,mlp,model.layers.10.mlp.up_proj.weight,8.538219691196476,0.9313673251513278
+muon_grpo,Muon + GRPO,10,k_proj,attn,model.layers.10.self_attn.k_proj.weight,24.03964863620195,1.3809281157236388
+muon_grpo,Muon + GRPO,10,o_proj,attn,model.layers.10.self_attn.o_proj.weight,14625.98749802245,4.165125197862864
+muon_grpo,Muon + GRPO,10,q_proj,attn,model.layers.10.self_attn.q_proj.weight,13370.34137047806,4.126142495775243
+muon_grpo,Muon + GRPO,10,v_proj,attn,model.layers.10.self_attn.v_proj.weight,3.299274900303387,0.5184185030903333
+muon_grpo,Muon + GRPO,11,down_proj,mlp,model.layers.11.mlp.down_proj.weight,16.053445717908545,1.2055682638849659
+muon_grpo,Muon + GRPO,11,gate_proj,mlp,model.layers.11.mlp.gate_proj.weight,13.225666922370896,1.1214175811535485
+muon_grpo,Muon + GRPO,11,up_proj,mlp,model.layers.11.mlp.up_proj.weight,6.605487789660276,0.8199048940982603
+muon_grpo,Muon + GRPO,11,k_proj,attn,model.layers.11.self_attn.k_proj.weight,21.611254939464626,1.3346799865713566
+muon_grpo,Muon + GRPO,11,o_proj,attn,model.layers.11.self_attn.o_proj.weight,94761.1731078774,4.976630428487244
+muon_grpo,Muon + GRPO,11,q_proj,attn,model.layers.11.self_attn.q_proj.weight,29339.75044561001,4.467456415555136
+muon_grpo,Muon + GRPO,11,v_proj,attn,model.layers.11.self_attn.v_proj.weight,2.8677262906428282,0.45753769785487547
+muon_grpo,Muon + GRPO,12,down_proj,mlp,model.layers.12.mlp.down_proj.weight,14.145424264448414,1.1506159778054232
+muon_grpo,Muon + GRPO,12,gate_proj,mlp,model.layers.12.mlp.gate_proj.weight,18.88755702798924,1.2761757886325167
+muon_grpo,Muon + GRPO,12,up_proj,mlp,model.layers.12.mlp.up_proj.weight,8.061027467494755,0.9063904009892135
+muon_grpo,Muon + GRPO,12,k_proj,attn,model.layers.12.self_attn.k_proj.weight,20.86408124729595,1.3193992652511934
+muon_grpo,Muon + GRPO,12,o_proj,attn,model.layers.12.self_attn.o_proj.weight,120966.42896669422,5.082664860089703
+muon_grpo,Muon + GRPO,12,q_proj,attn,model.layers.12.self_attn.q_proj.weight,15174.501799714719,4.181114441481296
+muon_grpo,Muon + GRPO,12,v_proj,attn,model.layers.12.self_attn.v_proj.weight,2.5506945774467096,0.40665845889569985
+muon_grpo,Muon + GRPO,13,down_proj,mlp,model.layers.13.mlp.down_proj.weight,30.006070020225906,1.4772091183740312
+muon_grpo,Muon + GRPO,13,gate_proj,mlp,model.layers.13.mlp.gate_proj.weight,12.316585245881335,1.0904903170465277
+muon_grpo,Muon + GRPO,13,up_proj,mlp,model.layers.13.mlp.up_proj.weight,6.31044585056333,0.8000600444420712
+muon_grpo,Muon + GRPO,13,k_proj,attn,model.layers.13.self_attn.k_proj.weight,41.91199098857648,1.6223382920630065
+muon_grpo,Muon + GRPO,13,o_proj,attn,model.layers.13.self_attn.o_proj.weight,9737.174623312983,3.988432958571694
+muon_grpo,Muon + GRPO,13,q_proj,attn,model.layers.13.self_attn.q_proj.weight,47333.204437152184,4.675165907008963
+muon_grpo,Muon + GRPO,13,v_proj,attn,model.layers.13.self_attn.v_proj.weight,3.7000209163193127,0.5682041791525041
+muon_grpo,Muon + GRPO,14,down_proj,mlp,model.layers.14.mlp.down_proj.weight,12.148294569506383,1.084515314062834
+muon_grpo,Muon + GRPO,14,gate_proj,mlp,model.layers.14.mlp.gate_proj.weight,13.416377717755326,1.1276352766722448
+muon_grpo,Muon + GRPO,14,up_proj,mlp,model.layers.14.mlp.up_proj.weight,6.9264465363294,0.8405104863489574
+muon_grpo,Muon + GRPO,14,k_proj,attn,model.layers.14.self_attn.k_proj.weight,23.139997861025766,1.3643633144711866
+muon_grpo,Muon + GRPO,14,o_proj,attn,model.layers.14.self_attn.o_proj.weight,6445.30760246093,3.8092436488986627
+muon_grpo,Muon + GRPO,14,q_proj,attn,model.layers.14.self_attn.q_proj.weight,11869.69425969529,4.074439532515053
+muon_grpo,Muon + GRPO,14,v_proj,attn,model.layers.14.self_attn.v_proj.weight,6.809360840358335,0.8331063488389687
+muon_grpo,Muon + GRPO,15,down_proj,mlp,model.layers.15.mlp.down_proj.weight,12.83096761430212,1.1082594088072246
+muon_grpo,Muon + GRPO,15,gate_proj,mlp,model.layers.15.mlp.gate_proj.weight,16.832820978167355,1.2261569046024998
+muon_grpo,Muon + GRPO,15,up_proj,mlp,model.layers.15.mlp.up_proj.weight,9.400115516584806,0.9731331906110916
+muon_grpo,Muon + GRPO,15,k_proj,attn,model.layers.15.self_attn.k_proj.weight,25.43915256653527,1.4055026399241954
+muon_grpo,Muon + GRPO,15,o_proj,attn,model.layers.15.self_attn.o_proj.weight,26881.61281626577,4.42945532153179
+muon_grpo,Muon + GRPO,15,q_proj,attn,model.layers.15.self_attn.q_proj.weight,25613.905730701972,4.408475806815166
+muon_grpo,Muon + GRPO,15,v_proj,attn,model.layers.15.self_attn.v_proj.weight,3.3574048184349565,0.526003709378157
+muon_grpo,Muon + GRPO,16,down_proj,mlp,model.layers.16.mlp.down_proj.weight,9.686297669857606,0.9861578112302571
+muon_grpo,Muon + GRPO,16,gate_proj,mlp,model.layers.16.mlp.gate_proj.weight,12.919270879350725,1.1112380042155763
+muon_grpo,Muon + GRPO,16,up_proj,mlp,model.layers.16.mlp.up_proj.weight,6.159705943837579,0.7895599800188182
+muon_grpo,Muon + GRPO,16,k_proj,attn,model.layers.16.self_attn.k_proj.weight,20.668338153979924,1.3153055584090478
+muon_grpo,Muon + GRPO,16,o_proj,attn,model.layers.16.self_attn.o_proj.weight,43137.985256246866,4.634859857675956
+muon_grpo,Muon + GRPO,16,q_proj,attn,model.layers.16.self_attn.q_proj.weight,98173.00898193468,4.991992102232476
+muon_grpo,Muon + GRPO,16,v_proj,attn,model.layers.16.self_attn.v_proj.weight,2.788733622437666,0.44540703279226734
+muon_grpo,Muon + GRPO,17,down_proj,mlp,model.layers.17.mlp.down_proj.weight,6.799691862540631,0.8324892324958835
+muon_grpo,Muon + GRPO,17,gate_proj,mlp,model.layers.17.mlp.gate_proj.weight,17.969438009055906,1.2545344948394983
+muon_grpo,Muon + GRPO,17,up_proj,mlp,model.layers.17.mlp.up_proj.weight,12.571940035039031,1.0994023008761051
+muon_grpo,Muon + GRPO,17,k_proj,attn,model.layers.17.self_attn.k_proj.weight,15.488220533261673,1.1900015238290362
+muon_grpo,Muon + GRPO,17,o_proj,attn,model.layers.17.self_attn.o_proj.weight,54729.10743595664,4.738218365394475
+muon_grpo,Muon + GRPO,17,q_proj,attn,model.layers.17.self_attn.q_proj.weight,13199.423124835193,4.120554950965284
+muon_grpo,Muon + GRPO,17,v_proj,attn,model.layers.17.self_attn.v_proj.weight,4.045308758308715,0.6069516747523201
+muon_grpo,Muon + GRPO,18,down_proj,mlp,model.layers.18.mlp.down_proj.weight,6.643800948865286,0.8224166123247509
+muon_grpo,Muon + GRPO,18,gate_proj,mlp,model.layers.18.mlp.gate_proj.weight,18.45574163426968,1.2661315017776453
+muon_grpo,Muon + GRPO,18,up_proj,mlp,model.layers.18.mlp.up_proj.weight,10.671885235056104,1.028241146215479
+muon_grpo,Muon + GRPO,18,k_proj,attn,model.layers.18.self_attn.k_proj.weight,22.850661580781154,1.3588987784418969
+muon_grpo,Muon + GRPO,18,o_proj,attn,model.layers.18.self_attn.o_proj.weight,20135.048271658754,4.303952675120003
+muon_grpo,Muon + GRPO,18,q_proj,attn,model.layers.18.self_attn.q_proj.weight,35779.42055650817,4.553633302940444
+muon_grpo,Muon + GRPO,18,v_proj,attn,model.layers.18.self_attn.v_proj.weight,2.1435075807255193,0.33112502377454517
+muon_grpo,Muon + GRPO,19,down_proj,mlp,model.layers.19.mlp.down_proj.weight,7.114108839254075,0.8521205052025697
+muon_grpo,Muon + GRPO,19,gate_proj,mlp,model.layers.19.mlp.gate_proj.weight,18.804874254067997,1.2742704336931705
+muon_grpo,Muon + GRPO,19,up_proj,mlp,model.layers.19.mlp.up_proj.weight,10.389633190030258,1.0166002148952074
+muon_grpo,Muon + GRPO,19,k_proj,attn,model.layers.19.self_attn.k_proj.weight,22.407548391261273,1.3503943429968917
+muon_grpo,Muon + GRPO,19,o_proj,attn,model.layers.19.self_attn.o_proj.weight,23278.665714097693,4.366958083812411
+muon_grpo,Muon + GRPO,19,q_proj,attn,model.layers.19.self_attn.q_proj.weight,26672.617378388608,4.426065635008087
+muon_grpo,Muon + GRPO,19,v_proj,attn,model.layers.19.self_attn.v_proj.weight,3.0089862989212683,0.47842021023378734
+muon_grpo,Muon + GRPO,2,down_proj,mlp,model.layers.2.mlp.down_proj.weight,13.203677879223708,1.1206949206126742
+muon_grpo,Muon + GRPO,2,gate_proj,mlp,model.layers.2.mlp.gate_proj.weight,17.38606077983463,1.2402011935395125
+muon_grpo,Muon + GRPO,2,up_proj,mlp,model.layers.2.mlp.up_proj.weight,8.915017823074903,0.950122215762113
+muon_grpo,Muon + GRPO,2,k_proj,attn,model.layers.2.self_attn.k_proj.weight,17.24701872352876,1.2367140348401435
+muon_grpo,Muon + GRPO,2,o_proj,attn,model.layers.2.self_attn.o_proj.weight,31752.87106134469,4.501782999855599
+muon_grpo,Muon + GRPO,2,q_proj,attn,model.layers.2.self_attn.q_proj.weight,23936.722224394685,4.379064680016978
+muon_grpo,Muon + GRPO,2,v_proj,attn,model.layers.2.self_attn.v_proj.weight,3.191352641739815,0.5039747960142208
+muon_grpo,Muon + GRPO,20,down_proj,mlp,model.layers.20.mlp.down_proj.weight,7.516869750482655,0.8760370250183801
+muon_grpo,Muon + GRPO,20,gate_proj,mlp,model.layers.20.mlp.gate_proj.weight,19.205160532126527,1.283417941697776
+muon_grpo,Muon + GRPO,20,up_proj,mlp,model.layers.20.mlp.up_proj.weight,11.187630323918865,1.0487381074193125
+muon_grpo,Muon + GRPO,20,k_proj,attn,model.layers.20.self_attn.k_proj.weight,22.074642022608195,1.3438936694923476
+muon_grpo,Muon + GRPO,20,o_proj,attn,model.layers.20.self_attn.o_proj.weight,497958.0084605197,5.697192721348496
+muon_grpo,Muon + GRPO,20,q_proj,attn,model.layers.20.self_attn.q_proj.weight,8912.403434575594,3.94999483732745
+muon_grpo,Muon + GRPO,20,v_proj,attn,model.layers.20.self_attn.v_proj.weight,6.942135003867621,0.8414930551528286
+muon_grpo,Muon + GRPO,21,down_proj,mlp,model.layers.21.mlp.down_proj.weight,9.390468502690725,0.9726872603233643
+muon_grpo,Muon + GRPO,21,gate_proj,mlp,model.layers.21.mlp.gate_proj.weight,17.629664719164776,1.246244052968566
+muon_grpo,Muon + GRPO,21,up_proj,mlp,model.layers.21.mlp.up_proj.weight,8.16638669701115,0.9120299409068251
+muon_grpo,Muon + GRPO,21,k_proj,attn,model.layers.21.self_attn.k_proj.weight,29.99111647742376,1.4769926335140753
+muon_grpo,Muon + GRPO,21,o_proj,attn,model.layers.21.self_attn.o_proj.weight,283570.21743013366,5.452660616197355
+muon_grpo,Muon + GRPO,21,q_proj,attn,model.layers.21.self_attn.q_proj.weight,14342.510774490142,4.156625184808608
+muon_grpo,Muon + GRPO,21,v_proj,attn,model.layers.21.self_attn.v_proj.weight,4.36682798257011,0.6401660845954915
+muon_grpo,Muon + GRPO,22,down_proj,mlp,model.layers.22.mlp.down_proj.weight,9.904778422547418,0.9958447644842245
+muon_grpo,Muon + GRPO,22,gate_proj,mlp,model.layers.22.mlp.gate_proj.weight,22.904471048914278,1.3599202667215649
+muon_grpo,Muon + GRPO,22,up_proj,mlp,model.layers.22.mlp.up_proj.weight,12.799609513141316,1.1071967205170246
+muon_grpo,Muon + GRPO,22,k_proj,attn,model.layers.22.self_attn.k_proj.weight,20.39481369665163,1.3095197424608747
+muon_grpo,Muon + GRPO,22,o_proj,attn,model.layers.22.self_attn.o_proj.weight,35427.803888998234,4.549344231970489
+muon_grpo,Muon + GRPO,22,q_proj,attn,model.layers.22.self_attn.q_proj.weight,53077.77828787189,4.724912736017735
+muon_grpo,Muon + GRPO,22,v_proj,attn,model.layers.22.self_attn.v_proj.weight,5.233053824455575,0.7187552016886108
+muon_grpo,Muon + GRPO,23,down_proj,mlp,model.layers.23.mlp.down_proj.weight,11.80575966572583,1.072093937879629
+muon_grpo,Muon + GRPO,23,gate_proj,mlp,model.layers.23.mlp.gate_proj.weight,19.842709398252826,1.2976009720708257
+muon_grpo,Muon + GRPO,23,up_proj,mlp,model.layers.23.mlp.up_proj.weight,10.792425707980211,1.0331190677776643
+muon_grpo,Muon + GRPO,23,k_proj,attn,model.layers.23.self_attn.k_proj.weight,16.00691927074455,1.204307754626388
+muon_grpo,Muon + GRPO,23,o_proj,attn,model.layers.23.self_attn.o_proj.weight,13180.794266622335,4.11994158136709
+muon_grpo,Muon + GRPO,23,q_proj,attn,model.layers.23.self_attn.q_proj.weight,918742.3646663949,5.9631937428437825
+muon_grpo,Muon + GRPO,23,v_proj,attn,model.layers.23.self_attn.v_proj.weight,4.042396744904373,0.6066389355194483
+muon_grpo,Muon + GRPO,24,down_proj,mlp,model.layers.24.mlp.down_proj.weight,10.012420003315187,1.0005390592038972
+muon_grpo,Muon + GRPO,24,gate_proj,mlp,model.layers.24.mlp.gate_proj.weight,21.049547002132226,1.323242754015336
+muon_grpo,Muon + GRPO,24,up_proj,mlp,model.layers.24.mlp.up_proj.weight,13.89517931781512,1.1428641557362846
+muon_grpo,Muon + GRPO,24,k_proj,attn,model.layers.24.self_attn.k_proj.weight,31.20910309483236,1.4942812878398863
+muon_grpo,Muon + GRPO,24,o_proj,attn,model.layers.24.self_attn.o_proj.weight,13398.68446153314,4.127062159622733
+muon_grpo,Muon + GRPO,24,q_proj,attn,model.layers.24.self_attn.q_proj.weight,98983.76745883773,4.995563979637249
+muon_grpo,Muon + GRPO,24,v_proj,attn,model.layers.24.self_attn.v_proj.weight,3.600359636756109,0.5563458842277467
+muon_grpo,Muon + GRPO,25,down_proj,mlp,model.layers.25.mlp.down_proj.weight,9.428454092936997,0.9744404908344372
+muon_grpo,Muon + GRPO,25,gate_proj,mlp,model.layers.25.mlp.gate_proj.weight,21.33852715939805,1.3291644399890754
+muon_grpo,Muon + GRPO,25,up_proj,mlp,model.layers.25.mlp.up_proj.weight,18.11274118302141,1.2579841814334314
+muon_grpo,Muon + GRPO,25,k_proj,attn,model.layers.25.self_attn.k_proj.weight,22.46491109195117,1.351504704150882
+muon_grpo,Muon + GRPO,25,o_proj,attn,model.layers.25.self_attn.o_proj.weight,16360.425084338269,4.213794583527486
+muon_grpo,Muon + GRPO,25,q_proj,attn,model.layers.25.self_attn.q_proj.weight,26140.966841924288,4.417321646226448
+muon_grpo,Muon + GRPO,25,v_proj,attn,model.layers.25.self_attn.v_proj.weight,4.337269453711104,0.6372164036163133
+muon_grpo,Muon + GRPO,26,down_proj,mlp,model.layers.26.mlp.down_proj.weight,8.741825436189696,0.9416021298982588
+muon_grpo,Muon + GRPO,26,gate_proj,mlp,model.layers.26.mlp.gate_proj.weight,20.033012213132253,1.3017462557931054
+muon_grpo,Muon + GRPO,26,up_proj,mlp,model.layers.26.mlp.up_proj.weight,18.550127115593504,1.2683468899840389
+muon_grpo,Muon + GRPO,26,k_proj,attn,model.layers.26.self_attn.k_proj.weight,18.921815465312378,1.276962802718102
+muon_grpo,Muon + GRPO,26,o_proj,attn,model.layers.26.self_attn.o_proj.weight,31627.215401299196,4.500060956408732
+muon_grpo,Muon + GRPO,26,q_proj,attn,model.layers.26.self_attn.q_proj.weight,58964.306120312336,4.770589192218727
+muon_grpo,Muon + GRPO,26,v_proj,attn,model.layers.26.self_attn.v_proj.weight,4.836674388676073,0.6845468510930005
+muon_grpo,Muon + GRPO,27,down_proj,mlp,model.layers.27.mlp.down_proj.weight,11.984608422625804,1.0786238487433868
+muon_grpo,Muon + GRPO,27,gate_proj,mlp,model.layers.27.mlp.gate_proj.weight,34.01133473372142,1.5316236756291555
+muon_grpo,Muon + GRPO,27,up_proj,mlp,model.layers.27.mlp.up_proj.weight,27.0590749976196,1.432312946352667
+muon_grpo,Muon + GRPO,27,k_proj,attn,model.layers.27.self_attn.k_proj.weight,16.959294302784457,1.2294077767660352
+muon_grpo,Muon + GRPO,27,o_proj,attn,model.layers.27.self_attn.o_proj.weight,103712.58895500169,5.0158314755969196
+muon_grpo,Muon + GRPO,27,q_proj,attn,model.layers.27.self_attn.q_proj.weight,83725.2863298909,4.922856641446649
+muon_grpo,Muon + GRPO,27,v_proj,attn,model.layers.27.self_attn.v_proj.weight,7.854444957733951,0.8951155006032039
+muon_grpo,Muon + GRPO,3,down_proj,mlp,model.layers.3.mlp.down_proj.weight,10.758179892382826,1.0317388020406397
+muon_grpo,Muon + GRPO,3,gate_proj,mlp,model.layers.3.mlp.gate_proj.weight,14.00002181335157,1.1461287123504407
+muon_grpo,Muon + GRPO,3,up_proj,mlp,model.layers.3.mlp.up_proj.weight,7.592078121614629,0.8803606682827233
+muon_grpo,Muon + GRPO,3,k_proj,attn,model.layers.3.self_attn.k_proj.weight,15.498559552803831,1.1902913364065035
+muon_grpo,Muon + GRPO,3,o_proj,attn,model.layers.3.self_attn.o_proj.weight,17250.212651147922,4.236794453186155
+muon_grpo,Muon + GRPO,3,q_proj,attn,model.layers.3.self_attn.q_proj.weight,74101.80024846179,4.869828758970905
+muon_grpo,Muon + GRPO,3,v_proj,attn,model.layers.3.self_attn.v_proj.weight,3.8918079253485356,0.5901513981380221
+muon_grpo,Muon + GRPO,4,down_proj,mlp,model.layers.4.mlp.down_proj.weight,11.15718789249425,1.0475547468714415
+muon_grpo,Muon + GRPO,4,gate_proj,mlp,model.layers.4.mlp.gate_proj.weight,17.495684125074796,1.2429309291530741
+muon_grpo,Muon + GRPO,4,up_proj,mlp,model.layers.4.mlp.up_proj.weight,8.78094505638798,0.9435412597201132
+muon_grpo,Muon + GRPO,4,k_proj,attn,model.layers.4.self_attn.k_proj.weight,23.935923939608376,1.379050196143389
+muon_grpo,Muon + GRPO,4,o_proj,attn,model.layers.4.self_attn.o_proj.weight,8661.950558068858,3.9376157004721946
+muon_grpo,Muon + GRPO,4,q_proj,attn,model.layers.4.self_attn.q_proj.weight,18295.656822319925,4.26234800547
+muon_grpo,Muon + GRPO,4,v_proj,attn,model.layers.4.self_attn.v_proj.weight,3.7874606943980456,0.5783481345018829
+muon_grpo,Muon + GRPO,5,down_proj,mlp,model.layers.5.mlp.down_proj.weight,12.38868888371968,1.0930253466750575
+muon_grpo,Muon + GRPO,5,gate_proj,mlp,model.layers.5.mlp.gate_proj.weight,20.634532091633336,1.3145946252693759
+muon_grpo,Muon + GRPO,5,up_proj,mlp,model.layers.5.mlp.up_proj.weight,8.095068062607288,0.9082205046138525
+muon_grpo,Muon + GRPO,5,k_proj,attn,model.layers.5.self_attn.k_proj.weight,22.34823304870615,1.349243191560481
+muon_grpo,Muon + GRPO,5,o_proj,attn,model.layers.5.self_attn.o_proj.weight,13667.990198852505,4.135704658699611
+muon_grpo,Muon + GRPO,5,q_proj,attn,model.layers.5.self_attn.q_proj.weight,15157.293677559206,4.180621665291805
+muon_grpo,Muon + GRPO,5,v_proj,attn,model.layers.5.self_attn.v_proj.weight,3.355896505941676,0.525808558952997
+muon_grpo,Muon + GRPO,6,down_proj,mlp,model.layers.6.mlp.down_proj.weight,9.162287460383785,0.9620039133405233
+muon_grpo,Muon + GRPO,6,gate_proj,mlp,model.layers.6.mlp.gate_proj.weight,19.226214335657634,1.2838937795590444
+muon_grpo,Muon + GRPO,6,up_proj,mlp,model.layers.6.mlp.up_proj.weight,7.420731859559765,0.8704467390922918
+muon_grpo,Muon + GRPO,6,k_proj,attn,model.layers.6.self_attn.k_proj.weight,22.19463829062288,1.3462480716562006
+muon_grpo,Muon + GRPO,6,o_proj,attn,model.layers.6.self_attn.o_proj.weight,63438.84664074256,4.802355278626785
+muon_grpo,Muon + GRPO,6,q_proj,attn,model.layers.6.self_attn.q_proj.weight,18384.55814764122,4.264453196546617
+muon_grpo,Muon + GRPO,6,v_proj,attn,model.layers.6.self_attn.v_proj.weight,3.2805103944446734,0.5159414181770897
+muon_grpo,Muon + GRPO,7,down_proj,mlp,model.layers.7.mlp.down_proj.weight,7.967953568387346,0.9013467946611349
+muon_grpo,Muon + GRPO,7,gate_proj,mlp,model.layers.7.mlp.gate_proj.weight,16.823138216371852,1.2259070130389236
+muon_grpo,Muon + GRPO,7,up_proj,mlp,model.layers.7.mlp.up_proj.weight,8.45178140908253,0.9269482562391401
+muon_grpo,Muon + GRPO,7,k_proj,attn,model.layers.7.self_attn.k_proj.weight,30.443282595671,1.4834914791210043
+muon_grpo,Muon + GRPO,7,o_proj,attn,model.layers.7.self_attn.o_proj.weight,9432.610484519693,3.974631900810348
+muon_grpo,Muon + GRPO,7,q_proj,attn,model.layers.7.self_attn.q_proj.weight,9171.076553919858,3.9624203186563283
+muon_grpo,Muon + GRPO,7,v_proj,attn,model.layers.7.self_attn.v_proj.weight,4.614927712917022,0.6641649027341688
+muon_grpo,Muon + GRPO,8,down_proj,mlp,model.layers.8.mlp.down_proj.weight,8.05863257288388,0.9062613549027216
+muon_grpo,Muon + GRPO,8,gate_proj,mlp,model.layers.8.mlp.gate_proj.weight,15.703929514299396,1.1960083373039005
+muon_grpo,Muon + GRPO,8,up_proj,mlp,model.layers.8.mlp.up_proj.weight,11.037958413039195,1.0428887534707179
+muon_grpo,Muon + GRPO,8,k_proj,attn,model.layers.8.self_attn.k_proj.weight,26.24187893777449,1.4189949276202791
+muon_grpo,Muon + GRPO,8,o_proj,attn,model.layers.8.self_attn.o_proj.weight,9371.67582242272,3.971817257414472
+muon_grpo,Muon + GRPO,8,q_proj,attn,model.layers.8.self_attn.q_proj.weight,19017.138167638426,4.279145161838168
+muon_grpo,Muon + GRPO,8,v_proj,attn,model.layers.8.self_attn.v_proj.weight,2.6148596253765226,0.41744837941334184
+muon_grpo,Muon + GRPO,9,down_proj,mlp,model.layers.9.mlp.down_proj.weight,11.961355801848258,1.077780409074567
+muon_grpo,Muon + GRPO,9,gate_proj,mlp,model.layers.9.mlp.gate_proj.weight,17.04560659708452,1.2316124609523535
+muon_grpo,Muon + GRPO,9,up_proj,mlp,model.layers.9.mlp.up_proj.weight,8.607413374720277,0.934872660645339
+muon_grpo,Muon + GRPO,9,k_proj,attn,model.layers.9.self_attn.k_proj.weight,29.97172946930568,1.476711803916789
+muon_grpo,Muon + GRPO,9,o_proj,attn,model.layers.9.self_attn.o_proj.weight,25013.081451214646,4.398167197321188
+muon_grpo,Muon + GRPO,9,q_proj,attn,model.layers.9.self_attn.q_proj.weight,31724.76540250531,4.501398419268741
+muon_grpo,Muon + GRPO,9,v_proj,attn,model.layers.9.self_attn.v_proj.weight,3.9117837411766674,0.5923748372684977
+adamw_rs,AdamW + RS,-1,embed,embed,model.embed_tokens.weight,69.19589145454067,1.8400803087400952
+adamw_rs,AdamW + RS,0,down_proj,mlp,model.layers.0.mlp.down_proj.weight,10.54813901771919,1.0231758448823447
+adamw_rs,AdamW + RS,0,gate_proj,mlp,model.layers.0.mlp.gate_proj.weight,50.78569015152301,1.7057413586677306
+adamw_rs,AdamW + RS,0,up_proj,mlp,model.layers.0.mlp.up_proj.weight,30.55751415977666,1.4851180216771258
+adamw_rs,AdamW + RS,0,k_proj,attn,model.layers.0.self_attn.k_proj.weight,18.743039253251954,1.2728400147211725
+adamw_rs,AdamW + RS,0,o_proj,attn,model.layers.0.self_attn.o_proj.weight,39968.33153945238,4.601716019204988
+adamw_rs,AdamW + RS,0,q_proj,attn,model.layers.0.self_attn.q_proj.weight,178043.80596308774,5.250526869429292
+adamw_rs,AdamW + RS,0,v_proj,attn,model.layers.0.self_attn.v_proj.weight,7.775783513621198,0.8907441608497378
+adamw_rs,AdamW + RS,1,down_proj,mlp,model.layers.1.mlp.down_proj.weight,8.997815819957905,0.9541370991657772
+adamw_rs,AdamW + RS,1,gate_proj,mlp,model.layers.1.mlp.gate_proj.weight,33.917144241765506,1.530419278364914
+adamw_rs,AdamW + RS,1,up_proj,mlp,model.layers.1.mlp.up_proj.weight,37.736555715906526,1.5767622587902916
+adamw_rs,AdamW + RS,1,k_proj,attn,model.layers.1.self_attn.k_proj.weight,30.089366860880908,1.4784130494310537
+adamw_rs,AdamW + RS,1,o_proj,attn,model.layers.1.self_attn.o_proj.weight,69837.4032931261,4.844088082982278
+adamw_rs,AdamW + RS,1,q_proj,attn,model.layers.1.self_attn.q_proj.weight,638788.8274866861,5.805357311656625
+adamw_rs,AdamW + RS,1,v_proj,attn,model.layers.1.self_attn.v_proj.weight,3.341826662866355,0.5239839197306373
+adamw_rs,AdamW + RS,10,down_proj,mlp,model.layers.10.mlp.down_proj.weight,13.491245599450394,1.1300520484113312
+adamw_rs,AdamW + RS,10,gate_proj,mlp,model.layers.10.mlp.gate_proj.weight,16.20904933597581,1.209757544136176
+adamw_rs,AdamW + RS,10,up_proj,mlp,model.layers.10.mlp.up_proj.weight,8.53811058059597,0.9313617752315307
+adamw_rs,AdamW + RS,10,k_proj,attn,model.layers.10.self_attn.k_proj.weight,24.025690041769725,1.380675869890188
+adamw_rs,AdamW + RS,10,o_proj,attn,model.layers.10.self_attn.o_proj.weight,14792.803096648058,4.170050476502586
+adamw_rs,AdamW + RS,10,q_proj,attn,model.layers.10.self_attn.q_proj.weight,13113.14533849652,4.117706874704111
+adamw_rs,AdamW + RS,10,v_proj,attn,model.layers.10.self_attn.v_proj.weight,3.299332308230263,0.5184260598201317
+adamw_rs,AdamW + RS,11,down_proj,mlp,model.layers.11.mlp.down_proj.weight,16.052954960545012,1.2055549872042761
+adamw_rs,AdamW + RS,11,gate_proj,mlp,model.layers.11.mlp.gate_proj.weight,13.225971387045234,1.121427578819966
+adamw_rs,AdamW + RS,11,up_proj,mlp,model.layers.11.mlp.up_proj.weight,6.605407716771502,0.8198996294719936
+adamw_rs,AdamW + RS,11,k_proj,attn,model.layers.11.self_attn.k_proj.weight,21.605709584568093,1.3345685341789224
+adamw_rs,AdamW + RS,11,o_proj,attn,model.layers.11.self_attn.o_proj.weight,85997.11544202169,4.934483884166561
+adamw_rs,AdamW + RS,11,q_proj,attn,model.layers.11.self_attn.q_proj.weight,23241.151772062403,4.3662576467757965
+adamw_rs,AdamW + RS,11,v_proj,attn,model.layers.11.self_attn.v_proj.weight,2.8677178565080275,0.45753642056994004
+adamw_rs,AdamW + RS,12,down_proj,mlp,model.layers.12.mlp.down_proj.weight,14.146415120635403,1.1506463981233592
+adamw_rs,AdamW + RS,12,gate_proj,mlp,model.layers.12.mlp.gate_proj.weight,18.886964517203747,1.2761621644141756
+adamw_rs,AdamW + RS,12,up_proj,mlp,model.layers.12.mlp.up_proj.weight,8.062317282786442,0.9064598852896145
+adamw_rs,AdamW + RS,12,k_proj,attn,model.layers.12.self_attn.k_proj.weight,20.868388038098132,1.3194889036319921
+adamw_rs,AdamW + RS,12,o_proj,attn,model.layers.12.self_attn.o_proj.weight,279643.27250634844,5.446604375788301
+adamw_rs,AdamW + RS,12,q_proj,attn,model.layers.12.self_attn.q_proj.weight,14823.924431589503,4.170963192399121
+adamw_rs,AdamW + RS,12,v_proj,attn,model.layers.12.self_attn.v_proj.weight,2.550640607744206,0.40664926963714804
+adamw_rs,AdamW + RS,13,down_proj,mlp,model.layers.13.mlp.down_proj.weight,30.006157784286927,1.477210388630071
+adamw_rs,AdamW + RS,13,gate_proj,mlp,model.layers.13.mlp.gate_proj.weight,12.316369261791019,1.0904827011757985
+adamw_rs,AdamW + RS,13,up_proj,mlp,model.layers.13.mlp.up_proj.weight,6.311382904817412,0.8001245291535067
+adamw_rs,AdamW + RS,13,k_proj,attn,model.layers.13.self_attn.k_proj.weight,41.91508621324499,1.6223703637763305
+adamw_rs,AdamW + RS,13,o_proj,attn,model.layers.13.self_attn.o_proj.weight,9514.059482043791,3.9783658623080407
+adamw_rs,AdamW + RS,13,q_proj,attn,model.layers.13.self_attn.q_proj.weight,59751.76449798364,4.776350734731853
+adamw_rs,AdamW + RS,13,v_proj,attn,model.layers.13.self_attn.v_proj.weight,3.700463801923233,0.5682561602811598
+adamw_rs,AdamW + RS,14,down_proj,mlp,model.layers.14.mlp.down_proj.weight,12.149164333237641,1.0845464064985262
+adamw_rs,AdamW + RS,14,gate_proj,mlp,model.layers.14.mlp.gate_proj.weight,13.416263444759588,1.12763157758566
+adamw_rs,AdamW + RS,14,up_proj,mlp,model.layers.14.mlp.up_proj.weight,6.926267365777806,0.8404992520475156
+adamw_rs,AdamW + RS,14,k_proj,attn,model.layers.14.self_attn.k_proj.weight,23.125378866173392,1.3640888565739087
+adamw_rs,AdamW + RS,14,o_proj,attn,model.layers.14.self_attn.o_proj.weight,6709.580569523226,3.826695372324733
+adamw_rs,AdamW + RS,14,q_proj,attn,model.layers.14.self_attn.q_proj.weight,11940.24930302543,4.077013394615625
+adamw_rs,AdamW + RS,14,v_proj,attn,model.layers.14.self_attn.v_proj.weight,6.809046226084543,0.8330862825797661
+adamw_rs,AdamW + RS,15,down_proj,mlp,model.layers.15.mlp.down_proj.weight,12.830197640433418,1.1082333464363878
+adamw_rs,AdamW + RS,15,gate_proj,mlp,model.layers.15.mlp.gate_proj.weight,16.832111195175813,1.2261385914905034
+adamw_rs,AdamW + RS,15,up_proj,mlp,model.layers.15.mlp.up_proj.weight,9.399910020711408,0.9731236963980442
+adamw_rs,AdamW + RS,15,k_proj,attn,model.layers.15.self_attn.k_proj.weight,25.405066607652056,1.4049203378921644
+adamw_rs,AdamW + RS,15,o_proj,attn,model.layers.15.self_attn.o_proj.weight,33432.119045133455,4.524163904574685
+adamw_rs,AdamW + RS,15,q_proj,attn,model.layers.15.self_attn.q_proj.weight,20867.448710309938,4.319469354730762
+adamw_rs,AdamW + RS,15,v_proj,attn,model.layers.15.self_attn.v_proj.weight,3.3573646962392805,0.5259985193718146
+adamw_rs,AdamW + RS,16,down_proj,mlp,model.layers.16.mlp.down_proj.weight,9.68531890792129,0.9861139252792119
+adamw_rs,AdamW + RS,16,gate_proj,mlp,model.layers.16.mlp.gate_proj.weight,12.919564060053167,1.111247859672417
+adamw_rs,AdamW + RS,16,up_proj,mlp,model.layers.16.mlp.up_proj.weight,6.1584386085917195,0.7894706164456603
+adamw_rs,AdamW + RS,16,k_proj,attn,model.layers.16.self_attn.k_proj.weight,20.669845758524882,1.3153372358691144
+adamw_rs,AdamW + RS,16,o_proj,attn,model.layers.16.self_attn.o_proj.weight,40853.699984191306,4.61123139526134
+adamw_rs,AdamW + RS,16,q_proj,attn,model.layers.16.self_attn.q_proj.weight,88758.54199568967,4.9482101596209525
+adamw_rs,AdamW + RS,16,v_proj,attn,model.layers.16.self_attn.v_proj.weight,2.788706931254277,0.4454028761065798
+adamw_rs,AdamW + RS,17,down_proj,mlp,model.layers.17.mlp.down_proj.weight,6.799343903940958,0.8324670079054939
+adamw_rs,AdamW + RS,17,gate_proj,mlp,model.layers.17.mlp.gate_proj.weight,17.969963992394877,1.2545472068852743
+adamw_rs,AdamW + RS,17,up_proj,mlp,model.layers.17.mlp.up_proj.weight,12.571688195432802,1.0993936010536045
+adamw_rs,AdamW + RS,17,k_proj,attn,model.layers.17.self_attn.k_proj.weight,15.489981088664805,1.190050887540127
+adamw_rs,AdamW + RS,17,o_proj,attn,model.layers.17.self_attn.o_proj.weight,60522.22974803495,4.781914919837422
+adamw_rs,AdamW + RS,17,q_proj,attn,model.layers.17.self_attn.q_proj.weight,13281.55436807937,4.123248904397715
+adamw_rs,AdamW + RS,17,v_proj,attn,model.layers.17.self_attn.v_proj.weight,4.044595715019072,0.6068751174164769
+adamw_rs,AdamW + RS,18,down_proj,mlp,model.layers.18.mlp.down_proj.weight,6.644159860657517,0.8224400731722246
+adamw_rs,AdamW + RS,18,gate_proj,mlp,model.layers.18.mlp.gate_proj.weight,18.455829166908533,1.2661335615622178
+adamw_rs,AdamW + RS,18,up_proj,mlp,model.layers.18.mlp.up_proj.weight,10.673015705578724,1.0282871485006855
+adamw_rs,AdamW + RS,18,k_proj,attn,model.layers.18.self_attn.k_proj.weight,22.856772599281157,1.3590149075432907
+adamw_rs,AdamW + RS,18,o_proj,attn,model.layers.18.self_attn.o_proj.weight,23258.169282127194,4.366575527161113
+adamw_rs,AdamW + RS,18,q_proj,attn,model.layers.18.self_attn.q_proj.weight,42673.98565640704,4.6301632069031
+adamw_rs,AdamW + RS,18,v_proj,attn,model.layers.18.self_attn.v_proj.weight,2.143362959451856,0.3310957211769729
+adamw_rs,AdamW + RS,19,down_proj,mlp,model.layers.19.mlp.down_proj.weight,7.1141518791740195,0.8521231326494662
+adamw_rs,AdamW + RS,19,gate_proj,mlp,model.layers.19.mlp.gate_proj.weight,18.8054604884902,1.2742839724386472
+adamw_rs,AdamW + RS,19,up_proj,mlp,model.layers.19.mlp.up_proj.weight,10.390401213043765,1.016632317648304
+adamw_rs,AdamW + RS,19,k_proj,attn,model.layers.19.self_attn.k_proj.weight,22.405752541501432,1.3503595351329223
+adamw_rs,AdamW + RS,19,o_proj,attn,model.layers.19.self_attn.o_proj.weight,25645.305882012733,4.409007883439909
+adamw_rs,AdamW + RS,19,q_proj,attn,model.layers.19.self_attn.q_proj.weight,21956.316533748253,4.341559483171213
+adamw_rs,AdamW + RS,19,v_proj,attn,model.layers.19.self_attn.v_proj.weight,3.009133760022767,0.47844149314009754
+adamw_rs,AdamW + RS,2,down_proj,mlp,model.layers.2.mlp.down_proj.weight,13.202857775979927,1.1206679449943553
+adamw_rs,AdamW + RS,2,gate_proj,mlp,model.layers.2.mlp.gate_proj.weight,17.387791435754036,1.2402444222454856
+adamw_rs,AdamW + RS,2,up_proj,mlp,model.layers.2.mlp.up_proj.weight,8.91538918563091,0.9501403062867774
+adamw_rs,AdamW + RS,2,k_proj,attn,model.layers.2.self_attn.k_proj.weight,17.249906700611632,1.2367867504516632
+adamw_rs,AdamW + RS,2,o_proj,attn,model.layers.2.self_attn.o_proj.weight,41944.903944429745,4.622679204181338
+adamw_rs,AdamW + RS,2,q_proj,attn,model.layers.2.self_attn.q_proj.weight,25195.41545420082,4.401321523953122
+adamw_rs,AdamW + RS,2,v_proj,attn,model.layers.2.self_attn.v_proj.weight,3.1915662739088684,0.5040038671252399
+adamw_rs,AdamW + RS,20,down_proj,mlp,model.layers.20.mlp.down_proj.weight,7.516337302824436,0.8760062612460002
+adamw_rs,AdamW + RS,20,gate_proj,mlp,model.layers.20.mlp.gate_proj.weight,19.205267735595797,1.2834203659287593
+adamw_rs,AdamW + RS,20,up_proj,mlp,model.layers.20.mlp.up_proj.weight,11.188121795518965,1.0487571855180358
+adamw_rs,AdamW + RS,20,k_proj,attn,model.layers.20.self_attn.k_proj.weight,22.05813536010509,1.3435687974494277
+adamw_rs,AdamW + RS,20,o_proj,attn,model.layers.20.self_attn.o_proj.weight,70440.09064181276,4.847819906142681
+adamw_rs,AdamW + RS,20,q_proj,attn,model.layers.20.self_attn.q_proj.weight,9072.654871848637,3.9577343904207
+adamw_rs,AdamW + RS,20,v_proj,attn,model.layers.20.self_attn.v_proj.weight,6.942007016684767,0.8414850483019641
+adamw_rs,AdamW + RS,21,down_proj,mlp,model.layers.21.mlp.down_proj.weight,9.391515126572402,0.9727356623437136
+adamw_rs,AdamW + RS,21,gate_proj,mlp,model.layers.21.mlp.gate_proj.weight,17.63112070096002,1.2462799185825761
+adamw_rs,AdamW + RS,21,up_proj,mlp,model.layers.21.mlp.up_proj.weight,8.166820588042661,0.9120530149396819
+adamw_rs,AdamW + RS,21,k_proj,attn,model.layers.21.self_attn.k_proj.weight,29.98480514516859,1.4769012309409144
+adamw_rs,AdamW + RS,21,o_proj,attn,model.layers.21.self_attn.o_proj.weight,132490.51658902958,5.122184793439234
+adamw_rs,AdamW + RS,21,q_proj,attn,model.layers.21.self_attn.q_proj.weight,13880.076565740812,4.142391861795135
+adamw_rs,AdamW + RS,21,v_proj,attn,model.layers.21.self_attn.v_proj.weight,4.3657120988145675,0.640055092339951
+adamw_rs,AdamW + RS,22,down_proj,mlp,model.layers.22.mlp.down_proj.weight,9.903180786524379,0.9957747073417318
+adamw_rs,AdamW + RS,22,gate_proj,mlp,model.layers.22.mlp.gate_proj.weight,22.902983276682328,1.359892055973755
+adamw_rs,AdamW + RS,22,up_proj,mlp,model.layers.22.mlp.up_proj.weight,12.798594107409166,1.1071622661378708
+adamw_rs,AdamW + RS,22,k_proj,attn,model.layers.22.self_attn.k_proj.weight,20.40155718886074,1.3096633170690213
+adamw_rs,AdamW + RS,22,o_proj,attn,model.layers.22.self_attn.o_proj.weight,32577.707688708648,4.5129205221711075
+adamw_rs,AdamW + RS,22,q_proj,attn,model.layers.22.self_attn.q_proj.weight,39380.90139843103,4.595285652581285
+adamw_rs,AdamW + RS,22,v_proj,attn,model.layers.22.self_attn.v_proj.weight,5.233350047712837,0.7187797847503092
+adamw_rs,AdamW + RS,23,down_proj,mlp,model.layers.23.mlp.down_proj.weight,11.804306094245339,1.0720404625458249
+adamw_rs,AdamW + RS,23,gate_proj,mlp,model.layers.23.mlp.gate_proj.weight,19.844262183880844,1.2976349563333323
+adamw_rs,AdamW + RS,23,up_proj,mlp,model.layers.23.mlp.up_proj.weight,10.792271437700443,1.0331128597932968
+adamw_rs,AdamW + RS,23,k_proj,attn,model.layers.23.self_attn.k_proj.weight,16.000948186483605,1.2041457189031988
+adamw_rs,AdamW + RS,23,o_proj,attn,model.layers.23.self_attn.o_proj.weight,12775.122394994134,4.10636506968471
+adamw_rs,AdamW + RS,23,q_proj,attn,model.layers.23.self_attn.q_proj.weight,149376.80790232564,5.174283174575074
+adamw_rs,AdamW + RS,23,v_proj,attn,model.layers.23.self_attn.v_proj.weight,4.0424380679372005,0.6066433750325733
+adamw_rs,AdamW + RS,24,down_proj,mlp,model.layers.24.mlp.down_proj.weight,10.014716078742218,1.0006386413796287
+adamw_rs,AdamW + RS,24,gate_proj,mlp,model.layers.24.mlp.gate_proj.weight,21.047771089245508,1.3232061118156677
+adamw_rs,AdamW + RS,24,up_proj,mlp,model.layers.24.mlp.up_proj.weight,13.895592671144245,1.1428770749218329
+adamw_rs,AdamW + RS,24,k_proj,attn,model.layers.24.self_attn.k_proj.weight,31.17877163835495,1.4938590011288728
+adamw_rs,AdamW + RS,24,o_proj,attn,model.layers.24.self_attn.o_proj.weight,14087.1180777014,4.148822154857519
+adamw_rs,AdamW + RS,24,q_proj,attn,model.layers.24.self_attn.q_proj.weight,88442.26229022941,4.94665984299303
+adamw_rs,AdamW + RS,24,v_proj,attn,model.layers.24.self_attn.v_proj.weight,3.6004441536728637,0.5563560789870109
+adamw_rs,AdamW + RS,25,down_proj,mlp,model.layers.25.mlp.down_proj.weight,9.42712283507162,0.9743791659597764
+adamw_rs,AdamW + RS,25,gate_proj,mlp,model.layers.25.mlp.gate_proj.weight,21.33875021682126,1.329168979763588
+adamw_rs,AdamW + RS,25,up_proj,mlp,model.layers.25.mlp.up_proj.weight,18.112737340483193,1.2579840892997611
+adamw_rs,AdamW + RS,25,k_proj,attn,model.layers.25.self_attn.k_proj.weight,22.46568092847586,1.3515195864722422
+adamw_rs,AdamW + RS,25,o_proj,attn,model.layers.25.self_attn.o_proj.weight,18461.881581389727,4.266275960978739
+adamw_rs,AdamW + RS,25,q_proj,attn,model.layers.25.self_attn.q_proj.weight,23181.246140832984,4.365136778372223
+adamw_rs,AdamW + RS,25,v_proj,attn,model.layers.25.self_attn.v_proj.weight,4.33763006640479,0.6372525105712582
+adamw_rs,AdamW + RS,26,down_proj,mlp,model.layers.26.mlp.down_proj.weight,8.742287201246372,0.9416250698117968
+adamw_rs,AdamW + RS,26,gate_proj,mlp,model.layers.26.mlp.gate_proj.weight,20.034864867207105,1.301786417513705
+adamw_rs,AdamW + RS,26,up_proj,mlp,model.layers.26.mlp.up_proj.weight,18.549333811576474,1.2683283168000352
+adamw_rs,AdamW + RS,26,k_proj,attn,model.layers.26.self_attn.k_proj.weight,18.90665449547108,1.2766146878775206
+adamw_rs,AdamW + RS,26,o_proj,attn,model.layers.26.self_attn.o_proj.weight,30624.592879063883,4.48607032393418
+adamw_rs,AdamW + RS,26,q_proj,attn,model.layers.26.self_attn.q_proj.weight,43637.99681376603,4.639864806245011
+adamw_rs,AdamW + RS,26,v_proj,attn,model.layers.26.self_attn.v_proj.weight,4.83777449581558,0.6846456206390396
+adamw_rs,AdamW + RS,27,down_proj,mlp,model.layers.27.mlp.down_proj.weight,11.966150227529461,1.0779544508357561
+adamw_rs,AdamW + RS,27,gate_proj,mlp,model.layers.27.mlp.gate_proj.weight,34.011522508654274,1.5316260733413507
+adamw_rs,AdamW + RS,27,up_proj,mlp,model.layers.27.mlp.up_proj.weight,27.058365158943264,1.432301553388798
+adamw_rs,AdamW + RS,27,k_proj,attn,model.layers.27.self_attn.k_proj.weight,16.961080926433148,1.229453526306678
+adamw_rs,AdamW + RS,27,o_proj,attn,model.layers.27.self_attn.o_proj.weight,153770.00857778997,5.18687163859089
+adamw_rs,AdamW + RS,27,q_proj,attn,model.layers.27.self_attn.q_proj.weight,62816.02815999656,4.798070472611207
+adamw_rs,AdamW + RS,27,v_proj,attn,model.layers.27.self_attn.v_proj.weight,7.854710395279682,0.8951301771480367
+adamw_rs,AdamW + RS,3,down_proj,mlp,model.layers.3.mlp.down_proj.weight,10.757240157005391,1.0317008644230434
+adamw_rs,AdamW + RS,3,gate_proj,mlp,model.layers.3.mlp.gate_proj.weight,14.000164555319863,1.1461331403244799
+adamw_rs,AdamW + RS,3,up_proj,mlp,model.layers.3.mlp.up_proj.weight,7.592141022199856,0.8803642664100704
+adamw_rs,AdamW + RS,3,k_proj,attn,model.layers.3.self_attn.k_proj.weight,15.495998494840148,1.190219565527094
+adamw_rs,AdamW + RS,3,o_proj,attn,model.layers.3.self_attn.o_proj.weight,15056.550152435972,4.1777254750923465
+adamw_rs,AdamW + RS,3,q_proj,attn,model.layers.3.self_attn.q_proj.weight,87359.78675657662,4.941311565258154
+adamw_rs,AdamW + RS,3,v_proj,attn,model.layers.3.self_attn.v_proj.weight,3.892281708713496,0.5902042653353301
+adamw_rs,AdamW + RS,4,down_proj,mlp,model.layers.4.mlp.down_proj.weight,11.155098023624706,1.0474733909293377
+adamw_rs,AdamW + RS,4,gate_proj,mlp,model.layers.4.mlp.gate_proj.weight,17.494720916861265,1.2429070188261335
+adamw_rs,AdamW + RS,4,up_proj,mlp,model.layers.4.mlp.up_proj.weight,8.781637791621614,0.9435755201807923
+adamw_rs,AdamW + RS,4,k_proj,attn,model.layers.4.self_attn.k_proj.weight,23.940877050874374,1.3791400563201028
+adamw_rs,AdamW + RS,4,o_proj,attn,model.layers.4.self_attn.o_proj.weight,8001.4179818645025,3.9031669578830863
+adamw_rs,AdamW + RS,4,q_proj,attn,model.layers.4.self_attn.q_proj.weight,23305.934306590134,4.367466517955714
+adamw_rs,AdamW + RS,4,v_proj,attn,model.layers.4.self_attn.v_proj.weight,3.7874812277364653,0.5783504889794915
+adamw_rs,AdamW + RS,5,down_proj,mlp,model.layers.5.mlp.down_proj.weight,12.388794237985449,1.093029039929618
+adamw_rs,AdamW + RS,5,gate_proj,mlp,model.layers.5.mlp.gate_proj.weight,20.634372201484265,1.3145912600523613
+adamw_rs,AdamW + RS,5,up_proj,mlp,model.layers.5.mlp.up_proj.weight,8.095815472882316,0.9082606007775587
+adamw_rs,AdamW + RS,5,k_proj,attn,model.layers.5.self_attn.k_proj.weight,22.358094878291315,1.3494347947825918
+adamw_rs,AdamW + RS,5,o_proj,attn,model.layers.5.self_attn.o_proj.weight,12277.051247444531,4.089094068698948
+adamw_rs,AdamW + RS,5,q_proj,attn,model.layers.5.self_attn.q_proj.weight,14459.594765729324,4.160156121902239
+adamw_rs,AdamW + RS,5,v_proj,attn,model.layers.5.self_attn.v_proj.weight,3.3559782339431163,0.5258191354376365
+adamw_rs,AdamW + RS,6,down_proj,mlp,model.layers.6.mlp.down_proj.weight,9.162954253355526,0.962035518327006
+adamw_rs,AdamW + RS,6,gate_proj,mlp,model.layers.6.mlp.gate_proj.weight,19.22662472197856,1.2839030495385308
+adamw_rs,AdamW + RS,6,up_proj,mlp,model.layers.6.mlp.up_proj.weight,7.420324152475361,0.8704228775912112
+adamw_rs,AdamW + RS,6,k_proj,attn,model.layers.6.self_attn.k_proj.weight,22.185674782475434,1.3460726424214655
+adamw_rs,AdamW + RS,6,o_proj,attn,model.layers.6.self_attn.o_proj.weight,104701.50743484341,5.0199529344574625
+adamw_rs,AdamW + RS,6,q_proj,attn,model.layers.6.self_attn.q_proj.weight,17717.914220848,4.24841259476928
+adamw_rs,AdamW + RS,6,v_proj,attn,model.layers.6.self_attn.v_proj.weight,3.28026233175895,0.515908576845703
+adamw_rs,AdamW + RS,7,down_proj,mlp,model.layers.7.mlp.down_proj.weight,7.9681829615781465,0.9013592975907841
+adamw_rs,AdamW + RS,7,gate_proj,mlp,model.layers.7.mlp.gate_proj.weight,16.8233925002261,1.2259135774051382
+adamw_rs,AdamW + RS,7,up_proj,mlp,model.layers.7.mlp.up_proj.weight,8.451785154076578,0.9269484486754811
+adamw_rs,AdamW + RS,7,k_proj,attn,model.layers.7.self_attn.k_proj.weight,30.441420334823885,1.4834649118694259
+adamw_rs,AdamW + RS,7,o_proj,attn,model.layers.7.self_attn.o_proj.weight,9069.934099738635,3.9576041315778636
+adamw_rs,AdamW + RS,7,q_proj,attn,model.layers.7.self_attn.q_proj.weight,8425.12498836527,3.9255763524341414
+adamw_rs,AdamW + RS,7,v_proj,attn,model.layers.7.self_attn.v_proj.weight,4.615013261561023,0.6641729533390703
+adamw_rs,AdamW + RS,8,down_proj,mlp,model.layers.8.mlp.down_proj.weight,8.05815902487907,0.9062358337828117
+adamw_rs,AdamW + RS,8,gate_proj,mlp,model.layers.8.mlp.gate_proj.weight,15.703201533830251,1.1959882044302386
+adamw_rs,AdamW + RS,8,up_proj,mlp,model.layers.8.mlp.up_proj.weight,11.036984096780722,1.0428504167751844
+adamw_rs,AdamW + RS,8,k_proj,attn,model.layers.8.self_attn.k_proj.weight,26.23447347347837,1.4188723523209945
+adamw_rs,AdamW + RS,8,o_proj,attn,model.layers.8.self_attn.o_proj.weight,8596.679009009124,3.9343307109398773
+adamw_rs,AdamW + RS,8,q_proj,attn,model.layers.8.self_attn.q_proj.weight,21539.19625421825,4.333229493350519
+adamw_rs,AdamW + RS,8,v_proj,attn,model.layers.8.self_attn.v_proj.weight,2.6149654081282567,0.4174659482096479
+adamw_rs,AdamW + RS,9,down_proj,mlp,model.layers.9.mlp.down_proj.weight,11.961800731784658,1.0777965633488547
+adamw_rs,AdamW + RS,9,gate_proj,mlp,model.layers.9.mlp.gate_proj.weight,17.045849109284884,1.2316186397269604
+adamw_rs,AdamW + RS,9,up_proj,mlp,model.layers.9.mlp.up_proj.weight,8.608015268002433,0.9349030286293918
+adamw_rs,AdamW + RS,9,k_proj,attn,model.layers.9.self_attn.k_proj.weight,29.97862747284616,1.4768117454363998
+adamw_rs,AdamW + RS,9,o_proj,attn,model.layers.9.self_attn.o_proj.weight,23201.558297887204,4.365517154608411
+adamw_rs,AdamW + RS,9,q_proj,attn,model.layers.9.self_attn.q_proj.weight,33567.15565811463,4.525914542489588
+adamw_rs,AdamW + RS,9,v_proj,attn,model.layers.9.self_attn.v_proj.weight,3.9116818067024726,0.5923635201407134
+muon_rs,Muon + RS,-1,embed,embed,model.embed_tokens.weight,69.2405310309597,1.8403603899793695
+muon_rs,Muon + RS,0,down_proj,mlp,model.layers.0.mlp.down_proj.weight,10.547660712673785,1.023156151365666
+muon_rs,Muon + RS,0,gate_proj,mlp,model.layers.0.mlp.gate_proj.weight,50.78665009501131,1.7057495675592242
+muon_rs,Muon + RS,0,up_proj,mlp,model.layers.0.mlp.up_proj.weight,30.557874905654142,1.4851231486982037
+muon_rs,Muon + RS,0,k_proj,attn,model.layers.0.self_attn.k_proj.weight,18.73937086017527,1.272755006160041
+muon_rs,Muon + RS,0,o_proj,attn,model.layers.0.self_attn.o_proj.weight,37331.36570072413,4.572073878097728
+muon_rs,Muon + RS,0,q_proj,attn,model.layers.0.self_attn.q_proj.weight,188990.50100712746,5.2764399763221315
+muon_rs,Muon + RS,0,v_proj,attn,model.layers.0.self_attn.v_proj.weight,7.774118460887809,0.890651154061896
+muon_rs,Muon + RS,1,down_proj,mlp,model.layers.1.mlp.down_proj.weight,8.99874371163636,0.9541818830852153
+muon_rs,Muon + RS,1,gate_proj,mlp,model.layers.1.mlp.gate_proj.weight,33.91661021534549,1.5304124403318649
+muon_rs,Muon + RS,1,up_proj,mlp,model.layers.1.mlp.up_proj.weight,37.734192338721996,1.5767350588036295
+muon_rs,Muon + RS,1,k_proj,attn,model.layers.1.self_attn.k_proj.weight,30.085290374951885,1.4783542075388498
+muon_rs,Muon + RS,1,o_proj,attn,model.layers.1.self_attn.o_proj.weight,54323.47312289392,4.7349875283911675
+muon_rs,Muon + RS,1,q_proj,attn,model.layers.1.self_attn.q_proj.weight,470179.7512117468,5.672263921840471
+muon_rs,Muon + RS,1,v_proj,attn,model.layers.1.self_attn.v_proj.weight,3.342164826906694,0.5240278643637349
+muon_rs,Muon + RS,10,down_proj,mlp,model.layers.10.mlp.down_proj.weight,13.491311823930106,1.1300541802275006
+muon_rs,Muon + RS,10,gate_proj,mlp,model.layers.10.mlp.gate_proj.weight,16.208987071073995,1.2097558758486255
+muon_rs,Muon + RS,10,up_proj,mlp,model.layers.10.mlp.up_proj.weight,8.537514858125133,0.9313314725075851
+muon_rs,Muon + RS,10,k_proj,attn,model.layers.10.self_attn.k_proj.weight,24.04243928777248,1.3809785280344051
+muon_rs,Muon + RS,10,o_proj,attn,model.layers.10.self_attn.o_proj.weight,17306.607125753664,4.238211934947008
+muon_rs,Muon + RS,10,q_proj,attn,model.layers.10.self_attn.q_proj.weight,12267.356462150014,4.08875098509103
+muon_rs,Muon + RS,10,v_proj,attn,model.layers.10.self_attn.v_proj.weight,3.299394896905622,0.518434298353259
+muon_rs,Muon + RS,11,down_proj,mlp,model.layers.11.mlp.down_proj.weight,16.053556067715242,1.2055712491722528
+muon_rs,Muon + RS,11,gate_proj,mlp,model.layers.11.mlp.gate_proj.weight,13.225464486575387,1.121410933668602
+muon_rs,Muon + RS,11,up_proj,mlp,model.layers.11.mlp.up_proj.weight,6.605477276667738,0.8199042028944573
+muon_rs,Muon + RS,11,k_proj,attn,model.layers.11.self_attn.k_proj.weight,21.608273986443436,1.3346200779382853
+muon_rs,Muon + RS,11,o_proj,attn,model.layers.11.self_attn.o_proj.weight,79641.657688558,4.901140291002547
+muon_rs,Muon + RS,11,q_proj,attn,model.layers.11.self_attn.q_proj.weight,26991.756164849885,4.431231141981176
+muon_rs,Muon + RS,11,v_proj,attn,model.layers.11.self_attn.v_proj.weight,2.8678012771854235,0.45754905382563243
+muon_rs,Muon + RS,12,down_proj,mlp,model.layers.12.mlp.down_proj.weight,14.145855547482379,1.1506292189060767
+muon_rs,Muon + RS,12,gate_proj,mlp,model.layers.12.mlp.gate_proj.weight,18.88865467527288,1.2762010268518615
+muon_rs,Muon + RS,12,up_proj,mlp,model.layers.12.mlp.up_proj.weight,8.061505711079516,0.90641616599123
+muon_rs,Muon + RS,12,k_proj,attn,model.layers.12.self_attn.k_proj.weight,20.859763519198477,1.3193093806538232
+muon_rs,Muon + RS,12,o_proj,attn,model.layers.12.self_attn.o_proj.weight,89970.6985116697,4.954101092254071
+muon_rs,Muon + RS,12,q_proj,attn,model.layers.12.self_attn.q_proj.weight,15313.112016122679,4.1850634594172345
+muon_rs,Muon + RS,12,v_proj,attn,model.layers.12.self_attn.v_proj.weight,2.5504698507085624,0.4066201940705796
+muon_rs,Muon + RS,13,down_proj,mlp,model.layers.13.mlp.down_proj.weight,30.006356967472072,1.477213271500704
+muon_rs,Muon + RS,13,gate_proj,mlp,model.layers.13.mlp.gate_proj.weight,12.316126804024481,1.0904741516508274
+muon_rs,Muon + RS,13,up_proj,mlp,model.layers.13.mlp.up_proj.weight,6.310612691686641,0.8000715265501639
+muon_rs,Muon + RS,13,k_proj,attn,model.layers.13.self_attn.k_proj.weight,41.91134799768121,1.6223316293029422
+muon_rs,Muon + RS,13,o_proj,attn,model.layers.13.self_attn.o_proj.weight,9126.798241462206,3.9603184500493573
+muon_rs,Muon + RS,13,q_proj,attn,model.layers.13.self_attn.q_proj.weight,49898.36085361822,4.69808627941255
+muon_rs,Muon + RS,13,v_proj,attn,model.layers.13.self_attn.v_proj.weight,3.7003222606203137,0.5682395483682339
+muon_rs,Muon + RS,14,down_proj,mlp,model.layers.14.mlp.down_proj.weight,12.149000190757537,1.0845405388805598
+muon_rs,Muon + RS,14,gate_proj,mlp,model.layers.14.mlp.gate_proj.weight,13.416310670840224,1.1276331063265204
+muon_rs,Muon + RS,14,up_proj,mlp,model.layers.14.mlp.up_proj.weight,6.92683327405106,0.8405347344780364
+muon_rs,Muon + RS,14,k_proj,attn,model.layers.14.self_attn.k_proj.weight,23.13734066878581,1.3643134410789348
+muon_rs,Muon + RS,14,o_proj,attn,model.layers.14.self_attn.o_proj.weight,6572.31423398262,3.817718319647715
+muon_rs,Muon + RS,14,q_proj,attn,model.layers.14.self_attn.q_proj.weight,12247.328568897656,4.088041369165083
+muon_rs,Muon + RS,14,v_proj,attn,model.layers.14.self_attn.v_proj.weight,6.81019635703462,0.8331596340195726
+muon_rs,Muon + RS,15,down_proj,mlp,model.layers.15.mlp.down_proj.weight,12.830736592267042,1.1082515892490046
+muon_rs,Muon + RS,15,gate_proj,mlp,model.layers.15.mlp.gate_proj.weight,16.830924139640423,1.2261079625431242
+muon_rs,Muon + RS,15,up_proj,mlp,model.layers.15.mlp.up_proj.weight,9.400351379310552,0.9731440875617737
+muon_rs,Muon + RS,15,k_proj,attn,model.layers.15.self_attn.k_proj.weight,25.43442582442572,1.4054219379926078
+muon_rs,Muon + RS,15,o_proj,attn,model.layers.15.self_attn.o_proj.weight,32527.76121390513,4.512254173152547
+muon_rs,Muon + RS,15,q_proj,attn,model.layers.15.self_attn.q_proj.weight,22897.549352223225,4.359789003747797
+muon_rs,Muon + RS,15,v_proj,attn,model.layers.15.self_attn.v_proj.weight,3.357576269175995,0.526025886688799
+muon_rs,Muon + RS,16,down_proj,mlp,model.layers.16.mlp.down_proj.weight,9.686276157575012,0.9861568467052843
+muon_rs,Muon + RS,16,gate_proj,mlp,model.layers.16.mlp.gate_proj.weight,12.919203423851727,1.1112357366241818
+muon_rs,Muon + RS,16,up_proj,mlp,model.layers.16.mlp.up_proj.weight,6.158861082627526,0.7895004083882402
+muon_rs,Muon + RS,16,k_proj,attn,model.layers.16.self_attn.k_proj.weight,20.67310629418445,1.3154057376367738
+muon_rs,Muon + RS,16,o_proj,attn,model.layers.16.self_attn.o_proj.weight,35446.30109003576,4.549570922170696
+muon_rs,Muon + RS,16,q_proj,attn,model.layers.16.self_attn.q_proj.weight,93384.93953576151,4.9702768419270695
+muon_rs,Muon + RS,16,v_proj,attn,model.layers.16.self_attn.v_proj.weight,2.788984190280839,0.4454460524183437
+muon_rs,Muon + RS,17,down_proj,mlp,model.layers.17.mlp.down_proj.weight,6.79957118301833,0.8324815246590044
+muon_rs,Muon + RS,17,gate_proj,mlp,model.layers.17.mlp.gate_proj.weight,17.968103032230488,1.2545022292446792
+muon_rs,Muon + RS,17,up_proj,mlp,model.layers.17.mlp.up_proj.weight,12.57283104980747,1.0994330796647513
+muon_rs,Muon + RS,17,k_proj,attn,model.layers.17.self_attn.k_proj.weight,15.490438411284252,1.1900637093607025
+muon_rs,Muon + RS,17,o_proj,attn,model.layers.17.self_attn.o_proj.weight,70555.97758000634,4.848533813555137
+muon_rs,Muon + RS,17,q_proj,attn,model.layers.17.self_attn.q_proj.weight,13577.89851864197,4.132832558428922
+muon_rs,Muon + RS,17,v_proj,attn,model.layers.17.self_attn.v_proj.weight,4.045733620411045,0.6069972845163393
+muon_rs,Muon + RS,18,down_proj,mlp,model.layers.18.mlp.down_proj.weight,6.644031564326845,0.8224316870214416
+muon_rs,Muon + RS,18,gate_proj,mlp,model.layers.18.mlp.gate_proj.weight,18.455743270182932,1.2661315402734197
+muon_rs,Muon + RS,18,up_proj,mlp,model.layers.18.mlp.up_proj.weight,10.67190225097714,1.0282418386812016
+muon_rs,Muon + RS,18,k_proj,attn,model.layers.18.self_attn.k_proj.weight,22.85500292112238,1.3589812811329955
+muon_rs,Muon + RS,18,o_proj,attn,model.layers.18.self_attn.o_proj.weight,19005.892053030897,4.278888258291503
+muon_rs,Muon + RS,18,q_proj,attn,model.layers.18.self_attn.q_proj.weight,35408.493762759266,4.54910745275542
+muon_rs,Muon + RS,18,v_proj,attn,model.layers.18.self_attn.v_proj.weight,2.143418563741424,0.33110698773487895
+muon_rs,Muon + RS,19,down_proj,mlp,model.layers.19.mlp.down_proj.weight,7.114510156789735,0.8521450037138198
+muon_rs,Muon + RS,19,gate_proj,mlp,model.layers.19.mlp.gate_proj.weight,18.80559238304017,1.2742870184089603
+muon_rs,Muon + RS,19,up_proj,mlp,model.layers.19.mlp.up_proj.weight,10.389765487319151,1.0166057449861816
+muon_rs,Muon + RS,19,k_proj,attn,model.layers.19.self_attn.k_proj.weight,22.40761362280039,1.3503956072876455
+muon_rs,Muon + RS,19,o_proj,attn,model.layers.19.self_attn.o_proj.weight,23238.671925695224,4.366211304793036
+muon_rs,Muon + RS,19,q_proj,attn,model.layers.19.self_attn.q_proj.weight,25583.28958659366,4.407956386798269
+muon_rs,Muon + RS,19,v_proj,attn,model.layers.19.self_attn.v_proj.weight,3.0092044535138194,0.47845169588776065
+muon_rs,Muon + RS,2,down_proj,mlp,model.layers.2.mlp.down_proj.weight,13.203255072474489,1.1206810134589393
+muon_rs,Muon + RS,2,gate_proj,mlp,model.layers.2.mlp.gate_proj.weight,17.388427087691635,1.2402602986196667
+muon_rs,Muon + RS,2,up_proj,mlp,model.layers.2.mlp.up_proj.weight,8.915322975633133,0.9501370809936515
+muon_rs,Muon + RS,2,k_proj,attn,model.layers.2.self_attn.k_proj.weight,17.24658410313781,1.2367030905941352
+muon_rs,Muon + RS,2,o_proj,attn,model.layers.2.self_attn.o_proj.weight,30003.234667816545,4.477168078808152
+muon_rs,Muon + RS,2,q_proj,attn,model.layers.2.self_attn.q_proj.weight,23736.156539002983,4.375410397472967
+muon_rs,Muon + RS,2,v_proj,attn,model.layers.2.self_attn.v_proj.weight,3.1910599129722197,0.5039349582608759
+muon_rs,Muon + RS,20,down_proj,mlp,model.layers.20.mlp.down_proj.weight,7.516491143496721,0.8760151500795696
+muon_rs,Muon + RS,20,gate_proj,mlp,model.layers.20.mlp.gate_proj.weight,19.205414559860603,1.283423686097223
+muon_rs,Muon + RS,20,up_proj,mlp,model.layers.20.mlp.up_proj.weight,11.18819362261974,1.048759973654772
+muon_rs,Muon + RS,20,k_proj,attn,model.layers.20.self_attn.k_proj.weight,22.07186113030523,1.343838955025865
+muon_rs,Muon + RS,20,o_proj,attn,model.layers.20.self_attn.o_proj.weight,146190.03613605563,5.164917773452264
+muon_rs,Muon + RS,20,q_proj,attn,model.layers.20.self_attn.q_proj.weight,9630.005519195478,3.983626536029566
+muon_rs,Muon + RS,20,v_proj,attn,model.layers.20.self_attn.v_proj.weight,6.9414847717686525,0.8414523752412049
+muon_rs,Muon + RS,21,down_proj,mlp,model.layers.21.mlp.down_proj.weight,9.391503182057455,0.9727351099897898
+muon_rs,Muon + RS,21,gate_proj,mlp,model.layers.21.mlp.gate_proj.weight,17.630842205418478,1.2462730585517123
+muon_rs,Muon + RS,21,up_proj,mlp,model.layers.21.mlp.up_proj.weight,8.166816949633047,0.9120528214566057
+muon_rs,Muon + RS,21,k_proj,attn,model.layers.21.self_attn.k_proj.weight,29.993582213388624,1.4770283378035807
+muon_rs,Muon + RS,21,o_proj,attn,model.layers.21.self_attn.o_proj.weight,431064.02312367246,5.634541777873919
+muon_rs,Muon + RS,21,q_proj,attn,model.layers.21.self_attn.q_proj.weight,14921.26442332387,4.173805626675862
+muon_rs,Muon + RS,21,v_proj,attn,model.layers.21.self_attn.v_proj.weight,4.365794036456904,0.6400632432970428
+muon_rs,Muon + RS,22,down_proj,mlp,model.layers.22.mlp.down_proj.weight,9.904200987182161,0.9958194449573907
+muon_rs,Muon + RS,22,gate_proj,mlp,model.layers.22.mlp.gate_proj.weight,22.904517260752115,1.3599211429490001
+muon_rs,Muon + RS,22,up_proj,mlp,model.layers.22.mlp.up_proj.weight,12.799514734982882,1.1071935046545744
+muon_rs,Muon + RS,22,k_proj,attn,model.layers.22.self_attn.k_proj.weight,20.39563185841588,1.3095371643416476
+muon_rs,Muon + RS,22,o_proj,attn,model.layers.22.self_attn.o_proj.weight,43048.72222103443,4.633960265183645
+muon_rs,Muon + RS,22,q_proj,attn,model.layers.22.self_attn.q_proj.weight,55007.410162628745,4.740421198148157
+muon_rs,Muon + RS,22,v_proj,attn,model.layers.22.self_attn.v_proj.weight,5.233416430207713,0.7187852935292202
+muon_rs,Muon + RS,23,down_proj,mlp,model.layers.23.mlp.down_proj.weight,11.80479880912427,1.0720585897348036
+muon_rs,Muon + RS,23,gate_proj,mlp,model.layers.23.mlp.gate_proj.weight,19.843492116828894,1.2976181029800857
+muon_rs,Muon + RS,23,up_proj,mlp,model.layers.23.mlp.up_proj.weight,10.792410642621116,1.0331184615370408
+muon_rs,Muon + RS,23,k_proj,attn,model.layers.23.self_attn.k_proj.weight,16.012452136291888,1.204457844580978
+muon_rs,Muon + RS,23,o_proj,attn,model.layers.23.self_attn.o_proj.weight,12959.624424074578,4.11259241566147
+muon_rs,Muon + RS,23,q_proj,attn,model.layers.23.self_attn.q_proj.weight,345134.8962627072,5.537988872615568
+muon_rs,Muon + RS,23,v_proj,attn,model.layers.23.self_attn.v_proj.weight,4.042681719426727,0.6066695506490697
+muon_rs,Muon + RS,24,down_proj,mlp,model.layers.24.mlp.down_proj.weight,10.013824396568278,1.0005999712979534
+muon_rs,Muon + RS,24,gate_proj,mlp,model.layers.24.mlp.gate_proj.weight,21.048552571581677,1.323222236428785
+muon_rs,Muon + RS,24,up_proj,mlp,model.layers.24.mlp.up_proj.weight,13.895042523426415,1.142859880200198
+muon_rs,Muon + RS,24,k_proj,attn,model.layers.24.self_attn.k_proj.weight,31.215281700641725,1.4943672585523384
+muon_rs,Muon + RS,24,o_proj,attn,model.layers.24.self_attn.o_proj.weight,12094.084232891695,4.08257298905516
+muon_rs,Muon + RS,24,q_proj,attn,model.layers.24.self_attn.q_proj.weight,99733.26981646034,4.9988400578848315
+muon_rs,Muon + RS,24,v_proj,attn,model.layers.24.self_attn.v_proj.weight,3.6008065179525177,0.5563997860635734
+muon_rs,Muon + RS,25,down_proj,mlp,model.layers.25.mlp.down_proj.weight,9.428409507746562,0.9744384371416714
+muon_rs,Muon + RS,25,gate_proj,mlp,model.layers.25.mlp.gate_proj.weight,21.339167689938414,1.3291774762545145
+muon_rs,Muon + RS,25,up_proj,mlp,model.layers.25.mlp.up_proj.weight,18.112663050566777,1.2579823080247214
+muon_rs,Muon + RS,25,k_proj,attn,model.layers.25.self_attn.k_proj.weight,22.465154686938238,1.351509413334226
+muon_rs,Muon + RS,25,o_proj,attn,model.layers.25.self_attn.o_proj.weight,16700.11037216164,4.222719341438742
+muon_rs,Muon + RS,25,q_proj,attn,model.layers.25.self_attn.q_proj.weight,28306.60305079028,4.451887754747858
+muon_rs,Muon + RS,25,v_proj,attn,model.layers.25.self_attn.v_proj.weight,4.337359559226917,0.6372254258645846
+muon_rs,Muon + RS,26,down_proj,mlp,model.layers.26.mlp.down_proj.weight,8.742069434561106,0.9416142515847693
+muon_rs,Muon + RS,26,gate_proj,mlp,model.layers.26.mlp.gate_proj.weight,20.034003144343064,1.3017677376006747
+muon_rs,Muon + RS,26,up_proj,mlp,model.layers.26.mlp.up_proj.weight,18.549128072289907,1.2683234998112798
+muon_rs,Muon + RS,26,k_proj,attn,model.layers.26.self_attn.k_proj.weight,18.91926308226147,1.276904216339545
+muon_rs,Muon + RS,26,o_proj,attn,model.layers.26.self_attn.o_proj.weight,31859.15947184351,4.503234313789171
+muon_rs,Muon + RS,26,q_proj,attn,model.layers.26.self_attn.q_proj.weight,47966.206380009164,4.680935371720461
+muon_rs,Muon + RS,26,v_proj,attn,model.layers.26.self_attn.v_proj.weight,4.8379774900485275,0.6846638433622695
+muon_rs,Muon + RS,27,down_proj,mlp,model.layers.27.mlp.down_proj.weight,11.985300570833758,1.0786489298688546
+muon_rs,Muon + RS,27,gate_proj,mlp,model.layers.27.mlp.gate_proj.weight,34.01202693818965,1.5316325143743608
+muon_rs,Muon + RS,27,up_proj,mlp,model.layers.27.mlp.up_proj.weight,27.05969656105227,1.4323229222468417
+muon_rs,Muon + RS,27,k_proj,attn,model.layers.27.self_attn.k_proj.weight,16.958144452860605,1.2293783303517152
+muon_rs,Muon + RS,27,o_proj,attn,model.layers.27.self_attn.o_proj.weight,105429.45845717972,5.022961975751962
+muon_rs,Muon + RS,27,q_proj,attn,model.layers.27.self_attn.q_proj.weight,140430.15615989963,5.14746037878768
+muon_rs,Muon + RS,27,v_proj,attn,model.layers.27.self_attn.v_proj.weight,7.854833287020797,0.8951369718972819
+muon_rs,Muon + RS,3,down_proj,mlp,model.layers.3.mlp.down_proj.weight,10.758175146385689,1.0317386104505342
+muon_rs,Muon + RS,3,gate_proj,mlp,model.layers.3.mlp.gate_proj.weight,13.999591102724391,1.1461153510765363
+muon_rs,Muon + RS,3,up_proj,mlp,model.layers.3.mlp.up_proj.weight,7.5922070492421,0.8803680433493197
+muon_rs,Muon + RS,3,k_proj,attn,model.layers.3.self_attn.k_proj.weight,15.500102695262932,1.1903345755792116
+muon_rs,Muon + RS,3,o_proj,attn,model.layers.3.self_attn.o_proj.weight,16605.77831659366,4.220259235892258
+muon_rs,Muon + RS,3,q_proj,attn,model.layers.3.self_attn.q_proj.weight,86481.78656940542,4.93692465283725
+muon_rs,Muon + RS,3,v_proj,attn,model.layers.3.self_attn.v_proj.weight,3.891894538655883,0.5901610633793686
+muon_rs,Muon + RS,4,down_proj,mlp,model.layers.4.mlp.down_proj.weight,11.157567009060134,1.0475695037651027
+muon_rs,Muon + RS,4,gate_proj,mlp,model.layers.4.mlp.gate_proj.weight,17.495658532016765,1.2429302938574247
+muon_rs,Muon + RS,4,up_proj,mlp,model.layers.4.mlp.up_proj.weight,8.780856710348802,0.9435368902143161
+muon_rs,Muon + RS,4,k_proj,attn,model.layers.4.self_attn.k_proj.weight,23.941358262625315,1.3791487855536777
+muon_rs,Muon + RS,4,o_proj,attn,model.layers.4.self_attn.o_proj.weight,8227.050287344724,3.9152441519129253
+muon_rs,Muon + RS,4,q_proj,attn,model.layers.4.self_attn.q_proj.weight,18941.158115417034,4.277406529459146
+muon_rs,Muon + RS,4,v_proj,attn,model.layers.4.self_attn.v_proj.weight,3.7874015755952444,0.578341355508703
+muon_rs,Muon + RS,5,down_proj,mlp,model.layers.5.mlp.down_proj.weight,12.388798930877313,1.0930292044409187
+muon_rs,Muon + RS,5,gate_proj,mlp,model.layers.5.mlp.gate_proj.weight,20.635009223186938,1.314604667329175
+muon_rs,Muon + RS,5,up_proj,mlp,model.layers.5.mlp.up_proj.weight,8.095292308193814,0.9082325350589563
+muon_rs,Muon + RS,5,k_proj,attn,model.layers.5.self_attn.k_proj.weight,22.34919960643857,1.3492619743256091
+muon_rs,Muon + RS,5,o_proj,attn,model.layers.5.self_attn.o_proj.weight,14680.922110753354,4.166753334533383
+muon_rs,Muon + RS,5,q_proj,attn,model.layers.5.self_attn.q_proj.weight,14851.25241262543,4.171763079441602
+muon_rs,Muon + RS,5,v_proj,attn,model.layers.5.self_attn.v_proj.weight,3.3558239118251203,0.525799164275544
+muon_rs,Muon + RS,6,down_proj,mlp,model.layers.6.mlp.down_proj.weight,9.162674798077074,0.9620222728460416
+muon_rs,Muon + RS,6,gate_proj,mlp,model.layers.6.mlp.gate_proj.weight,19.226209698774888,1.2838936748180485
+muon_rs,Muon + RS,6,up_proj,mlp,model.layers.6.mlp.up_proj.weight,7.420421967372078,0.870428602434093
+muon_rs,Muon + RS,6,k_proj,attn,model.layers.6.self_attn.k_proj.weight,22.19868189719253,1.3463271878843905
+muon_rs,Muon + RS,6,o_proj,attn,model.layers.6.self_attn.o_proj.weight,60416.214255920386,4.781153508436865
+muon_rs,Muon + RS,6,q_proj,attn,model.layers.6.self_attn.q_proj.weight,19813.586099827924,4.29696308646322
+muon_rs,Muon + RS,6,v_proj,attn,model.layers.6.self_attn.v_proj.weight,3.280439736777488,0.5159320639724851
+muon_rs,Muon + RS,7,down_proj,mlp,model.layers.7.mlp.down_proj.weight,7.96822507061463,0.9013615926778761
+muon_rs,Muon + RS,7,gate_proj,mlp,model.layers.7.mlp.gate_proj.weight,16.823241984271732,1.2259096918308796
+muon_rs,Muon + RS,7,up_proj,mlp,model.layers.7.mlp.up_proj.weight,8.451693119176166,0.9269437194417997
+muon_rs,Muon + RS,7,k_proj,attn,model.layers.7.self_attn.k_proj.weight,30.434412810842193,1.4833649270691123
+muon_rs,Muon + RS,7,o_proj,attn,model.layers.7.self_attn.o_proj.weight,9274.523043346539,3.9672915845977195
+muon_rs,Muon + RS,7,q_proj,attn,model.layers.7.self_attn.q_proj.weight,9032.463251268884,3.9558062033091317
+muon_rs,Muon + RS,7,v_proj,attn,model.layers.7.self_attn.v_proj.weight,4.6152674710993065,0.6641968749949656
+muon_rs,Muon + RS,8,down_proj,mlp,model.layers.8.mlp.down_proj.weight,8.058944249283588,0.9062781513904372
+muon_rs,Muon + RS,8,gate_proj,mlp,model.layers.8.mlp.gate_proj.weight,15.705063622818034,1.196039700109425
+muon_rs,Muon + RS,8,up_proj,mlp,model.layers.8.mlp.up_proj.weight,11.037741558154384,1.0428802211134225
+muon_rs,Muon + RS,8,k_proj,attn,model.layers.8.self_attn.k_proj.weight,26.23717009224739,1.4189169907798889
+muon_rs,Muon + RS,8,o_proj,attn,model.layers.8.self_attn.o_proj.weight,8825.069918679064,3.9457181548730285
+muon_rs,Muon + RS,8,q_proj,attn,model.layers.8.self_attn.q_proj.weight,19789.968442618952,4.296445101674442
+muon_rs,Muon + RS,8,v_proj,attn,model.layers.8.self_attn.v_proj.weight,2.6149730164404756,0.41746721179929086
+muon_rs,Muon + RS,9,down_proj,mlp,model.layers.9.mlp.down_proj.weight,11.961356242961504,1.0777804250905645
+muon_rs,Muon + RS,9,gate_proj,mlp,model.layers.9.mlp.gate_proj.weight,17.046721243510877,1.2316408594116595
+muon_rs,Muon + RS,9,up_proj,mlp,model.layers.9.mlp.up_proj.weight,8.607519862832978,0.9348780335618757
+muon_rs,Muon + RS,9,k_proj,attn,model.layers.9.self_attn.k_proj.weight,29.98116141399779,1.4768484525923355
+muon_rs,Muon + RS,9,o_proj,attn,model.layers.9.self_attn.o_proj.weight,26641.52285108649,4.4255590458331415
+muon_rs,Muon + RS,9,q_proj,attn,model.layers.9.self_attn.q_proj.weight,31681.221692995925,4.500801920527827
+muon_rs,Muon + RS,9,v_proj,attn,model.layers.9.self_attn.v_proj.weight,3.911577329589848,0.5923519204141262
