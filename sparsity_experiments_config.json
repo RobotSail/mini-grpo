@@ -1,0 +1,62 @@
+{
+    "adamw_grpo_fp32": {
+        "path": "/mnt/nvme2n1/checkpoints/verify-exps-variable-seeds/sparsity/adamw_fp32/checkpoint-1138254",
+        "label": "AdamW + GRPO (FP32)",
+        "color": "#1f77b4"
+    },
+    "adamw_grpo_bf16": {
+        "path": "/mnt/nvme2n1/checkpoints/verify-exps-variable-seeds/sparsity/adamw_bf16/checkpoint-1119312",
+        "label": "AdamW + GRPO (BF16)",
+        "color": "#aec7e8"
+    },
+    "adamw_grpo_mixed": {
+        "path": "/mnt/nvme2n1/checkpoints/verify-exps-variable-seeds/sparsity/adamw_mixed/checkpoint-1121154",
+        "label": "AdamW + GRPO (Mixed)",
+        "color": "#6baed6"
+    },
+    "muon_grpo_fp32": {
+        "path": "/mnt/nvme2n1/checkpoints/verify-exps-variable-seeds/sparsity/muon_fp32/checkpoint-1082468",
+        "label": "Muon + GRPO (FP32)",
+        "color": "#d62728"
+    },
+    "muon_grpo_bf16": {
+        "path": "/mnt/nvme2n1/checkpoints/verify-exps-variable-seeds/sparsity/muon_bf16/checkpoint-1117678",
+        "label": "Muon + GRPO (BF16)",
+        "color": "#ff9896"
+    },
+    "muon_grpo_mixed": {
+        "path": "/mnt/nvme2n1/checkpoints/verify-exps-variable-seeds/sparsity/muon_mixed/checkpoint-1098510",
+        "label": "Muon + GRPO (Mixed)",
+        "color": "#e6550d"
+    },
+    "adamw_sft_fp32": {
+        "path": "/mnt/nvme2n1/checkpoints/verify-exps-variable-seeds/sparsity/sft_adamw_fp32/hf_format/samples_11098.0_tokens_1053913",
+        "label": "AdamW + SFT (FP32)",
+        "color": "#2ca02c"
+    },
+    "adamw_sft_bf16": {
+        "path": "/mnt/nvme2n1/checkpoints/verify-exps-variable-seeds/sparsity/sft_adamw_bf16/hf_format/samples_11098.0_tokens_1053913",
+        "label": "AdamW + SFT (BF16)",
+        "color": "#98df8a"
+    },
+    "adamw_sft_mixed": {
+        "path": "/mnt/nvme2n1/checkpoints/verify-exps-variable-seeds/sparsity/sft_adamw_mixed/hf_format/samples_11098.0_tokens_1053913",
+        "label": "AdamW + SFT (Mixed)",
+        "color": "#74c476"
+    },
+    "muon_sft_fp32": {
+        "path": "/mnt/nvme2n1/checkpoints/verify-exps-variable-seeds/sparsity/sft_muon_fp32/hf_format/samples_11098.0_tokens_1053913",
+        "label": "Muon + SFT (FP32)",
+        "color": "#9467bd"
+    },
+    "muon_sft_bf16": {
+        "path": "/mnt/nvme2n1/checkpoints/verify-exps-variable-seeds/sparsity/sft_muon_bf16/hf_format/samples_11098.0_tokens_1053913",
+        "label": "Muon + SFT (BF16)",
+        "color": "#c5b0d5"
+    },
+    "muon_sft_mixed": {
+        "path": "/mnt/nvme2n1/checkpoints/verify-exps-variable-seeds/sparsity/sft_muon_mixed/hf_format/samples_11098.0_tokens_1053913",
+        "label": "Muon + SFT (Mixed)",
+        "color": "#b07cd8"
+    }
+}

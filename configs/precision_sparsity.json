@@ -1,0 +1,22 @@
+{
+    "adamw_fp32": {
+        "path": "/mnt/nvme2n1/checkpoints/verify-exps-variable-seeds/sparsity/adamw_fp32/checkpoint-1142346",
+        "label": "AdamW + FP32",
+        "color": "#1f77b4"
+    },
+    "adamw_bf16": {
+        "path": "/mnt/nvme2n1/checkpoints/verify-exps-variable-seeds/sparsity/adamw_bf16/checkpoint-1118240",
+        "label": "AdamW + BF16",
+        "color": "#aec7e8"
+    },
+    "muon_fp32": {
+        "path": "/mnt/nvme2n1/checkpoints/verify-exps-variable-seeds/sparsity/muon_fp32/checkpoint-1086490",
+        "label": "Muon + FP32",
+        "color": "#d62728"
+    },
+    "muon_bf16": {
+        "path": "/mnt/nvme2n1/checkpoints/verify-exps-variable-seeds/sparsity/muon_bf16/checkpoint-1105684",
+        "label": "Muon + BF16",
+        "color": "#ff9896"
+    }
+}

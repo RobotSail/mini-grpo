@@ -1,0 +1,40 @@
+{
+  "baseline": "Qwen/Qwen2-1.5B-Instruct",
+  "experiments": [
+    "adamw_grpo_fp32",
+    "adamw_grpo_bf16",
+    "adamw_grpo_mixed",
+    "muon_grpo_fp32",
+    "muon_grpo_bf16",
+    "muon_grpo_mixed",
+    "adamw_sft_fp32",
+    "adamw_sft_bf16",
+    "adamw_sft_mixed",
+    "muon_sft_fp32",
+    "muon_sft_bf16",
+    "muon_sft_mixed"
+  ],
+  "n_params": 197,
+  "metrics": [
+    "frobenius_norm",
+    "spectral_norm",
+    "nuclear_norm",
+    "effective_rank",
+    "stable_rank",
+    "spectral_entropy",
+    "gini_coefficient",
+    "rank_90",
+    "rank_95",
+    "rank_99",
+    "sv_at_rank_90",
+    "sv_at_rank_95",
+    "sv_at_rank_99",
+    "sv_sum_at_rank_90",
+    "sv_sum_at_rank_95",
+    "sv_sum_at_rank_99",
+    "top1_energy",
+    "top5_energy",
+    "top10_energy",
+    "top50_energy"
+  ]
+}

@@ -38,7 +38,7 @@ from transformers import AutoModelForCausalLM
 BASELINE_MODEL = "Qwen/Qwen2-1.5B-Instruct"
 
 # Fixed budget checkpoints at ~1.1M tokens for fair comparison
-EXPERIMENTS = {
+DEFAULT_EXPERIMENTS = {
     "adamw_sft": {
         "path": "/mnt/nvme2n1/checkpoints/verify-exps-variable-seeds/qwen2-1.5b-gsm8k-sft-adamw_verify_1_fp32/hf_format/samples_11098.0_tokens_1053913",
         "label": "AdamW + SFT",
@@ -70,6 +70,9 @@ EXPERIMENTS = {
         "color": "#8c564b",
     },
 }
+
+# Active experiment set — overridden by --config
+EXPERIMENTS = DEFAULT_EXPERIMENTS
 
 COMPONENT_ORDER = ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"]
 
@@ -331,8 +334,8 @@ def compute_all_updates(
         base_w = base_params[param_name]
         exp_w = exp_params[param_name]
 
-        # Compute update
-        delta_w = exp_w - base_w
+        # Compute update (explicit FP32 to avoid precision issues with BF16 checkpoints)
+        delta_w = exp_w.float() - base_w.float()
 
         # Compute SVD
         sv = compute_update_svd(delta_w)
@@ -1364,28 +1367,37 @@ def compute_param_sparsity(base_w: torch.Tensor, exp_w: torch.Tensor) -> dict:
     sparsity = 1 - ||ΔW||₀ / n
     where ||ΔW||₀ counts non-zero elements and n is total elements.
 
-    Computes both full-precision (float32) and bfloat16 sparsity.
-    Full-precision captures all changes; bfloat16 captures changes
-    that survive inference-time quantization.
+    Computes:
+    - Strict nonzero (|ΔW| != 0)
+    - Thresholded (|ΔW| > 1e-5), matching the convention in arXiv:2505.11711v2
+    - bfloat16 precision variants of both
     """
     n = base_w.numel()
 
     # Full precision (float32)
     delta_fp32 = exp_w.float() - base_w.float()
     n_changed_fp32 = torch.count_nonzero(delta_fp32).item()
+    n_changed_fp32_thresh = torch.sum(delta_fp32.abs() > 1e-5).item()
 
     # bfloat16 precision (inference-time)
     delta_bf16 = exp_w.bfloat16() - base_w.bfloat16()
     n_changed_bf16 = torch.count_nonzero(delta_bf16).item()
+    n_changed_bf16_thresh = torch.sum(delta_bf16.abs() > 1e-5).item()
 
     return {
         "n_params": n,
+        # Strict nonzero
         "n_changed": n_changed_fp32,
         "n_unchanged": n - n_changed_fp32,
         "sparsity": 1.0 - n_changed_fp32 / n,
         "n_changed_bf16": n_changed_bf16,
         "n_unchanged_bf16": n - n_changed_bf16,
         "sparsity_bf16": 1.0 - n_changed_bf16 / n,
+        # Thresholded (|ΔW| > 1e-5), following arXiv:2505.11711v2
+        "n_changed_thresh": n_changed_fp32_thresh,
+        "sparsity_thresh": 1.0 - n_changed_fp32_thresh / n,
+        "n_changed_bf16_thresh": n_changed_bf16_thresh,
+        "sparsity_bf16_thresh": 1.0 - n_changed_bf16_thresh / n,
     }
 
 
@@ -1638,14 +1650,26 @@ def plot_sparsity_heatmap(df: pd.DataFrame, output_path: Path, bf16: bool = Fals
 
 
 def main():
+    global EXPERIMENTS
+
     parser = argparse.ArgumentParser(description="Analyze weight update spectral structure")
     parser.add_argument("--baseline", type=str, default=BASELINE_MODEL)
     parser.add_argument("--output-dir", "-o", type=str, default="./weight_updates")
     parser.add_argument("--cache-dir", type=str, default="./update_svd_cache")
     parser.add_argument("--gpu", type=int, default=0)
     parser.add_argument("--no-cache", action="store_true")
+    parser.add_argument(
+        "--config", type=str, default=None,
+        help="JSON file with experiment definitions (overrides built-in EXPERIMENTS)",
+    )
 
     args = parser.parse_args()
+
+    # Load experiment config from JSON if provided
+    if args.config:
+        with open(args.config) as f:
+            EXPERIMENTS = json.load(f)
+        print(f"Loaded {len(EXPERIMENTS)} experiments from {args.config}")
 
     device = torch.device("cuda", args.gpu)
     print(f"Using device: {device}")

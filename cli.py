@@ -2001,9 +2001,119 @@ def rs_train(
     trainer.train()
     dist.barrier()
     dist.destroy_process_group()
-    
-    
-    
+
+
+@app.command()
+def grpo_train(
+    data_path: str = typer.Option(..., "--data-path", help="Path to training data (GSM8K jsonl)"),
+    output_dir: str = typer.Option(..., "--output-dir", help="Path to the output directory"),
+    model_name: str = typer.Option(
+        "Qwen/Qwen2-1.5B-Instruct", "--model", "-m", help="Model name or path",
+    ),
+
+    max_tokens: int = typer.Option(..., "--max-tokens", help="Total token budget (loss-counted tokens backpropped on)"),
+    inner_epochs: int = typer.Option(2, "--inner-epochs", help="Inner epochs per rollout batch"),
+    inner_batch_size: int = typer.Option(32, "--inner-batch-size", help="Training batch size for GRPO inner loop"),
+
+    save_every_n_tokens: int = typer.Option(
+        0, "--save-every-n-tokens", help="Save checkpoint every N tokens (0 = disabled)"
+    ),
+
+    # GRPO settings (defaults match cli.py train command)
+    group_size: int = typer.Option(16, "-G", "--group-size", help="Rollouts per prompt"),
+    batch_size: int = typer.Option(64, "-B", "--batch-size", help="Prompts per rollout iteration"),
+    clip_eps: float = typer.Option(0.2, "--clip-eps", help="GRPO clip epsilon"),
+    kl_strength: float = typer.Option(0.01, "--kl", help="KL penalty strength"),
+    gradient_clip: float = typer.Option(1.0, "--gradient-clip", help="Gradient clipping max norm"),
+
+    # Sampling
+    temperature: float = typer.Option(0.7, "-t", "--temp", help="Sampling temperature"),
+    max_new_tokens: int = typer.Option(512, "--max-new-tokens", help="Max tokens to generate per response"),
+    top_p: float = typer.Option(1.0, "--top-p", help="Top-p sampling threshold"),
+    top_k: int = typer.Option(0, "--top-k", help="Top-k sampling (0 = disabled)"),
+    max_seq_len: int = typer.Option(8192, "--msl", "--max-seq-len", help="Maximum sequence length"),
+
+    # Memory optimization
+    max_tokens_per_microbatch: int = typer.Option(
+        0, "--max-tokens-per-microbatch",
+        help="Max tokens per microbatch for gradient accumulation (0 = no limit)"
+    ),
+
+    # Optimizer
+    optimizer_type: str = typer.Option("adamw", "-O", "--optimizer", help="Optimizer type: 'adamw' or 'muon'"),
+    lr: float = typer.Option(1e-5, "--lr", help="Learning rate"),
+    beta1: float = typer.Option(0.9, "--beta1", help="Adam beta1"),
+    beta2: float = typer.Option(0.95, "--beta2", help="Adam beta2"),
+    wd: float = typer.Option(0.0, "--wd", help="Weight decay"),
+
+    # Precision
+    precision: str = typer.Option(
+        "fp32", "--precision", "-P",
+        help="'fp32' | 'bf16' | 'mixed' (FP32 master weights + BF16 fwd via FSDP2)",
+    ),
+
+    # Device
+    gpu: int = typer.Option(0, "--gpu", "-g", help="CUDA GPU for training"),
+    vllm_gpus: str = typer.Option("1", "--vllm-gpus", help="Comma-separated GPU indices for vLLM inference"),
+
+    # Wandb
+    use_wandb: bool = typer.Option(False, "--wandb", help="Enable wandb logging"),
+    wandb_project: str = typer.Option("mini-grpo-gsm8k", "--wandb-project", help="Wandb project name"),
+    wandb_run_name: str = typer.Option(None, "--wandb-run", help="Wandb run name"),
+    wandb_entity: str = typer.Option(None, "--wandb-entity", help="Wandb entity"),
+
+    seed: int = typer.Option(67, "--seed", help="Random seed"),
+
+    validation_path: str = typer.Option(None, "--validation-path", help="Path to validation data"),
+):
+    """
+    GRPO training with vLLM inference and configurable precision.
+
+    Same GRPO loop, reward (0/0.1/1.1), and loss as the `train` command,
+    but uses vLLM on separate GPU(s) for fast rollout generation.
+
+    Use --precision to toggle between FP32 and BF16 for paired sparsity
+    experiments.  An initial checkpoint is saved automatically so you
+    can diff pre/post weights for L0 sparsity and spectral analysis.
+    """
+    from grpo_trainer import GRPOTrainer
+
+    trainer = GRPOTrainer(
+        data_path=data_path,
+        model_name=model_name,
+        output_dir=output_dir,
+        token_budget=max_tokens,
+        inner_epochs=inner_epochs,
+        inner_batch_size=inner_batch_size,
+        save_every_n_tokens=save_every_n_tokens,
+        group_size=group_size,
+        batch_size=batch_size,
+        clip_eps=clip_eps,
+        kl_strength=kl_strength,
+        temperature=temperature,
+        top_k=top_k,
+        top_p=top_p,
+        max_new_tokens=max_new_tokens,
+        max_seq_len=max_seq_len,
+        max_tokens_per_microbatch=max_tokens_per_microbatch,
+        optimizer_type=optimizer_type,
+        lr=lr,
+        beta1=beta1,
+        beta2=beta2,
+        weight_decay=wd,
+        gradient_clip=gradient_clip,
+        precision=precision,
+        gpu=gpu,
+        vllm_gpus=vllm_gpus,
+        use_wandb=use_wandb,
+        wandb_project=wandb_project,
+        wandb_run_name=wandb_run_name,
+        wandb_entity=wandb_entity,
+        seed=seed,
+        validation_path=validation_path,
+    )
+    trainer.train()
+
 
 @app.command()
 def sft_train(
@@ -2046,6 +2156,11 @@ def sft_train(
     wandb_project: str = typer.Option("muon-rl", "--wandb-project", help="Wandb project name"),
     wandb_run_name: str = typer.Option(None, "--wandb-run", help="Wandb run name"),
     wandb_entity: str = typer.Option(None, "--wandb-entity", help="Wandb entity"),
+    # Precision
+    precision: str = typer.Option(
+        "mixed", "--precision", "-P",
+        help="'fp32' | 'bf16' | 'mixed' (FP32 master weights + BF16 fwd via FSDP2)",
+    ),
     # Misc
     seed: int = typer.Option(67, "--seed", help="Random seed"),
     use_liger: bool = typer.Option(False, "--liger", help="Use Liger kernels"),
@@ -2126,6 +2241,9 @@ def sft_train(
         if gsm8k_vllm_gpu_memory_utilization != 0.8:
             optional_kwargs["gsm8k_vllm_gpu_memory_utilization"] = gsm8k_vllm_gpu_memory_utilization
 
+    # Derive train_dtype from precision
+    train_dtype = "float32" if precision in ("fp32", "mixed") else "bfloat16"
+
     osft(
         model_path=model_name,
         data_path=data_path,
@@ -2165,7 +2283,9 @@ def sft_train(
         seed=seed,
         use_liger=use_liger,
         nproc_per_node=num_gpus,
-
+        # Precision control
+        precision=precision,
+        train_dtype=train_dtype,
         # Ensures training saves FP32 checkpoints
         save_dtype='float32',
         **optional_kwargs,
