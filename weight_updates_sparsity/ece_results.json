@@ -1,0 +1,1010 @@
+{
+  "muon_bf16_checkpoint-1117678": {
+    "step": 0,
+    "path": "/mnt/nvme2n1/checkpoints/verify-exps-variable-seeds/sparsity/muon_bf16/checkpoint-1117678",
+    "total_samples": 1319,
+    "correct": 122,
+    "parsable": 185,
+    "accuracy": 0.09249431387414708,
+    "parsable_rate": 0.14025777103866566,
+    "ece": 0.3384757056863622,
+    "mean_confidence": 0.9979351651458215,
+    "n_calibration_samples": 185,
+    "per_bin_data": [
+      {
+        "bin_lo": 0.0,
+        "bin_hi": 0.1,
+        "count": 0,
+        "accuracy": 0.0,
+        "avg_confidence": 0.0
+      },
+      {
+        "bin_lo": 0.1,
+        "bin_hi": 0.2,
+        "count": 0,
+        "accuracy": 0.0,
+        "avg_confidence": 0.0
+      },
+      {
+        "bin_lo": 0.2,
+        "bin_hi": 0.30000000000000004,
+        "count": 0,
+        "accuracy": 0.0,
+        "avg_confidence": 0.0
+      },
+      {
+        "bin_lo": 0.30000000000000004,
+        "bin_hi": 0.4,
+        "count": 0,
+        "accuracy": 0.0,
+        "avg_confidence": 0.0
+      },
+      {
+        "bin_lo": 0.4,
+        "bin_hi": 0.5,
+        "count": 0,
+        "accuracy": 0.0,
+        "avg_confidence": 0.0
+      },
+      {
+        "bin_lo": 0.5,
+        "bin_hi": 0.6000000000000001,
+        "count": 0,
+        "accuracy": 0.0,
+        "avg_confidence": 0.0
+      },
+      {
+        "bin_lo": 0.6000000000000001,
+        "bin_hi": 0.7000000000000001,
+        "count": 0,
+        "accuracy": 0.0,
+        "avg_confidence": 0.0
+      },
+      {
+        "bin_lo": 0.7000000000000001,
+        "bin_hi": 0.8,
+        "count": 0,
+        "accuracy": 0.0,
+        "avg_confidence": 0.0
+      },
+      {
+        "bin_lo": 0.8,
+        "bin_hi": 0.9,
+        "count": 1,
+        "accuracy": 0.0,
+        "avg_confidence": 0.8805272459260077
+      },
+      {
+        "bin_lo": 0.9,
+        "bin_hi": 1.0,
+        "count": 184,
+        "accuracy": 0.6630434782608695,
+        "avg_confidence": 0.9985732516633206
+      }
+    ]
+  },
+  "adamw_fp32_checkpoint-1138254": {
+    "step": 0,
+    "path": "/mnt/nvme2n1/checkpoints/verify-exps-variable-seeds/sparsity/adamw_fp32/checkpoint-1138254",
+    "total_samples": 1319,
+    "correct": 9,
+    "parsable": 20,
+    "accuracy": 0.006823351023502654,
+    "parsable_rate": 0.015163002274450341,
+    "ece": 0.3103310631956176,
+    "mean_confidence": 1.376439058930252e-05,
+    "n_calibration_samples": 29,
+    "per_bin_data": [
+      {
+        "bin_lo": 0.0,
+        "bin_hi": 0.1,
+        "count": 29,
+        "accuracy": 0.3103448275862069,
+        "avg_confidence": 1.376439058930252e-05
+      },
+      {
+        "bin_lo": 0.1,
+        "bin_hi": 0.2,
+        "count": 0,
+        "accuracy": 0.0,
+        "avg_confidence": 0.0
+      },
+      {
+        "bin_lo": 0.2,
+        "bin_hi": 0.30000000000000004,
+        "count": 0,
+        "accuracy": 0.0,
+        "avg_confidence": 0.0
+      },
+      {
+        "bin_lo": 0.30000000000000004,
+        "bin_hi": 0.4,
+        "count": 0,
+        "accuracy": 0.0,
+        "avg_confidence": 0.0
+      },
+      {
+        "bin_lo": 0.4,
+        "bin_hi": 0.5,
+        "count": 0,
+        "accuracy": 0.0,
+        "avg_confidence": 0.0
+      },
+      {
+        "bin_lo": 0.5,
+        "bin_hi": 0.6000000000000001,
+        "count": 0,
+        "accuracy": 0.0,
+        "avg_confidence": 0.0
+      },
+      {
+        "bin_lo": 0.6000000000000001,
+        "bin_hi": 0.7000000000000001,
+        "count": 0,
+        "accuracy": 0.0,
+        "avg_confidence": 0.0
+      },
+      {
+        "bin_lo": 0.7000000000000001,
+        "bin_hi": 0.8,
+        "count": 0,
+        "accuracy": 0.0,
+        "avg_confidence": 0.0
+      },
+      {
+        "bin_lo": 0.8,
+        "bin_hi": 0.9,
+        "count": 0,
+        "accuracy": 0.0,
+        "avg_confidence": 0.0
+      },
+      {
+        "bin_lo": 0.9,
+        "bin_hi": 1.0,
+        "count": 0,
+        "accuracy": 0.0,
+        "avg_confidence": 0.0
+      }
+    ]
+  },
+  "sft_adamw_bf16_tokens_1053913": {
+    "step": 0,
+    "path": "/mnt/nvme2n1/checkpoints/verify-exps-variable-seeds/sparsity/sft_adamw_bf16/hf_format/samples_11098.0_tokens_1053913",
+    "total_samples": 1319,
+    "correct": 656,
+    "parsable": 1179,
+    "accuracy": 0.4973464746019712,
+    "parsable_rate": 0.8938589840788476,
+    "ece": 0.4246829847962628,
+    "mean_confidence": 0.9810867167725137,
+    "n_calibration_samples": 1179,
+    "per_bin_data": [
+      {
+        "bin_lo": 0.0,
+        "bin_hi": 0.1,
+        "count": 0,
+        "accuracy": 0.0,
+        "avg_confidence": 0.0
+      },
+      {
+        "bin_lo": 0.1,
+        "bin_hi": 0.2,
+        "count": 0,
+        "accuracy": 0.0,
+        "avg_confidence": 0.0
+      },
+      {
+        "bin_lo": 0.2,
+        "bin_hi": 0.30000000000000004,
+        "count": 0,
+        "accuracy": 0.0,
+        "avg_confidence": 0.0
+      },
+      {
+        "bin_lo": 0.30000000000000004,
+        "bin_hi": 0.4,
+        "count": 3,
+        "accuracy": 0.0,
+        "avg_confidence": 0.32643410038641313
+      },
+      {
+        "bin_lo": 0.4,
+        "bin_hi": 0.5,
+        "count": 5,
+        "accuracy": 0.0,
+        "avg_confidence": 0.4739921988416385
+      },
+      {
+        "bin_lo": 0.5,
+        "bin_hi": 0.6000000000000001,
+        "count": 8,
+        "accuracy": 0.125,
+        "avg_confidence": 0.5434478238418983
+      },
+      {
+        "bin_lo": 0.6000000000000001,
+        "bin_hi": 0.7000000000000001,
+        "count": 8,
+        "accuracy": 0.125,
+        "avg_confidence": 0.6506294008806675
+      },
+      {
+        "bin_lo": 0.7000000000000001,
+        "bin_hi": 0.8,
+        "count": 10,
+        "accuracy": 0.3,
+        "avg_confidence": 0.7634552228908056
+      },
+      {
+        "bin_lo": 0.8,
+        "bin_hi": 0.9,
+        "count": 23,
+        "accuracy": 0.43478260869565216,
+        "avg_confidence": 0.8593497446434132
+      },
+      {
+        "bin_lo": 0.9,
+        "bin_hi": 1.0,
+        "count": 1122,
+        "accuracy": 0.571301247771836,
+        "avg_confidence": 0.995008700201372
+      }
+    ]
+  },
+  "sft_adamw_fp32_tokens_1053913": {
+    "step": 0,
+    "path": "/mnt/nvme2n1/checkpoints/verify-exps-variable-seeds/sparsity/sft_adamw_fp32/hf_format/samples_11098.0_tokens_1053913",
+    "total_samples": 1319,
+    "correct": 655,
+    "parsable": 1222,
+    "accuracy": 0.4965883244882487,
+    "parsable_rate": 0.9264594389689158,
+    "ece": 0.45790721649605665,
+    "mean_confidence": 0.993913763140901,
+    "n_calibration_samples": 1222,
+    "per_bin_data": [
+      {
+        "bin_lo": 0.0,
+        "bin_hi": 0.1,
+        "count": 0,
+        "accuracy": 0.0,
+        "avg_confidence": 0.0
+      },
+      {
+        "bin_lo": 0.1,
+        "bin_hi": 0.2,
+        "count": 0,
+        "accuracy": 0.0,
+        "avg_confidence": 0.0
+      },
+      {
+        "bin_lo": 0.2,
+        "bin_hi": 0.30000000000000004,
+        "count": 0,
+        "accuracy": 0.0,
+        "avg_confidence": 0.0
+      },
+      {
+        "bin_lo": 0.30000000000000004,
+        "bin_hi": 0.4,
+        "count": 0,
+        "accuracy": 0.0,
+        "avg_confidence": 0.0
+      },
+      {
+        "bin_lo": 0.4,
+        "bin_hi": 0.5,
+        "count": 1,
+        "accuracy": 0.0,
+        "avg_confidence": 0.44074586147260153
+      },
+      {
+        "bin_lo": 0.5,
+        "bin_hi": 0.6000000000000001,
+        "count": 3,
+        "accuracy": 0.3333333333333333,
+        "avg_confidence": 0.5791736320433727
+      },
+      {
+        "bin_lo": 0.6000000000000001,
+        "bin_hi": 0.7000000000000001,
+        "count": 3,
+        "accuracy": 0.0,
+        "avg_confidence": 0.6505062421382998
+      },
+      {
+        "bin_lo": 0.7000000000000001,
+        "bin_hi": 0.8,
+        "count": 3,
+        "accuracy": 0.0,
+        "avg_confidence": 0.7244789082139276
+      },
+      {
+        "bin_lo": 0.8,
+        "bin_hi": 0.9,
+        "count": 7,
+        "accuracy": 0.5714285714285714,
+        "avg_confidence": 0.8652880951453675
+      },
+      {
+        "bin_lo": 0.9,
+        "bin_hi": 1.0,
+        "count": 1205,
+        "accuracy": 0.5394190871369294,
+        "avg_confidence": 0.9976783233888001
+      }
+    ]
+  },
+  "muon_fp32_checkpoint-1082468": {
+    "step": 0,
+    "path": "/mnt/nvme2n1/checkpoints/verify-exps-variable-seeds/sparsity/muon_fp32/checkpoint-1082468",
+    "total_samples": 1319,
+    "correct": 645,
+    "parsable": 1047,
+    "accuracy": 0.4890068233510235,
+    "parsable_rate": 0.7937831690674754,
+    "ece": 0.3506635430080174,
+    "mean_confidence": 0.9663631987185348,
+    "n_calibration_samples": 1047,
+    "per_bin_data": [
+      {
+        "bin_lo": 0.0,
+        "bin_hi": 0.1,
+        "count": 0,
+        "accuracy": 0.0,
+        "avg_confidence": 0.0
+      },
+      {
+        "bin_lo": 0.1,
+        "bin_hi": 0.2,
+        "count": 0,
+        "accuracy": 0.0,
+        "avg_confidence": 0.0
+      },
+      {
+        "bin_lo": 0.2,
+        "bin_hi": 0.30000000000000004,
+        "count": 3,
+        "accuracy": 0.3333333333333333,
+        "avg_confidence": 0.27292325481861107
+      },
+      {
+        "bin_lo": 0.30000000000000004,
+        "bin_hi": 0.4,
+        "count": 2,
+        "accuracy": 0.0,
+        "avg_confidence": 0.36617769308332804
+      },
+      {
+        "bin_lo": 0.4,
+        "bin_hi": 0.5,
+        "count": 12,
+        "accuracy": 0.16666666666666666,
+        "avg_confidence": 0.44079750621469244
+      },
+      {
+        "bin_lo": 0.5,
+        "bin_hi": 0.6000000000000001,
+        "count": 13,
+        "accuracy": 0.0,
+        "avg_confidence": 0.5385478234378992
+      },
+      {
+        "bin_lo": 0.6000000000000001,
+        "bin_hi": 0.7000000000000001,
+        "count": 8,
+        "accuracy": 0.125,
+        "avg_confidence": 0.6468079582512136
+      },
+      {
+        "bin_lo": 0.7000000000000001,
+        "bin_hi": 0.8,
+        "count": 18,
+        "accuracy": 0.2777777777777778,
+        "avg_confidence": 0.7655003853298722
+      },
+      {
+        "bin_lo": 0.8,
+        "bin_hi": 0.9,
+        "count": 30,
+        "accuracy": 0.43333333333333335,
+        "avg_confidence": 0.8514644968206159
+      },
+      {
+        "bin_lo": 0.9,
+        "bin_hi": 1.0,
+        "count": 961,
+        "accuracy": 0.6482830385015609,
+        "avg_confidence": 0.9921363648510391
+      }
+    ]
+  },
+  "adamw_bf16_checkpoint-1119312": {
+    "step": 0,
+    "path": "/mnt/nvme2n1/checkpoints/verify-exps-variable-seeds/sparsity/adamw_bf16/checkpoint-1119312",
+    "total_samples": 1319,
+    "correct": 611,
+    "parsable": 934,
+    "accuracy": 0.4632297194844579,
+    "parsable_rate": 0.7081122062168309,
+    "ece": 0.3424406906187146,
+    "mean_confidence": 0.9966162794838109,
+    "n_calibration_samples": 934,
+    "per_bin_data": [
+      {
+        "bin_lo": 0.0,
+        "bin_hi": 0.1,
+        "count": 0,
+        "accuracy": 0.0,
+        "avg_confidence": 0.0
+      },
+      {
+        "bin_lo": 0.1,
+        "bin_hi": 0.2,
+        "count": 0,
+        "accuracy": 0.0,
+        "avg_confidence": 0.0
+      },
+      {
+        "bin_lo": 0.2,
+        "bin_hi": 0.30000000000000004,
+        "count": 0,
+        "accuracy": 0.0,
+        "avg_confidence": 0.0
+      },
+      {
+        "bin_lo": 0.30000000000000004,
+        "bin_hi": 0.4,
+        "count": 0,
+        "accuracy": 0.0,
+        "avg_confidence": 0.0
+      },
+      {
+        "bin_lo": 0.4,
+        "bin_hi": 0.5,
+        "count": 0,
+        "accuracy": 0.0,
+        "avg_confidence": 0.0
+      },
+      {
+        "bin_lo": 0.5,
+        "bin_hi": 0.6000000000000001,
+        "count": 0,
+        "accuracy": 0.0,
+        "avg_confidence": 0.0
+      },
+      {
+        "bin_lo": 0.6000000000000001,
+        "bin_hi": 0.7000000000000001,
+        "count": 1,
+        "accuracy": 0.0,
+        "avg_confidence": 0.693114209471173
+      },
+      {
+        "bin_lo": 0.7000000000000001,
+        "bin_hi": 0.8,
+        "count": 2,
+        "accuracy": 0.0,
+        "avg_confidence": 0.7407579671807859
+      },
+      {
+        "bin_lo": 0.8,
+        "bin_hi": 0.9,
+        "count": 6,
+        "accuracy": 0.6666666666666666,
+        "avg_confidence": 0.8517522501874962
+      },
+      {
+        "bin_lo": 0.9,
+        "bin_hi": 1.0,
+        "count": 925,
+        "accuracy": 0.6562162162162162,
+        "avg_confidence": 0.9984372555599154
+      }
+    ]
+  },
+  "muon_mixed_checkpoint-1098510": {
+    "step": 0,
+    "path": "/mnt/nvme2n1/checkpoints/verify-exps-variable-seeds/sparsity/muon_mixed/checkpoint-1098510",
+    "total_samples": 1319,
+    "correct": 781,
+    "parsable": 1232,
+    "accuracy": 0.5921152388172858,
+    "parsable_rate": 0.934040940106141,
+    "ece": 0.3604409554316409,
+    "mean_confidence": 0.9938553917657853,
+    "n_calibration_samples": 1233,
+    "per_bin_data": [
+      {
+        "bin_lo": 0.0,
+        "bin_hi": 0.1,
+        "count": 0,
+        "accuracy": 0.0,
+        "avg_confidence": 0.0
+      },
+      {
+        "bin_lo": 0.1,
+        "bin_hi": 0.2,
+        "count": 0,
+        "accuracy": 0.0,
+        "avg_confidence": 0.0
+      },
+      {
+        "bin_lo": 0.2,
+        "bin_hi": 0.30000000000000004,
+        "count": 0,
+        "accuracy": 0.0,
+        "avg_confidence": 0.0
+      },
+      {
+        "bin_lo": 0.30000000000000004,
+        "bin_hi": 0.4,
+        "count": 0,
+        "accuracy": 0.0,
+        "avg_confidence": 0.0
+      },
+      {
+        "bin_lo": 0.4,
+        "bin_hi": 0.5,
+        "count": 1,
+        "accuracy": 0.0,
+        "avg_confidence": 0.4953110914245502
+      },
+      {
+        "bin_lo": 0.5,
+        "bin_hi": 0.6000000000000001,
+        "count": 2,
+        "accuracy": 0.5,
+        "avg_confidence": 0.5476313816021592
+      },
+      {
+        "bin_lo": 0.6000000000000001,
+        "bin_hi": 0.7000000000000001,
+        "count": 0,
+        "accuracy": 0.0,
+        "avg_confidence": 0.0
+      },
+      {
+        "bin_lo": 0.7000000000000001,
+        "bin_hi": 0.8,
+        "count": 3,
+        "accuracy": 0.3333333333333333,
+        "avg_confidence": 0.7679348029540843
+      },
+      {
+        "bin_lo": 0.8,
+        "bin_hi": 0.9,
+        "count": 10,
+        "accuracy": 0.4,
+        "avg_confidence": 0.8654852932822557
+      },
+      {
+        "bin_lo": 0.9,
+        "bin_hi": 1.0,
+        "count": 1217,
+        "accuracy": 0.6368118323746919,
+        "avg_confidence": 0.9966100795816759
+      }
+    ]
+  },
+  "adamw_mixed_checkpoint-1121154": {
+    "step": 0,
+    "path": "/mnt/nvme2n1/checkpoints/verify-exps-variable-seeds/sparsity/adamw_mixed/checkpoint-1121154",
+    "total_samples": 1319,
+    "correct": 809,
+    "parsable": 1258,
+    "accuracy": 0.6133434420015162,
+    "parsable_rate": 0.9537528430629265,
+    "ece": 0.355778056243411,
+    "mean_confidence": 0.9988623169747305,
+    "n_calibration_samples": 1258,
+    "per_bin_data": [
+      {
+        "bin_lo": 0.0,
+        "bin_hi": 0.1,
+        "count": 0,
+        "accuracy": 0.0,
+        "avg_confidence": 0.0
+      },
+      {
+        "bin_lo": 0.1,
+        "bin_hi": 0.2,
+        "count": 0,
+        "accuracy": 0.0,
+        "avg_confidence": 0.0
+      },
+      {
+        "bin_lo": 0.2,
+        "bin_hi": 0.30000000000000004,
+        "count": 0,
+        "accuracy": 0.0,
+        "avg_confidence": 0.0
+      },
+      {
+        "bin_lo": 0.30000000000000004,
+        "bin_hi": 0.4,
+        "count": 0,
+        "accuracy": 0.0,
+        "avg_confidence": 0.0
+      },
+      {
+        "bin_lo": 0.4,
+        "bin_hi": 0.5,
+        "count": 0,
+        "accuracy": 0.0,
+        "avg_confidence": 0.0
+      },
+      {
+        "bin_lo": 0.5,
+        "bin_hi": 0.6000000000000001,
+        "count": 0,
+        "accuracy": 0.0,
+        "avg_confidence": 0.0
+      },
+      {
+        "bin_lo": 0.6000000000000001,
+        "bin_hi": 0.7000000000000001,
+        "count": 0,
+        "accuracy": 0.0,
+        "avg_confidence": 0.0
+      },
+      {
+        "bin_lo": 0.7000000000000001,
+        "bin_hi": 0.8,
+        "count": 2,
+        "accuracy": 0.0,
+        "avg_confidence": 0.7529327177879397
+      },
+      {
+        "bin_lo": 0.8,
+        "bin_hi": 0.9,
+        "count": 2,
+        "accuracy": 0.0,
+        "avg_confidence": 0.825881162204043
+      },
+      {
+        "bin_lo": 0.9,
+        "bin_hi": 1.0,
+        "count": 1254,
+        "accuracy": 0.6451355661881978,
+        "avg_confidence": 0.9995304361995432
+      }
+    ]
+  },
+  "sft_adamw_mixed_tokens_1053913": {
+    "step": 0,
+    "path": "/mnt/nvme2n1/checkpoints/verify-exps-variable-seeds/sparsity/sft_adamw_mixed/hf_format/samples_11098.0_tokens_1053913",
+    "total_samples": 1319,
+    "correct": 667,
+    "parsable": 1305,
+    "accuracy": 0.5056861258529188,
+    "parsable_rate": 0.9893858984078847,
+    "ece": 0.4832666808062737,
+    "mean_confidence": 0.994377791917385,
+    "n_calibration_samples": 1305,
+    "per_bin_data": [
+      {
+        "bin_lo": 0.0,
+        "bin_hi": 0.1,
+        "count": 0,
+        "accuracy": 0.0,
+        "avg_confidence": 0.0
+      },
+      {
+        "bin_lo": 0.1,
+        "bin_hi": 0.2,
+        "count": 0,
+        "accuracy": 0.0,
+        "avg_confidence": 0.0
+      },
+      {
+        "bin_lo": 0.2,
+        "bin_hi": 0.30000000000000004,
+        "count": 0,
+        "accuracy": 0.0,
+        "avg_confidence": 0.0
+      },
+      {
+        "bin_lo": 0.30000000000000004,
+        "bin_hi": 0.4,
+        "count": 0,
+        "accuracy": 0.0,
+        "avg_confidence": 0.0
+      },
+      {
+        "bin_lo": 0.4,
+        "bin_hi": 0.5,
+        "count": 0,
+        "accuracy": 0.0,
+        "avg_confidence": 0.0
+      },
+      {
+        "bin_lo": 0.5,
+        "bin_hi": 0.6000000000000001,
+        "count": 0,
+        "accuracy": 0.0,
+        "avg_confidence": 0.0
+      },
+      {
+        "bin_lo": 0.6000000000000001,
+        "bin_hi": 0.7000000000000001,
+        "count": 0,
+        "accuracy": 0.0,
+        "avg_confidence": 0.0
+      },
+      {
+        "bin_lo": 0.7000000000000001,
+        "bin_hi": 0.8,
+        "count": 4,
+        "accuracy": 0.25,
+        "avg_confidence": 0.7683547920912588
+      },
+      {
+        "bin_lo": 0.8,
+        "bin_hi": 0.9,
+        "count": 19,
+        "accuracy": 0.3157894736842105,
+        "avg_confidence": 0.8639938323074419
+      },
+      {
+        "bin_lo": 0.9,
+        "bin_hi": 1.0,
+        "count": 1282,
+        "accuracy": 0.514820592823713,
+        "avg_confidence": 0.9970153794617634
+      }
+    ]
+  },
+  "sft_muon_fp32_tokens_1053913": {
+    "step": 0,
+    "path": "/mnt/nvme2n1/checkpoints/verify-exps-variable-seeds/sparsity/sft_muon_fp32/hf_format/samples_11098.0_tokens_1053913",
+    "total_samples": 1319,
+    "correct": 670,
+    "parsable": 1229,
+    "accuracy": 0.5079605761940864,
+    "parsable_rate": 0.9317664897649734,
+    "ece": 0.4482994746470742,
+    "mean_confidence": 0.9931633816088875,
+    "n_calibration_samples": 1229,
+    "per_bin_data": [
+      {
+        "bin_lo": 0.0,
+        "bin_hi": 0.1,
+        "count": 0,
+        "accuracy": 0.0,
+        "avg_confidence": 0.0
+      },
+      {
+        "bin_lo": 0.1,
+        "bin_hi": 0.2,
+        "count": 0,
+        "accuracy": 0.0,
+        "avg_confidence": 0.0
+      },
+      {
+        "bin_lo": 0.2,
+        "bin_hi": 0.30000000000000004,
+        "count": 0,
+        "accuracy": 0.0,
+        "avg_confidence": 0.0
+      },
+      {
+        "bin_lo": 0.30000000000000004,
+        "bin_hi": 0.4,
+        "count": 1,
+        "accuracy": 0.0,
+        "avg_confidence": 0.3546667488822245
+      },
+      {
+        "bin_lo": 0.4,
+        "bin_hi": 0.5,
+        "count": 2,
+        "accuracy": 0.5,
+        "avg_confidence": 0.40943541401715533
+      },
+      {
+        "bin_lo": 0.5,
+        "bin_hi": 0.6000000000000001,
+        "count": 1,
+        "accuracy": 0.0,
+        "avg_confidence": 0.5639715276584917
+      },
+      {
+        "bin_lo": 0.6000000000000001,
+        "bin_hi": 0.7000000000000001,
+        "count": 1,
+        "accuracy": 0.0,
+        "avg_confidence": 0.6369965341560648
+      },
+      {
+        "bin_lo": 0.7000000000000001,
+        "bin_hi": 0.8,
+        "count": 6,
+        "accuracy": 0.3333333333333333,
+        "avg_confidence": 0.7574264921003645
+      },
+      {
+        "bin_lo": 0.8,
+        "bin_hi": 0.9,
+        "count": 8,
+        "accuracy": 0.375,
+        "avg_confidence": 0.8776207337445094
+      },
+      {
+        "bin_lo": 0.9,
+        "bin_hi": 1.0,
+        "count": 1210,
+        "accuracy": 0.5487603305785124,
+        "avg_confidence": 0.9972378227570524
+      }
+    ]
+  },
+  "sft_muon_mixed_tokens_1053913": {
+    "step": 0,
+    "path": "/mnt/nvme2n1/checkpoints/verify-exps-variable-seeds/sparsity/sft_muon_mixed/hf_format/samples_11098.0_tokens_1053913",
+    "total_samples": 1319,
+    "correct": 675,
+    "parsable": 1308,
+    "accuracy": 0.511751326762699,
+    "parsable_rate": 0.9916603487490523,
+    "ece": 0.47834207396763084,
+    "mean_confidence": 0.9930722434659248,
+    "n_calibration_samples": 1308,
+    "per_bin_data": [
+      {
+        "bin_lo": 0.0,
+        "bin_hi": 0.1,
+        "count": 0,
+        "accuracy": 0.0,
+        "avg_confidence": 0.0
+      },
+      {
+        "bin_lo": 0.1,
+        "bin_hi": 0.2,
+        "count": 1,
+        "accuracy": 1.0,
+        "avg_confidence": 0.13353085188424874
+      },
+      {
+        "bin_lo": 0.2,
+        "bin_hi": 0.30000000000000004,
+        "count": 0,
+        "accuracy": 0.0,
+        "avg_confidence": 0.0
+      },
+      {
+        "bin_lo": 0.30000000000000004,
+        "bin_hi": 0.4,
+        "count": 0,
+        "accuracy": 0.0,
+        "avg_confidence": 0.0
+      },
+      {
+        "bin_lo": 0.4,
+        "bin_hi": 0.5,
+        "count": 0,
+        "accuracy": 0.0,
+        "avg_confidence": 0.0
+      },
+      {
+        "bin_lo": 0.5,
+        "bin_hi": 0.6000000000000001,
+        "count": 0,
+        "accuracy": 0.0,
+        "avg_confidence": 0.0
+      },
+      {
+        "bin_lo": 0.6000000000000001,
+        "bin_hi": 0.7000000000000001,
+        "count": 3,
+        "accuracy": 0.0,
+        "avg_confidence": 0.6537727972265325
+      },
+      {
+        "bin_lo": 0.7000000000000001,
+        "bin_hi": 0.8,
+        "count": 2,
+        "accuracy": 0.0,
+        "avg_confidence": 0.7572828635258331
+      },
+      {
+        "bin_lo": 0.8,
+        "bin_hi": 0.9,
+        "count": 6,
+        "accuracy": 0.3333333333333333,
+        "avg_confidence": 0.8704524904890935
+      },
+      {
+        "bin_lo": 0.9,
+        "bin_hi": 1.0,
+        "count": 1296,
+        "accuracy": 0.5185185185185185,
+        "avg_confidence": 0.9954524417745984
+      }
+    ]
+  },
+  "sft_muon_bf16_tokens_1053913": {
+    "step": 0,
+    "path": "/mnt/nvme2n1/checkpoints/verify-exps-variable-seeds/sparsity/sft_muon_bf16/hf_format/samples_11098.0_tokens_1053913",
+    "total_samples": 1319,
+    "correct": 66,
+    "parsable": 104,
+    "accuracy": 0.050037907505686124,
+    "parsable_rate": 0.07884761182714177,
+    "ece": 0.3634224073224085,
+    "mean_confidence": 0.9980377919377934,
+    "n_calibration_samples": 104,
+    "per_bin_data": [
+      {
+        "bin_lo": 0.0,
+        "bin_hi": 0.1,
+        "count": 0,
+        "accuracy": 0.0,
+        "avg_confidence": 0.0
+      },
+      {
+        "bin_lo": 0.1,
+        "bin_hi": 0.2,
+        "count": 0,
+        "accuracy": 0.0,
+        "avg_confidence": 0.0
+      },
+      {
+        "bin_lo": 0.2,
+        "bin_hi": 0.30000000000000004,
+        "count": 0,
+        "accuracy": 0.0,
+        "avg_confidence": 0.0
+      },
+      {
+        "bin_lo": 0.30000000000000004,
+        "bin_hi": 0.4,
+        "count": 0,
+        "accuracy": 0.0,
+        "avg_confidence": 0.0
+      },
+      {
+        "bin_lo": 0.4,
+        "bin_hi": 0.5,
+        "count": 0,
+        "accuracy": 0.0,
+        "avg_confidence": 0.0
+      },
+      {
+        "bin_lo": 0.5,
+        "bin_hi": 0.6000000000000001,
+        "count": 0,
+        "accuracy": 0.0,
+        "avg_confidence": 0.0
+      },
+      {
+        "bin_lo": 0.6000000000000001,
+        "bin_hi": 0.7000000000000001,
+        "count": 0,
+        "accuracy": 0.0,
+        "avg_confidence": 0.0
+      },
+      {
+        "bin_lo": 0.7000000000000001,
+        "bin_hi": 0.8,
+        "count": 0,
+        "accuracy": 0.0,
+        "avg_confidence": 0.0
+      },
+      {
+        "bin_lo": 0.8,
+        "bin_hi": 0.9,
+        "count": 1,
+        "accuracy": 0.0,
+        "avg_confidence": 0.8802210585708045
+      },
+      {
+        "bin_lo": 0.9,
+        "bin_hi": 1.0,
+        "count": 103,
+        "accuracy": 0.6407766990291263,
+        "avg_confidence": 0.9991816437180552
+      }
+    ]
+  }
+}

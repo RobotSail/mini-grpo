@@ -213,6 +213,236 @@ def load_kl_dataset(
         )
 
 
+def extract_answer_confidence(completion) -> float | None:
+    """Extract confidence for the answer tokens from a vLLM completion.
+
+    Confidence = geometric mean of token probabilities for tokens inside
+    the last <answer>...</answer> span.
+
+    Returns None if no answer tags found or no logprobs available.
+    """
+    if not completion.logprobs:
+        return None
+
+    text = completion.text
+    # Find the last <answer>...</answer> span by character position
+    matches = list(re.finditer(r"<answer>(.*?)</answer>", text, re.DOTALL | re.IGNORECASE))
+    if not matches:
+        return None
+
+    last_match = matches[-1]
+    # Only the content between tags, not the tags themselves
+    content_start_char = last_match.start(1)  # start of group 1 (content after <answer>)
+    content_end_char = last_match.end(1)      # end of group 1 (content before </answer>)
+
+    # Map character positions to token indices.
+    # completion.logprobs is a list of dicts, one per generated token.
+    # We reconstruct character offsets by walking through token texts.
+    char_offset = 0
+    answer_logprobs = []
+
+    for token_logprob_dict in completion.logprobs:
+        # Each entry is a dict {token_id: Logprob} for the sampled token
+        if not token_logprob_dict:
+            char_offset += 1  # approximate
+            continue
+
+        # Get the sampled token's logprob (first entry is the sampled token)
+        sampled = next(iter(token_logprob_dict.values()))
+        token_text = sampled.decoded_token if hasattr(sampled, 'decoded_token') else ""
+        token_len = len(token_text)
+        token_end = char_offset + token_len
+
+        # Check if this token is fully within the answer content (between tags)
+        if char_offset >= content_start_char and token_end <= content_end_char:
+            answer_logprobs.append(sampled.logprob)
+
+        char_offset = token_end
+
+    if not answer_logprobs:
+        return None
+
+    # Geometric mean of token probabilities = exp(mean(log_probs))
+    import math
+    mean_logprob = sum(answer_logprobs) / len(answer_logprobs)
+    return math.exp(mean_logprob)
+
+
+def compute_ece(confidences: list[float], correctness: list[bool], n_bins: int = 10) -> dict:
+    """Compute calibration metrics: ECE, MCE, Brier score, and NLL.
+
+    ECE = Σ |B_m|/n × |acc(B_m) - conf(B_m)|
+    MCE = max_m |acc(B_m) - conf(B_m)|
+    Brier = (1/n) Σ (c_i - z_i)²
+    NLL = -(1/n) Σ [z_i log(c_i) + (1-z_i) log(1-c_i)]
+
+    Args:
+        confidences: Per-sample confidence scores in [0, 1]
+        correctness: Per-sample correctness (True/False)
+        n_bins: Number of equal-width bins
+
+    Returns:
+        Dict with ece, mce, brier, nll, mean_confidence, and per_bin_data.
+    """
+    import numpy as np
+
+    confidences = np.array(confidences)
+    correctness = np.array(correctness, dtype=float)
+    n = len(confidences)
+
+    if n == 0:
+        return {"ece": 0.0, "mce": 0.0, "brier": 0.0, "nll": 0.0,
+                "mean_confidence": 0.0, "per_bin_data": []}
+
+    # Brier score: mean squared error between confidence and correctness
+    brier = float(np.mean((confidences - correctness) ** 2))
+
+    # NLL (log loss): clip to avoid log(0)
+    eps = 1e-12
+    c_clipped = np.clip(confidences, eps, 1 - eps)
+    nll = float(-np.mean(
+        correctness * np.log(c_clipped) + (1 - correctness) * np.log(1 - c_clipped)
+    ))
+
+    # Binned metrics: ECE and MCE
+    bin_edges = np.linspace(0, 1, n_bins + 1)
+    ece = 0.0
+    mce = 0.0
+    per_bin_data = []
+
+    for m in range(n_bins):
+        lo, hi = bin_edges[m], bin_edges[m + 1]
+        mask = (confidences > lo) & (confidences <= hi) if m > 0 else (confidences >= lo) & (confidences <= hi)
+        bin_size = mask.sum()
+
+        if bin_size == 0:
+            per_bin_data.append({
+                "bin_lo": float(lo), "bin_hi": float(hi),
+                "count": 0, "accuracy": 0.0, "avg_confidence": 0.0,
+            })
+            continue
+
+        bin_acc = correctness[mask].mean()
+        bin_conf = confidences[mask].mean()
+        bin_gap = abs(bin_acc - bin_conf)
+        ece += (bin_size / n) * bin_gap
+        mce = max(mce, bin_gap)
+
+        per_bin_data.append({
+            "bin_lo": float(lo), "bin_hi": float(hi),
+            "count": int(bin_size),
+            "accuracy": float(bin_acc),
+            "avg_confidence": float(bin_conf),
+        })
+
+    return {
+        "ece": float(ece),
+        "mce": float(mce),
+        "brier": brier,
+        "nll": nll,
+        "mean_confidence": float(confidences.mean()),
+        "n_calibration_samples": n,
+        "per_bin_data": per_bin_data,
+    }
+
+
+def compute_answer_confidences_hf(
+    model_path: str,
+    tokenizer,
+    prompts: list[str],
+    responses: list[str],
+    batch_size: int = 8,
+) -> list[float | None]:
+    """Compute answer token confidence via HuggingFace forward pass in FP32.
+
+    For each (prompt, response) pair:
+    1. Tokenize prompt + response
+    2. Forward pass to get logits
+    3. Extract logprobs of tokens corresponding to answer content (between <answer> tags)
+    4. Confidence = exp(mean(logprobs))
+
+    Returns list of confidence values (None if no answer found).
+    """
+    import math
+
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    print(f"Loading model for calibration (FP32 logprobs): {model_path}")
+    model = AutoModelForCausalLM.from_pretrained(
+        model_path,
+        torch_dtype=torch.float32,
+        device_map=device,
+    )
+    model.eval()
+
+    confidences = [None] * len(prompts)
+
+    with torch.no_grad():
+        for i in tqdm(range(0, len(prompts), batch_size), desc="Calibration (FP32)"):
+            batch_prompts = prompts[i:i + batch_size]
+            batch_responses = responses[i:i + batch_size]
+
+            for j, (prompt, response) in enumerate(zip(batch_prompts, batch_responses)):
+                idx = i + j
+
+                # Find answer content in response
+                matches = list(re.finditer(
+                    r"<answer>(.*?)</answer>", response, re.DOTALL | re.IGNORECASE
+                ))
+                if not matches:
+                    continue
+
+                last_match = matches[-1]
+                answer_content = last_match.group(1)
+                if not answer_content.strip():
+                    continue
+
+                # Tokenize full sequence (prompt + response)
+                full_text = prompt + response
+                full_ids = tokenizer.encode(full_text, return_tensors="pt").to(device)
+                prompt_ids = tokenizer.encode(prompt, return_tensors="pt")
+                prompt_len = prompt_ids.shape[1]
+
+                # Tokenize just the answer content to know its token length
+                # We find where the answer content appears in the response tokens
+                pre_answer = response[:last_match.start(1)]
+                pre_answer_ids = tokenizer.encode(prompt + pre_answer, return_tensors="pt")
+                pre_answer_len = pre_answer_ids.shape[1]
+
+                post_answer = response[:last_match.end(1)]
+                post_answer_ids = tokenizer.encode(prompt + post_answer, return_tensors="pt")
+                post_answer_len = post_answer_ids.shape[1]
+
+                answer_token_start = pre_answer_len
+                answer_token_end = post_answer_len
+
+                if answer_token_start >= answer_token_end:
+                    continue
+
+                # Forward pass
+                outputs = model(input_ids=full_ids)
+                # logits[t] predicts token[t+1], so for token at position p,
+                # its logprob comes from logits[p-1]
+                logprobs = F.log_softmax(outputs.logits[0, :-1], dim=-1)
+                target_ids = full_ids[0, 1:]
+
+                # Gather logprobs of actual tokens in the answer span
+                # Token at position p has its logprob at logprobs[p-1]
+                answer_logprobs = []
+                for p in range(answer_token_start, min(answer_token_end, len(target_ids))):
+                    token_id = target_ids[p].item()
+                    lp = logprobs[p, token_id].item()
+                    answer_logprobs.append(lp)
+
+                if answer_logprobs:
+                    mean_lp = sum(answer_logprobs) / len(answer_logprobs)
+                    confidences[idx] = math.exp(mean_lp)
+
+    del model
+    torch.cuda.empty_cache()
+    return confidences
+
+
 def evaluate_checkpoint(
     model_path: str | Path,
     eval_dataset: datasets.Dataset,
@@ -223,6 +453,7 @@ def evaluate_checkpoint(
     top_p: float = 1.0,
     repetition_penalty: float = 1.0,
     group_size: int = 1,
+    calibration: bool = False,
 ) -> dict:
     """Evaluate a single checkpoint on the dataset using vLLM."""
     model_path = str(model_path)
@@ -234,7 +465,7 @@ def evaluate_checkpoint(
     llm = LLM(
         model=model_path,
         tensor_parallel_size=1,
-        gpu_memory_utilization=0.9,
+        gpu_memory_utilization=0.9 if not calibration else 0.45,
         dtype="bfloat16",
     )
 
@@ -263,10 +494,12 @@ def evaluate_checkpoint(
     print(f"Generating {len(prompts)} responses with vLLM...")
     outputs = llm.generate(prompts, sampling_params)
 
-    # Evaluate responses
+    # Evaluate responses — collect text and correctness
     total_correct = 0
     total_parsable = 0
     total_samples = 0
+    per_sample_correct = []
+    per_sample_response = []
 
     for idx, output in enumerate(tqdm(outputs, desc="Scoring")):
         sample = eval_dataset[idx]
@@ -274,6 +507,7 @@ def evaluate_checkpoint(
 
         any_correct = False
         any_parsable = False
+        best_response = output.outputs[0].text  # default to first
 
         for completion in output.outputs:
             response = completion.text
@@ -284,9 +518,11 @@ def evaluate_checkpoint(
                 try:
                     parsed_answer = parse_number(last_match)
                     any_parsable = True
+                    best_response = response
 
                     if abs(parsed_answer - expected) < 1e-6:
                         any_correct = True
+                        best_response = response
                         break
                 except ValueError:
                     pass
@@ -296,17 +532,40 @@ def evaluate_checkpoint(
         if any_parsable:
             total_parsable += 1
         total_samples += 1
+        per_sample_correct.append(any_correct)
+        per_sample_response.append(best_response)
 
-    # Cleanup
+    # Free vLLM before loading HF model for calibration
     del llm
+    torch.cuda.empty_cache()
 
-    return {
+    result = {
         "total_samples": total_samples,
         "correct": total_correct,
         "parsable": total_parsable,
         "accuracy": total_correct / total_samples if total_samples > 0 else 0.0,
         "parsable_rate": total_parsable / total_samples if total_samples > 0 else 0.0,
     }
+
+    # Compute calibration via HF forward pass in FP32
+    if calibration:
+        confidences = compute_answer_confidences_hf(
+            model_path, tokenizer, prompts, per_sample_response, batch_size=1,
+        )
+
+        calibration_data = [
+            (conf, correct)
+            for conf, correct in zip(confidences, per_sample_correct)
+            if conf is not None
+        ]
+
+        if calibration_data:
+            conf_list = [c for c, _ in calibration_data]
+            corr_list = [c for _, c in calibration_data]
+            ece_results = compute_ece(conf_list, corr_list)
+            result.update(ece_results)
+
+    return result
 
 
 def compute_kl_divergence(
@@ -569,6 +828,11 @@ def main():
         help="Comma-separated list of steps to evaluate (default: all)",
     )
     parser.add_argument(
+        "--calibration",
+        action="store_true",
+        help="Compute ECE (Expected Calibration Error) using answer token confidence",
+    )
+    parser.add_argument(
         "--compute-kl",
         action="store_true",
         help="Compute KL divergence from base model (requires --base-model)",
@@ -691,11 +955,15 @@ def main():
                 top_p=args.top_p,
                 repetition_penalty=args.repetition_penalty,
                 group_size=args.group_size,
+                calibration=args.calibration,
             )
             metrics.update(accuracy_metrics)
             print(f"\nAccuracy Results for {label}:")
             print(f"  Accuracy: {metrics['accuracy']:.2%} ({metrics['correct']}/{metrics['total_samples']})")
             print(f"  Parsable: {metrics['parsable_rate']:.2%} ({metrics['parsable']}/{metrics['total_samples']})")
+            if args.calibration and "ece" in metrics:
+                print(f"  ECE: {metrics['ece']:.4f} | MCE: {metrics['mce']:.4f} | Brier: {metrics['brier']:.4f} | NLL: {metrics['nll']:.4f}")
+                print(f"  Mean confidence: {metrics['mean_confidence']:.4f}")
 
         # Compute KL divergence (if requested)
         if args.compute_kl or args.kl_only:

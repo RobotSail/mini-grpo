@@ -10,6 +10,10 @@ import requests
 from transformers import GenerationConfig
 import json
 import random
+import subprocess
+import sys
+import time
+import httpx
 from typer import Typer
 import typer
 import re
@@ -2287,6 +2291,755 @@ def sft_train(
         precision=precision,
         train_dtype=train_dtype,
         # Ensures training saves FP32 checkpoints
+        save_dtype='float32',
+        **optional_kwargs,
+    )
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# COUNTDOWN TASK COMMANDS
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+@app.command()
+def generate_countdown_datasets(
+    system_msg: str = typer.Option(
+        None,
+        "--system-msg",
+        help="System message (default: countdown_utils.DEFAULT_COUNTDOWN_SYSTEM_MSG)",
+    ),
+    total_samples: int = typer.Option(5000, "--total-samples", help="Total samples to take from dataset (0 = all ~490K)"),
+    seed: int = typer.Option(67, "--seed", help="Random seed for shuffling"),
+    output_dir: str = typer.Option("generated_data", "--output-dir", help="Directory to save datasets"),
+    val_split: float = typer.Option(0.05, "--val-split", help="Fraction of data for validation set"),
+    test_split: float = typer.Option(0.05, "--test-split", help="Fraction of data for test set"),
+):
+    """
+    Generate paired GRPO and SFT countdown datasets from Jiayi-Pan/Countdown-Tasks-3to4.
+
+    Loads the full dataset from HuggingFace, shuffles with seed, takes the first
+    --total-samples, solves each for SFT, splits into train/val/test, verifies all
+    solutions through the reward function, and saves to disk.
+
+    Outputs:
+      - countdown_{grpo,sft}_{train,val,test}.jsonl
+    """
+    from countdown_utils import generate_countdown_dataset, DEFAULT_COUNTDOWN_SYSTEM_MSG
+
+    if system_msg is None:
+        system_msg = DEFAULT_COUNTDOWN_SYSTEM_MSG
+
+    typer.secho("Loading and solving countdown problems from HuggingFace...", fg=typer.colors.CYAN)
+    result = generate_countdown_dataset(
+        total_samples=total_samples,
+        system_msg=system_msg,
+        seed=seed,
+        val_split=val_split,
+        test_split=test_split,
+    )
+
+    os.makedirs(output_dir, exist_ok=True)
+
+    for split_name in ["grpo_train", "grpo_val", "grpo_test", "sft_train", "sft_val", "sft_test"]:
+        samples = result[split_name]
+        ds = datasets.Dataset.from_list(samples)
+        path = os.path.join(output_dir, f"countdown_{split_name}.jsonl")
+        ds.to_json(path)
+        typer.secho(f"  Saved {len(samples)} {split_name} samples to '{path}'", fg=typer.colors.BLUE)
+
+    n_train = len(result["grpo_train"])
+    n_val = len(result["grpo_val"])
+    n_test = len(result["grpo_test"])
+    typer.secho(
+        f"\nGenerated {n_train} train + {n_val} val + {n_test} test countdown samples (seed={seed})",
+        fg=typer.colors.GREEN,
+        bold=True,
+    )
+
+    # Show examples
+    num_examples = min(3, n_train)
+    typer.secho(f"\n{'=' * 70}", fg=typer.colors.BRIGHT_CYAN)
+    typer.secho(f"  DATASET EXAMPLES ({num_examples} samples)", fg=typer.colors.BRIGHT_CYAN, bold=True)
+    typer.secho(f"{'=' * 70}", fg=typer.colors.BRIGHT_CYAN)
+
+    for ex_idx in range(num_examples):
+        grpo_sample = result["grpo_train"][ex_idx]
+        sft_sample = result["sft_train"][ex_idx]
+
+        typer.secho(f"\n{'─' * 70}", fg=typer.colors.WHITE)
+        typer.secho(f"  Example {ex_idx + 1}", fg=typer.colors.BRIGHT_CYAN, bold=True)
+        typer.secho(f"{'─' * 70}", fg=typer.colors.WHITE)
+
+        typer.secho(f"  Numbers: {grpo_sample['numbers']}", fg=typer.colors.YELLOW)
+        typer.secho(f"  Target:  {grpo_sample['answer']}", fg=typer.colors.YELLOW)
+
+        typer.secho(f"\n  [GRPO Format] (prompt only)", fg=typer.colors.GREEN, bold=True)
+        for msg in grpo_sample["messages"]:
+            role = msg["role"].upper()
+            content = msg["content"]
+            if role == "SYSTEM":
+                content = content[:80] + "..." if len(content) > 80 else content
+            typer.secho(f"    [{role}]: {content}", fg=typer.colors.WHITE)
+
+        typer.secho(f"\n  [SFT Format] (includes assistant response)", fg=typer.colors.GREEN, bold=True)
+        for msg in sft_sample["messages"]:
+            role = msg["role"].upper()
+            content = msg["content"]
+            if role == "SYSTEM":
+                content = content[:80] + "..." if len(content) > 80 else content
+            color = typer.colors.BRIGHT_GREEN if role == "ASSISTANT" else typer.colors.WHITE
+            typer.secho(f"    [{role}]: {content}", fg=color)
+
+    typer.secho(f"\n{'=' * 70}\n", fg=typer.colors.BRIGHT_CYAN)
+
+
+def _is_vllm_line_important(text: str) -> bool:
+    """Filter vLLM output to only show important lines."""
+    # Always show errors and warnings
+    if "ERROR" in text or "error" in text.lower() or "FAILED" in text:
+        return True
+    # Show reload events
+    if "Reloading weights" in text or "Loading weights took" in text:
+        return True
+    # Show startup/shutdown
+    if "Starting vLLM" in text or "vLLM API server version" in text:
+        return True
+    if "Shutting down" in text or "Application startup complete" in text:
+        return True
+    # Hide everything else (request logs, throughput stats, cache info, sleep/wake details)
+    return False
+
+
+def _stream_output(stream, prefix, file=sys.stdout, filter_fn=None):
+    """Stream subprocess output line by line with a prefix.
+
+    If filter_fn is provided, only lines where filter_fn(text) returns True are printed.
+    """
+    buf = b""
+    try:
+        while True:
+            chunk = stream.read(4096)
+            if not chunk:
+                if buf:
+                    text = buf.decode("utf-8", errors="replace").rstrip()
+                    if filter_fn is None or filter_fn(text):
+                        print(f"[{prefix}] {text}", file=file, flush=True)
+                break
+            buf += chunk
+            while b"\n" in buf:
+                line, buf = buf.split(b"\n", 1)
+                text = line.decode("utf-8", errors="replace").rstrip("\r")
+                if filter_fn is None or filter_fn(text):
+                    print(f"[{prefix}] {text}", file=file, flush=True)
+    except (ValueError, OSError):
+        pass
+
+
+def _kill_process_tree(pid: int, sig: int):
+    """Send a signal to a process and all its descendants."""
+    import signal
+    try:
+        result = subprocess.run(
+            ["ps", "--no-headers", "-o", "pid", "--ppid", str(pid)],
+            capture_output=True, text=True, timeout=5,
+        )
+        child_pids = [int(p.strip()) for p in result.stdout.strip().split("\n") if p.strip()]
+        for cpid in child_pids:
+            _kill_process_tree(cpid, sig)
+    except (subprocess.TimeoutExpired, ValueError, FileNotFoundError):
+        pass
+    try:
+        os.kill(pid, sig)
+    except (ProcessLookupError, PermissionError):
+        pass
+
+
+def _kill_process(proc, name, timeout=5):
+    """Terminate a subprocess and its descendants, escalate to SIGKILL."""
+    import signal
+    if proc is None or proc.poll() is not None:
+        return
+    typer.secho(f"Terminating {name} (pid={proc.pid})...", fg=typer.colors.YELLOW)
+    _kill_process_tree(proc.pid, signal.SIGTERM)
+    try:
+        proc.wait(timeout=timeout)
+    except subprocess.TimeoutExpired:
+        typer.secho(f"Force killing {name}...", fg=typer.colors.RED)
+        _kill_process_tree(proc.pid, signal.SIGKILL)
+        try:
+            proc.wait(timeout=3)
+        except subprocess.TimeoutExpired:
+            pass
+
+
+def _wait_for_vllm_health(url: str, timeout: int = 300):
+    """Wait for vLLM to become ready."""
+    start = time.time()
+    health_ok = False
+    while time.time() - start < timeout:
+        try:
+            resp = httpx.get(f"{url}/health", timeout=10)
+            if resp.status_code == 200:
+                health_ok = True
+            if health_ok:
+                resp = httpx.get(f"{url}/v1/models", timeout=10)
+                if resp.status_code == 200 and resp.json().get("data"):
+                    return True
+        except (httpx.ConnectError, httpx.ReadTimeout, httpx.ConnectTimeout):
+            pass
+        time.sleep(2)
+    return False
+
+
+def _setup_vllm_checkpoint(model_name: str, checkpoint_dir: str):
+    """Save initial model weights + config to checkpoint dir for vLLM."""
+    import shutil
+    from transformers import AutoConfig, AutoModelForCausalLM
+    from safetensors.torch import save_file
+
+    if os.path.exists(checkpoint_dir):
+        shutil.rmtree(checkpoint_dir)
+    os.makedirs(checkpoint_dir, exist_ok=True)
+
+    config = AutoConfig.from_pretrained(model_name)
+    config.save_pretrained(checkpoint_dir)
+
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    tokenizer.save_pretrained(checkpoint_dir)
+
+    typer.secho("Loading model weights for vLLM checkpoint...", fg=typer.colors.CYAN)
+    model = AutoModelForCausalLM.from_pretrained(model_name)
+    model.save_pretrained(checkpoint_dir)
+    del model
+    torch.cuda.empty_cache()
+
+    typer.secho(f"vLLM checkpoint saved to {checkpoint_dir}", fg=typer.colors.GREEN)
+
+
+@app.command()
+def countdown_grpo_train(
+    data_path: str = typer.Option(..., "--data-path", help="Path to countdown GRPO training data (jsonl)"),
+    output_dir: str = typer.Option(..., "--output-dir", help="Path to the output directory"),
+    model_name: str = typer.Option(
+        "Qwen/Qwen2-1.5B-Instruct", "--model", "-m", help="Model name or path",
+    ),
+
+    max_tokens: int = typer.Option(..., "--max-tokens", help="Total token budget (loss-counted tokens backpropped on)"),
+    inner_epochs: int = typer.Option(2, "--inner-epochs", help="Inner epochs per rollout batch"),
+    inner_batch_size: int = typer.Option(32, "--inner-batch-size", help="Training batch size for GRPO inner loop"),
+
+    save_every_n_tokens: int = typer.Option(
+        0, "--save-every-n-tokens", help="Save checkpoint every N tokens (0 = disabled)"
+    ),
+
+    # GRPO settings
+    group_size: int = typer.Option(16, "-G", "--group-size", help="Rollouts per prompt"),
+    batch_size: int = typer.Option(64, "-B", "--batch-size", help="Prompts per rollout iteration"),
+    clip_eps: float = typer.Option(0.2, "--clip-eps", help="GRPO clip epsilon"),
+    kl_strength: float = typer.Option(0.01, "--kl", help="KL penalty strength"),
+    gradient_clip: float = typer.Option(1.0, "--gradient-clip", help="Gradient clipping max norm"),
+
+    # Sampling
+    temperature: float = typer.Option(0.7, "-t", "--temp", help="Sampling temperature"),
+    max_new_tokens: int = typer.Option(512, "--max-new-tokens", help="Max tokens to generate per response"),
+    top_p: float = typer.Option(1.0, "--top-p", help="Top-p sampling threshold"),
+    top_k: int = typer.Option(0, "--top-k", help="Top-k sampling (0 = disabled)"),
+    max_seq_len: int = typer.Option(8192, "--msl", "--max-seq-len", help="Maximum sequence length"),
+
+    # Memory / gradient accumulation
+    max_tokens_per_gpu: int = typer.Option(
+        4096, "--max-tokens-per-gpu",
+        help="Max tokens per GPU per microbatch (controls gradient accumulation)"
+    ),
+
+    # Optimizer
+    optimizer_type: str = typer.Option("adamw", "-O", "--optimizer", help="Optimizer type: 'adamw' or 'muon'"),
+    lr: float = typer.Option(1e-5, "--lr", help="Learning rate"),
+    beta1: float = typer.Option(0.9, "--beta1", help="Adam beta1"),
+    beta2: float = typer.Option(0.95, "--beta2", help="Adam beta2"),
+    wd: float = typer.Option(0.0, "--wd", help="Weight decay"),
+
+    # GPU allocation
+    train_gpus: str = typer.Option("0,1", "--train-gpus", help="Comma-separated GPU indices for training"),
+    vllm_gpus: str = typer.Option("2", "--vllm-gpus", help="Comma-separated GPU indices for vLLM inference"),
+    vllm_gpu_memory_utilization: float = typer.Option(0.9, "--vllm-mem", help="vLLM GPU memory utilization"),
+    ref_cpu_offload: bool = typer.Option(False, "--ref-cpu-offload", help="CPU offload reference model to save GPU memory"),
+
+    # Wandb
+    use_wandb: bool = typer.Option(False, "--wandb", help="Enable wandb logging"),
+    wandb_project: str = typer.Option("countdown-grpo", "--wandb-project", help="Wandb project name"),
+    wandb_run_name: str = typer.Option(None, "--wandb-run", help="Wandb run name"),
+    wandb_entity: str = typer.Option(None, "--wandb-entity", help="Wandb entity"),
+
+    seed: int = typer.Option(67, "--seed", help="Random seed"),
+
+    validation_path: str = typer.Option(None, "--validation-path", help="Path to validation data"),
+):
+    """
+    Multi-GPU GRPO training on countdown problems with FSDP2.
+
+    Orchestrator: starts vLLM on --vllm-gpus, then launches distributed
+    training via torchrun on --train-gpus. Single command, no manual torchrun.
+
+    Example:
+        python cli.py countdown-grpo-train \\
+            --data-path generated_data/countdown_grpo_train.jsonl \\
+            --output-dir /out --max-tokens 1000000 \\
+            --train-gpus 0,1 --vllm-gpus 2
+    """
+    import socket as sock
+    import threading
+
+    n_train_gpus = len(train_gpus.split(","))
+    n_vllm_gpus = len(vllm_gpus.split(","))
+
+    typer.secho(f"Countdown GRPO Orchestrator", fg=typer.colors.BRIGHT_CYAN, bold=True)
+    typer.secho(f"  Training GPUs: {train_gpus} ({n_train_gpus} workers)", fg=typer.colors.WHITE)
+    typer.secho(f"  vLLM GPUs:     {vllm_gpus} ({n_vllm_gpus} data-parallel)", fg=typer.colors.WHITE)
+    typer.secho(f"  Model:         {model_name}", fg=typer.colors.WHITE)
+    typer.secho(f"  Token budget:  {max_tokens:,}", fg=typer.colors.WHITE)
+
+    # 1. Allocate port and set up checkpoint dir
+    with sock.socket(sock.AF_INET, sock.SOCK_STREAM) as s:
+        s.bind(("", 0))
+        vllm_port = s.getsockname()[1]
+
+    vllm_url = f"http://localhost:{vllm_port}"
+    checkpoint_dir = f"/dev/shm/active-policy-{vllm_port}"
+
+    typer.secho(f"\nSaving initial weights for vLLM...", fg=typer.colors.CYAN)
+    _setup_vllm_checkpoint(model_name, checkpoint_dir)
+
+    # 2. Start vLLM
+    vllm_cmd = [
+        sys.executable, "-m", "vllm.entrypoints.openai.api_server",
+        "--model", checkpoint_dir,
+        "--served-model-name", "policy",
+        "--port", str(vllm_port),
+        "--gpu-memory-utilization", str(vllm_gpu_memory_utilization),
+        "--max-model-len", str(max_seq_len),
+        "--seed", str(seed),
+        "--dtype", "bfloat16",
+        "--trust-remote-code",
+        "--disable-log-requests",
+        "--data-parallel-size", str(n_vllm_gpus),
+        "--enable-sleep-mode",
+    ]
+
+    vllm_env = os.environ.copy()
+    vllm_env["CUDA_VISIBLE_DEVICES"] = vllm_gpus
+    vllm_env["VLLM_SERVER_DEV_MODE"] = "1"
+
+    vllm_process = None
+    training_process = None
+
+    try:
+        typer.secho(f"\nStarting vLLM on GPU(s) {vllm_gpus} (port {vllm_port})...", fg=typer.colors.CYAN)
+        vllm_process = subprocess.Popen(
+            vllm_cmd, env=vllm_env,
+            stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+            start_new_session=True,
+        )
+
+        # Stream vLLM output in background (filtered to important lines only)
+        vllm_thread = threading.Thread(
+            target=_stream_output,
+            args=(vllm_process.stdout, "VLLM"),
+            kwargs={"filter_fn": _is_vllm_line_important},
+            daemon=True,
+        )
+        vllm_thread.start()
+
+        # Wait for vLLM health
+        typer.secho("Waiting for vLLM to be ready...", fg=typer.colors.CYAN)
+        if not _wait_for_vllm_health(vllm_url):
+            typer.secho("vLLM failed to start!", fg=typer.colors.RED, bold=True)
+            raise RuntimeError("vLLM not ready within timeout")
+        typer.secho(f"vLLM ready at {vllm_url}", fg=typer.colors.GREEN, bold=True)
+
+        # 3. Launch torchrun for training (allocate unique master port)
+        with sock.socket(sock.AF_INET, sock.SOCK_STREAM) as s:
+            s.bind(("", 0))
+            master_port = s.getsockname()[1]
+
+        train_cmd = [
+            sys.executable, "-m", "torch.distributed.run",
+            "--nproc_per_node", str(n_train_gpus),
+            "--master_port", str(master_port),
+            "cli.py", "countdown-grpo-worker",
+            "--data-path", data_path,
+            "--output-dir", output_dir,
+            "--model", model_name,
+            "--max-tokens", str(max_tokens),
+            "--inner-epochs", str(inner_epochs),
+            "--inner-batch-size", str(inner_batch_size),
+            "--save-every-n-tokens", str(save_every_n_tokens),
+            "--group-size", str(group_size),
+            "--batch-size", str(batch_size),
+            "--clip-eps", str(clip_eps),
+            "--kl", str(kl_strength),
+            "--gradient-clip", str(gradient_clip),
+            "--temp", str(temperature),
+            "--max-new-tokens", str(max_new_tokens),
+            "--top-p", str(top_p),
+            "--top-k", str(top_k),
+            "--max-seq-len", str(max_seq_len),
+            "--max-tokens-per-gpu", str(max_tokens_per_gpu),
+            "--optimizer", optimizer_type,
+            "--lr", str(lr),
+            "--beta1", str(beta1),
+            "--beta2", str(beta2),
+            "--wd", str(wd),
+            "--vllm-url", vllm_url,
+            "--vllm-checkpoint-dir", checkpoint_dir,
+            "--seed", str(seed),
+        ]
+        if use_wandb:
+            train_cmd.append("--wandb")
+        if wandb_project:
+            train_cmd += ["--wandb-project", wandb_project]
+        if wandb_run_name:
+            train_cmd += ["--wandb-run", wandb_run_name]
+        if wandb_entity:
+            train_cmd += ["--wandb-entity", wandb_entity]
+        if validation_path:
+            train_cmd += ["--validation-path", validation_path]
+        if ref_cpu_offload:
+            train_cmd.append("--ref-cpu-offload")
+
+        train_env = os.environ.copy()
+        train_env["CUDA_VISIBLE_DEVICES"] = train_gpus
+
+        typer.secho(
+            f"\nLaunching training ({n_train_gpus} workers on GPU(s) {train_gpus})...",
+            fg=typer.colors.CYAN,
+        )
+        training_process = subprocess.Popen(
+            train_cmd, env=train_env,
+            stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+            start_new_session=True,
+        )
+
+        train_thread = threading.Thread(
+            target=_stream_output, args=(training_process.stdout, "TRAIN"), daemon=True,
+        )
+        train_thread.start()
+
+        # 4. Wait for training to complete
+        while training_process.poll() is None:
+            try:
+                training_process.wait(timeout=1)
+            except subprocess.TimeoutExpired:
+                continue
+
+        exit_code = training_process.returncode
+        if exit_code == 0:
+            typer.secho("\nTraining completed successfully!", fg=typer.colors.GREEN, bold=True)
+        else:
+            typer.secho(f"\nTraining exited with code {exit_code}", fg=typer.colors.RED, bold=True)
+
+    except KeyboardInterrupt:
+        typer.secho("\nCtrl+C received, shutting down...", fg=typer.colors.YELLOW)
+    except Exception as e:
+        typer.secho(f"\nError: {e}", fg=typer.colors.RED)
+    finally:
+        _kill_process(training_process, "training")
+        _kill_process(vllm_process, "vLLM")
+
+        # Clean up checkpoint dir
+        import shutil
+        if os.path.exists(checkpoint_dir):
+            shutil.rmtree(checkpoint_dir, ignore_errors=True)
+
+
+@app.command()
+def countdown_grpo_worker(
+    data_path: str = typer.Option(..., "--data-path"),
+    output_dir: str = typer.Option(..., "--output-dir"),
+    model_name: str = typer.Option("Qwen/Qwen2-1.5B-Instruct", "--model", "-m"),
+    max_tokens: int = typer.Option(..., "--max-tokens"),
+    inner_epochs: int = typer.Option(2, "--inner-epochs"),
+    inner_batch_size: int = typer.Option(32, "--inner-batch-size"),
+    save_every_n_tokens: int = typer.Option(0, "--save-every-n-tokens"),
+    group_size: int = typer.Option(16, "-G", "--group-size"),
+    batch_size: int = typer.Option(64, "-B", "--batch-size"),
+    clip_eps: float = typer.Option(0.2, "--clip-eps"),
+    kl_strength: float = typer.Option(0.01, "--kl"),
+    gradient_clip: float = typer.Option(1.0, "--gradient-clip"),
+    temperature: float = typer.Option(0.7, "-t", "--temp"),
+    max_new_tokens: int = typer.Option(512, "--max-new-tokens"),
+    top_p: float = typer.Option(1.0, "--top-p"),
+    top_k: int = typer.Option(0, "--top-k"),
+    max_seq_len: int = typer.Option(8192, "--msl", "--max-seq-len"),
+    max_tokens_per_gpu: int = typer.Option(4096, "--max-tokens-per-gpu"),
+    optimizer_type: str = typer.Option("adamw", "-O", "--optimizer"),
+    lr: float = typer.Option(1e-5, "--lr"),
+    beta1: float = typer.Option(0.9, "--beta1"),
+    beta2: float = typer.Option(0.95, "--beta2"),
+    wd: float = typer.Option(0.0, "--wd"),
+    vllm_url: str = typer.Option(..., "--vllm-url"),
+    vllm_checkpoint_dir: str = typer.Option(..., "--vllm-checkpoint-dir"),
+    ref_cpu_offload: bool = typer.Option(False, "--ref-cpu-offload"),
+    use_wandb: bool = typer.Option(False, "--wandb"),
+    wandb_project: str = typer.Option("countdown-grpo", "--wandb-project"),
+    wandb_run_name: str = typer.Option(None, "--wandb-run"),
+    wandb_entity: str = typer.Option(None, "--wandb-entity"),
+    seed: int = typer.Option(67, "--seed"),
+    validation_path: str = typer.Option(None, "--validation-path"),
+):
+    """
+    Internal: GRPO training worker launched by countdown-grpo-train via torchrun.
+    Do not call directly.
+    """
+    from distributed_grpo_trainer import DistributedGRPOTrainer
+    from countdown_utils import countdown_reward_fn
+
+    trainer = DistributedGRPOTrainer(
+        data_path=data_path,
+        model_name=model_name,
+        output_dir=output_dir,
+        token_budget=max_tokens,
+        inner_epochs=inner_epochs,
+        inner_batch_size=inner_batch_size,
+        save_every_n_tokens=save_every_n_tokens,
+        group_size=group_size,
+        batch_size=batch_size,
+        clip_eps=clip_eps,
+        kl_strength=kl_strength,
+        temperature=temperature,
+        top_k=top_k,
+        top_p=top_p,
+        max_new_tokens=max_new_tokens,
+        max_seq_len=max_seq_len,
+        max_tokens_per_gpu=max_tokens_per_gpu,
+        optimizer_type=optimizer_type,
+        lr=lr,
+        beta1=beta1,
+        beta2=beta2,
+        weight_decay=wd,
+        gradient_clip=gradient_clip,
+        vllm_url=vllm_url,
+        vllm_checkpoint_dir=vllm_checkpoint_dir,
+        ref_cpu_offload=ref_cpu_offload,
+        use_wandb=use_wandb,
+        wandb_project=wandb_project,
+        wandb_run_name=wandb_run_name,
+        wandb_entity=wandb_entity,
+        seed=seed,
+        validation_path=validation_path,
+        reward_fn=countdown_reward_fn,
+    )
+    trainer.train()
+
+
+@app.command()
+def countdown_rs_train(
+    data_path: str = typer.Option(..., "--data-path", help="Path to the training data"),
+    output_dir: str = typer.Option(..., "--output-dir", help="Path to the output directory"),
+    model_name: str = typer.Option("Qwen/Qwen2-1.5B-Instruct", "--model", "-m", help="Model name or path"),
+
+    max_tokens: int = typer.Option(..., "--max-tokens", help="Maximum loss-counted tokens to train on"),
+    num_inner_epochs: int = typer.Option(1, "--inner-epochs", help="Number of inner epochs"),
+
+    max_seq_len: int = typer.Option(8192, "--msl", "--max-seq-len", help="Maximum sequence length"),
+    max_tokens_per_gpu: int = typer.Option(8192, "--max-tokens-per-gpu", help="Max tokens per GPU"),
+    save_every_n_tokens: int = typer.Option(
+        0, "--save-every-n-tokens", help="Save checkpoint every N tokens (0 = disabled)"
+    ),
+
+    samples_to_accept: int = typer.Option(1, "--samples-to-accept", help="Number of samples to accept per rollout batch"),
+    inference_batch_size: int = typer.Option(32, "--inference-batch-size", help="Inference batch size"),
+    inference_group_size: int = typer.Option(16, "--inference-group-size", help="Rollouts per prompt"),
+
+    # sampling params
+    temperature: float = typer.Option(0.7, "-t", "--temp", help="Sampling temperature"),
+    max_new_tokens: int = typer.Option(512, "--max-new-tokens", help="Max new tokens to generate"),
+    top_p: float = typer.Option(1.0, "--top-p", help="Top-p sampling"),
+    top_k: int = typer.Option(0, "--top-k", help="Top-k sampling (0 = disabled)"),
+
+    # wandb
+    use_wandb: bool = typer.Option(False, "--wandb", help="Enable wandb logging"),
+    wandb_project: str = typer.Option("countdown-rs", "--wandb-project", help="Wandb project name"),
+    wandb_run_name: str = typer.Option(None, "--wandb-run", help="Wandb run name"),
+    wandb_entity: str = typer.Option(None, "--wandb-entity", help="Wandb entity"),
+
+    seed: int = typer.Option(67, "--seed", help="Random seed"),
+
+    optimizer_type: str = typer.Option("adamw", "-O", "--optimizer", help="Optimizer type: 'adamw' or 'muon'"),
+    lr: float = typer.Option(1e-5, "--lr", help="Learning rate"),
+    beta1: float = typer.Option(0.9, help="Adam beta1"),
+    beta2: float = typer.Option(0.95, help="Adam beta2"),
+    wd: float = typer.Option(0.0, "--wd", help="Weight decay"),
+
+    gpu: int = typer.Option(0, "--gpu", "-g", help="CUDA GPU for training"),
+    vllm_gpus: str = typer.Option("1", "--vllm-gpus", help="Comma-separated GPU indices for vLLM inference"),
+
+    validation_path: str = typer.Option(None, "--validation-path", help="Path to validation data"),
+):
+    """
+    Rejection Sampling training on countdown problems.
+
+    Same RS loop as rs_train but uses the countdown reward function which
+    validates arithmetic expressions in addition to checking the final answer.
+    """
+    from countdown_utils import countdown_reward_fn
+
+    trainer = RSTrainer(
+        data_path=data_path,
+        model_name=model_name,
+        output_dir=output_dir,
+        token_budget=max_tokens,
+        inner_epochs=num_inner_epochs,
+        inner_batch_size=samples_to_accept,
+        save_every_n_tokens=save_every_n_tokens,
+        samples_to_accept=samples_to_accept,
+        inference_batch_size=inference_batch_size,
+        inference_group_size=inference_group_size,
+        temperature=temperature,
+        top_k=top_k,
+        top_p=top_p,
+        max_new_tokens=max_new_tokens,
+        max_seq_len=max_seq_len,
+        max_tokens_per_gpu=max_tokens_per_gpu,
+        use_wandb=use_wandb,
+        wandb_project=wandb_project,
+        wandb_run_name=wandb_run_name,
+        wandb_entity=wandb_entity,
+        seed=seed,
+        optimizer_type=optimizer_type,
+        lr=lr,
+        beta1=beta1,
+        beta2=beta2,
+        weight_decay=wd,
+        gpu=gpu,
+        vllm_gpus=vllm_gpus,
+        vllm_gpu_memory_utilization=0.9,
+        validation_path=validation_path,
+        reward_fn=countdown_reward_fn,
+    )
+    trainer.train()
+    dist.barrier()
+    dist.destroy_process_group()
+
+
+@app.command()
+def countdown_sft_train(
+    # Data paths
+    data_path: str = typer.Option(..., "--data-path", help="Path to countdown SFT training data (jsonl with 'messages')"),
+    model_name: str = typer.Option("Qwen/Qwen2-1.5B-Instruct", "--model", "-m", help="Model name or path"),
+    output_dir: str = typer.Option(..., "--output-dir", help="Path to the output directory"),
+    # Training mode
+    max_steps: int = typer.Option(0, "--max-steps", help="Maximum training steps"),
+    max_tokens: int = typer.Option(0, "--max-tokens", help="Maximum loss-counted tokens"),
+    num_epochs: int = typer.Option(1, "--epochs", help="Number of epochs"),
+    # Batch settings
+    effective_batch_size: int = typer.Option(32, "-B", "--batch-size", help="Effective batch size"),
+    max_tokens_per_gpu: int = typer.Option(8192, "--max-tokens-per-gpu", help="Max tokens per GPU"),
+    max_seq_len: int = typer.Option(2048, "--max-seq-len", help="Maximum sequence length"),
+    # Optimizer settings
+    optimizer_type: str = typer.Option("adamw", "-O", "--optimizer", help="Optimizer: 'adamw' or 'muon'"),
+    lr: float = typer.Option(1e-5, "--lr", help="Learning rate"),
+    muon_lr: float = typer.Option(None, "--muon-lr", help="Muon-specific LR"),
+    beta1: float = typer.Option(0.9, "--beta1", help="Adam beta1"),
+    beta2: float = typer.Option(0.95, "--beta2", help="Adam beta2"),
+    weight_decay: float = typer.Option(0.0, "--wd", help="Weight decay"),
+    # LR scheduler
+    lr_scheduler: str = typer.Option("cosine", "--lr-scheduler", help="LR scheduler type"),
+    warmup_steps: int = typer.Option(0, "--warmup-steps", help="Number of warmup steps"),
+    # Checkpointing
+    save_final_checkpoint: bool = typer.Option(True, "--save-final/--no-save-final", help="Save final checkpoint"),
+    checkpoint_at_epoch: bool = typer.Option(False, "--checkpoint-at-epoch", help="Save checkpoint each epoch"),
+    save_every_steps: int = typer.Option(0, "--save-every", help="Save every N optimizer steps (0 = disabled)"),
+    save_every_n_tokens: int = typer.Option(0, "--save-every-n-tokens", help="Save every N tokens (0 = disabled)"),
+    # Data processing
+    use_processed_dataset: bool = typer.Option(False, "--use-processed", help="Data is already tokenized"),
+    unmask_messages: bool = typer.Option(False, "--unmask", help="Train on all tokens (not just assistant)"),
+    # Wandb
+    use_wandb: bool = typer.Option(False, "--wandb", help="Enable wandb logging"),
+    wandb_project: str = typer.Option("countdown-sft", "--wandb-project", help="Wandb project name"),
+    wandb_run_name: str = typer.Option(None, "--wandb-run", help="Wandb run name"),
+    wandb_entity: str = typer.Option(None, "--wandb-entity", help="Wandb entity"),
+    # Precision
+    precision: str = typer.Option(
+        "mixed", "--precision", "-P",
+        help="'fp32' | 'bf16' | 'mixed'",
+    ),
+    # Misc
+    seed: int = typer.Option(67, "--seed", help="Random seed"),
+    use_liger: bool = typer.Option(False, "--liger", help="Use Liger kernels"),
+    num_gpus: int = typer.Option(1, "--num-gpus", help="Number of GPUs"),
+    validation_split: float = typer.Option(0.0, "--validation-split", help="Fraction for validation"),
+    validation_frequency: int = typer.Option(0, "--validation-frequency", help="Validation frequency (steps)"),
+    disable_kl: bool = typer.Option(False, "--disable-kl", help="Disable KL divergence tracking"),
+):
+    """
+    SFT training on countdown problems.
+
+    Uses the same SFT pipeline as sft_train -- the data format (messages with
+    system/user/assistant) is identical, just the content is countdown problems.
+    """
+    from training_hub import osft
+    from mini_trainer import TrainingMode
+
+    # Determine training mode
+    if max_tokens > 0:
+        training_mode = TrainingMode.TOKEN
+        typer.secho(f"Training for {max_tokens:,} tokens", fg=typer.colors.CYAN)
+    elif max_steps > 0:
+        training_mode = TrainingMode.STEP
+        typer.secho(f"Training for {max_steps} steps", fg=typer.colors.CYAN)
+    else:
+        training_mode = TrainingMode.EPOCH
+        typer.secho(f"Training for {num_epochs} epoch(s)", fg=typer.colors.CYAN)
+
+    optional_kwargs = {}
+    if use_wandb:
+        optional_kwargs["wandb_project"] = wandb_project
+        if wandb_run_name:
+            optional_kwargs["wandb_run_name"] = wandb_run_name
+        if wandb_entity:
+            optional_kwargs["wandb_entity"] = wandb_entity
+    if validation_frequency > 0:
+        optional_kwargs["validation_frequency"] = validation_frequency
+    if validation_split > 0:
+        optional_kwargs["validation_split"] = validation_split
+    if muon_lr is not None:
+        optional_kwargs["muon_lr"] = muon_lr
+
+    train_dtype = "float32" if precision in ("fp32", "mixed") else "bfloat16"
+
+    osft(
+        model_path=model_name,
+        data_path=data_path,
+        ckpt_output_dir=output_dir,
+        unfreeze_rank_ratio=1.0,
+        osft=False,
+        effective_batch_size=effective_batch_size,
+        max_tokens_per_gpu=max_tokens_per_gpu,
+        max_seq_len=max_seq_len,
+        optimizer_type=optimizer_type,
+        learning_rate=lr,
+        beta1=beta1,
+        beta2=beta2,
+        weight_decay=weight_decay,
+        lr_scheduler=lr_scheduler,
+        warmup_steps=warmup_steps,
+        training_mode=training_mode,
+        num_epochs=num_epochs,
+        max_steps=max_steps,
+        max_tokens=max_tokens,
+        save_final_checkpoint=save_final_checkpoint,
+        checkpoint_at_epoch=checkpoint_at_epoch,
+        save_every_steps=save_every_steps if save_every_steps > 0 else None,
+        save_every_n_tokens=save_every_n_tokens if save_every_n_tokens > 0 else None,
+        use_processed_dataset=use_processed_dataset,
+        unmask_messages=unmask_messages,
+        compute_kl=not disable_kl,
+        seed=seed,
+        use_liger=use_liger,
+        nproc_per_node=num_gpus,
+        precision=precision,
+        train_dtype=train_dtype,
         save_dtype='float32',
         **optional_kwargs,
     )

@@ -223,6 +223,8 @@ class GRPOTrainer:
         seed: int = 67,
         # Validation
         validation_path: str = None,
+        # Reward function: (response, answer, prompt_data) -> float
+        reward_fn=None,
     ):
         utils.set_determinism(seed)
 
@@ -244,6 +246,7 @@ class GRPOTrainer:
         self.gradient_clip = gradient_clip
         self.use_wandb = use_wandb
         self.precision = precision
+        self.reward_fn = reward_fn or (lambda resp, ans, pd: reward_response(resp, ans))
 
         assert precision in ("fp32", "bf16", "mixed"), (
             f"precision must be 'fp32', 'bf16', or 'mixed', got '{precision}'"
@@ -759,6 +762,7 @@ class GRPOTrainer:
                         "problem", sample["messages"][-1]["content"]
                     ),
                     "messages": sample["messages"],
+                    "numbers": sample.get("numbers", None),
                 }
             )
 
@@ -857,7 +861,7 @@ class GRPOTrainer:
             for (response_text, response_ids), old_lps in zip(
                 group_responses, old_logprobs_list
             ):
-                r = reward_response(response_text, answer)
+                r = self.reward_fn(response_text, answer, prompt_data)
                 total_completions += 1
                 if r >= 0.1:
                     total_parsable += 1
@@ -1388,12 +1392,13 @@ class GRPOTrainer:
                         .squeeze(0)
                         .tolist()
                     )
-                    requests.append(
-                        {
+                    req = {
                             "prompt_text": self.tokenizer.decode(prompt_ids),
                             "answer": batch["answer"][j],
                         }
-                    )
+                    if "numbers" in batch:
+                        req["numbers"] = batch["numbers"][j]
+                    requests.append(req)
 
                 async def gen_one(req):
                     body = {
@@ -1405,14 +1410,15 @@ class GRPOTrainer:
                     }
                     resp = await client.post(completions_url, json=body)
                     resp.raise_for_status()
-                    return resp.json(), req["answer"]
+                    return resp.json(), req
 
                 results = await asyncio.gather(
                     *[gen_one(r) for r in requests]
                 )
-                for result, answer in results:
+                for result, req in results:
                     text = result["choices"][0]["text"]
-                    r = reward_response(text, answer)
+                    answer = req["answer"]
+                    r = self.reward_fn(text, answer, req)
                     total += 1
                     if r >= 0.1:
                         parsable += 1

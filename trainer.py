@@ -293,6 +293,8 @@ class RSTrainer:
         vllm_gpu_memory_utilization: float = 0.9,
         # validation
         validation_path: str = None,
+        # Reward function: (response, answer, prompt_data) -> float
+        reward_fn=None,
     ):
 
         # first we must set the seed
@@ -318,6 +320,7 @@ class RSTrainer:
         self.top_k = top_k
         self.top_p = top_p
         self.use_wandb = use_wandb
+        self.reward_fn = reward_fn or (lambda resp, ans, pd: reward_response(resp, ans))
 
         # check basic validation
         if self.output_dir and not self._valid_save_dir(self.output_dir):
@@ -732,6 +735,7 @@ class RSTrainer:
                 "prompt_ids": prompt_ids,
                 "prompt_text": prompt_text,
                 "answer": sample["answer"],
+                "numbers": sample.get("numbers", None),
             }
 
         async def generate_for_prompt(prompt_data: dict) -> list[RejectionSample]:
@@ -772,7 +776,7 @@ class RSTrainer:
                 except ValueError:
                     pass
 
-                reward = reward_response(completion_text, prompt_data["answer"])
+                reward = self.reward_fn(completion_text, prompt_data["answer"], prompt_data)
 
                 completions.append(
                     RejectionSample(
@@ -955,10 +959,13 @@ class RSTrainer:
                         return_tensors="pt"
                     ).squeeze(0).tolist()
                     prompt_text = self.tokenizer.decode(prompt_ids)
-                    requests.append({
+                    req = {
                         "prompt_text": prompt_text,
                         "answer": batch["answer"][j],
-                    })
+                    }
+                    if "numbers" in batch:
+                        req["numbers"] = batch["numbers"][j]
+                    requests.append(req)
 
                 # generate completions (n=1 per prompt)
                 async def generate_one(req):
@@ -971,13 +978,14 @@ class RSTrainer:
                     }
                     resp = await client.post(completions_url, json=body)
                     resp.raise_for_status()
-                    return resp.json(), req["answer"]
+                    return resp.json(), req
 
                 results = await asyncio.gather(*[generate_one(r) for r in requests])
 
-                for result, answer in results:
+                for result, req in results:
                     completion = result["choices"][0]["text"]
-                    reward = reward_response(completion, answer)
+                    answer = req["answer"]
+                    reward = self.reward_fn(completion, answer, req)
                     total += 1
                     if reward >= 0.1:
                         parsable += 1

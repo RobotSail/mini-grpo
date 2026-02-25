@@ -174,6 +174,8 @@ def run_single_eval(
         cmd.append("--reverse-kl")
     if eval_kwargs.get("kl_dataset"):
         cmd.extend(["--kl-dataset", eval_kwargs["kl_dataset"]])
+    if eval_kwargs.get("calibration"):
+        cmd.append("--calibration")
 
     print(f"[GPU {gpu_id}] Starting {label}: {checkpoint_path}")
 
@@ -209,6 +211,8 @@ def run_single_eval(
                 status_parts.append(f"KL={metrics['kl_divergence']:.4f}")
             if "reverse_kl" in metrics:
                 status_parts.append(f"RevKL={metrics['reverse_kl']:.4f}")
+            if "ece" in metrics:
+                status_parts.append(f"ECE={metrics['ece']:.4f}")
             print(f"[GPU {gpu_id}] {label}: {', '.join(status_parts)}")
             return checkpoint_path, step, label, metrics, ""
         else:
@@ -347,6 +351,11 @@ def main():
         help="Dataset for KL computation. Options: 'ifeval' (recommended for drift), "
              "'gsm8k', or path to jsonl file.",
     )
+    parser.add_argument(
+        "--calibration",
+        action="store_true",
+        help="Compute ECE (Expected Calibration Error) using answer token confidence",
+    )
 
     args = parser.parse_args()
 
@@ -394,6 +403,7 @@ def main():
         "kl_max_prompt_length": args.kl_max_prompt_length,
         "reverse_kl": args.reverse_kl,
         "kl_dataset": args.kl_dataset,
+        "calibration": args.calibration,
     }
 
     print(f"\nStarting parallel evaluation with {len(gpu_ids)} GPU(s)...")
