@@ -13,15 +13,18 @@ set -eo pipefail
 CHECKPOINT_PREFIX="/mnt/nvme2n1/checkpoints/countdown"
 DATA_DIR="generated_data"
 MODEL="Qwen/Qwen2-1.5B-Instruct"
+TOTAL_SAMPLES=15000
+VAL_SPLIT=0.1
+TEST_SPLIT=0.1
 
 # ── Step 0: Generate countdown data (50K samples, seed 67) ──
 if [ ! -f "${DATA_DIR}/countdown_grpo_train.jsonl" ]; then
     echo "Generating 50K countdown samples..."
     python cli.py generate-countdown-datasets \
-        --total-samples 50000 \
+        --total-samples "${TOTAL_SAMPLES}" \
         --output-dir "${DATA_DIR}" \
-        --val-split 0.1 \
-        --test-split 0.1 \
+        --val-split "${VAL_SPLIT}" \
+        --test-split "${TEST_SPLIT}" \
         --seed 67
 fi
 
@@ -33,17 +36,20 @@ SFT_DATA="${DATA_DIR}/countdown_sft_train.jsonl"
 # GRPO: 16 prompts × 8 rollouts = 128 samples per rollout batch
 #   inner_epochs=1, inner_batch_size=128 → 1 gradient step per rollout batch
 # SFT: batch_size=128 → 128 samples per gradient step (matching GRPO)
-LR="1e-6"
-GROUP_SIZE=8
-BATCH_SIZE=16
+LR="3e-7"
+GROUP_SIZE=16
+BATCH_SIZE=32
 INNER_BATCH_SIZE=128
 INNER_EPOCHS=1
 SFT_BATCH_SIZE=128
-MAX_TOKENS=300000
-SAVE_EVERY=50000
+MAX_TOKENS=15000000
+SAVE_EVERY=1000000
+TEMPERATURE=1.0
 KL=0
+FORMAT_REWARD=0.00
+UPDATE_REF_EVERY=0
 SEED=67
-MAX_TOKENS_PER_GPU=4096
+MAX_TOKENS_PER_GPU=8192
 
 # ========================================
 # Run 1: GRPO AdamW
@@ -66,7 +72,10 @@ python cli.py countdown-grpo-train \
     --max-tokens ${MAX_TOKENS} \
     --save-every-n-tokens ${SAVE_EVERY} \
     --seed ${SEED} \
+    --temp ${TEMPERATURE} \
     --kl ${KL} \
+    --format-reward ${FORMAT_REWARD} \
+    --update-ref-every ${UPDATE_REF_EVERY} \
     --train-gpus 0,1 \
     --vllm-gpus 2,3,4,5,6,7 \
     --max-tokens-per-gpu ${MAX_TOKENS_PER_GPU} \
@@ -97,7 +106,10 @@ python cli.py countdown-grpo-train \
     --max-tokens ${MAX_TOKENS} \
     --save-every-n-tokens ${SAVE_EVERY} \
     --seed ${SEED} \
+    --temp ${TEMPERATURE} \
     --kl ${KL} \
+    --format-reward ${FORMAT_REWARD} \
+    --update-ref-every ${UPDATE_REF_EVERY} \
     --train-gpus 0,1 \
     --vllm-gpus 2,3,4,5,6,7 \
     --max-tokens-per-gpu ${MAX_TOKENS_PER_GPU} \

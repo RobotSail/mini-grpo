@@ -209,11 +209,14 @@ class DistributedGRPOTrainer:
         vllm_checkpoint_dir: str = "/dev/shm/active-policy-distributed",
         # Reference model
         ref_cpu_offload: bool = False,
+        update_ref_every: int = 0,
         # Logging
         use_wandb: bool = False,
         wandb_project: str = "countdown-grpo",
         wandb_run_name: str = None,
         wandb_entity: str = None,
+        # Reward
+        format_reward: float = 0.1,
         # Misc
         seed: int = 67,
         validation_path: str = None,
@@ -260,9 +263,12 @@ class DistributedGRPOTrainer:
         self.max_tokens_per_gpu = max_tokens_per_gpu
         self.gradient_clip = gradient_clip
         self.use_wandb = use_wandb
+        self.format_reward = format_reward
         self.reward_fn = reward_fn or (lambda resp, ans, pd: reward_response(resp, ans))
 
         self.stats = StatsTracker(token_budget, save_every_n_tokens)
+        self.update_ref_every = update_ref_every
+        self._steps_since_ref_update = 0
 
         if output_dir and self.rank == 0:
             os.makedirs(output_dir, exist_ok=True)
@@ -453,6 +459,33 @@ class DistributedGRPOTrainer:
                 broadcast_from_rank0=False,
             ),
         )
+
+    @torch.no_grad()
+    def _update_ref_policy(self):
+        """Copy current policy weights into the reference model."""
+        log_rank_0("updating reference policy to current policy weights...")
+        policy_sd = get_model_state_dict(
+            self.policy,
+            options=StateDictOptions(full_state_dict=False),
+        )
+        ref_sd = get_model_state_dict(
+            self.ref_policy,
+            options=StateDictOptions(full_state_dict=False),
+        )
+        for key in ref_sd:
+            ref_sd[key].copy_(policy_sd[key])
+        del policy_sd, ref_sd
+        dist.barrier()
+        self._steps_since_ref_update = 0
+        log_rank_0("reference policy updated")
+
+    def _maybe_update_ref_policy(self):
+        """Update reference policy if enough optimizer steps have elapsed."""
+        if self.update_ref_every <= 0:
+            return
+        self._steps_since_ref_update += 1
+        if self._steps_since_ref_update >= self.update_ref_every:
+            self._update_ref_policy()
 
     # ── vLLM Weight Sync (vLLM is externally managed) ──────────────────
 
@@ -665,12 +698,28 @@ class DistributedGRPOTrainer:
             group = []
             answer = prompt_data["answer"]
             for (response_text, response_ids), old_lps in zip(group_responses, old_logprobs_list):
-                r = self.reward_fn(response_text, answer, prompt_data)
+                result = self.reward_fn(response_text, answer, prompt_data)
+
+                # Structured result (dict) — grade and reward are separate
+                if isinstance(result, dict):
+                    is_parsable = result["is_parsable"]
+                    is_correct = result["is_correct"]
+                    reward = 0.0
+                    if is_parsable:
+                        reward += self.format_reward
+                    if is_correct:
+                        reward += 1.0
+                else:
+                    # Legacy float result — infer flags from value
+                    reward = float(result)
+                    is_parsable = reward > 0
+                    is_correct = reward > 1.0
+
                 total_completions += 1
-                total_reward += r
-                if r >= 0.1:
+                total_reward += reward
+                if is_parsable:
                     total_parsable += 1
-                if r >= 1.0:
+                if is_correct:
                     total_correct += 1
 
                 group.append(GRPOSample(
@@ -678,9 +727,9 @@ class DistributedGRPOTrainer:
                     response_ids=response_ids,
                     response=response_text,
                     old_logprobs=old_lps,
-                    reward=r,
-                    is_parsable=r >= 0.1,
-                    is_correct=r >= 1.0,
+                    reward=reward,
+                    is_parsable=is_parsable,
+                    is_correct=is_correct,
                 ))
 
             self._compute_advantages(group)
@@ -804,14 +853,17 @@ class DistributedGRPOTrainer:
 
         outputs = self.policy(input_ids=input_ids, attention_mask=attention_mask)
         logits = outputs.logits
+        if self.temperature > 0:
+            logits = logits / self.temperature
 
         results = []
         for i, response_ids in enumerate(response_ids_list):
             response_len = len(response_ids)
-            response_logits = logits[i, prompt_len - 1: prompt_len - 1 + response_len].float()
-            response_log_probs = F.log_softmax(response_logits, dim=-1)
+            response_logits = logits[i, prompt_len - 1: prompt_len - 1 + response_len]
             token_ids = torch.tensor(response_ids, device=self.device, dtype=torch.long)
-            lps = response_log_probs.gather(-1, token_ids.unsqueeze(-1)).squeeze(-1)
+            # F.cross_entropy computes -log_softmax(logits)[target] in fp32 internally
+            # while saving bf16 logits for backward — no fp32 copy in the graph
+            lps = -F.cross_entropy(response_logits, token_ids, reduction='none')
             results.append(lps.tolist())
 
         del outputs, logits
@@ -850,9 +902,13 @@ class DistributedGRPOTrainer:
             # Split samples across ranks: rank k gets samples[k::world_size]
             local_samples = all_samples[self.rank::self.world_size]
 
+            # inner_batch_size is the GLOBAL batch size for each optimizer step.
+            # Each rank processes its share (global / world_size).
+            local_inner_batch_size = max(1, self.inner_batch_size // self.world_size)
+
             # Create local batches
-            for batch_start in range(0, max(len(local_samples), 1), self.inner_batch_size):
-                local_batch = local_samples[batch_start:batch_start + self.inner_batch_size]
+            for batch_start in range(0, max(len(local_samples), 1), local_inner_batch_size):
+                local_batch = local_samples[batch_start:batch_start + local_inner_batch_size]
 
                 if local_batch:
                     batch = self._collate_grpo_batch(local_batch)
@@ -924,6 +980,7 @@ class DistributedGRPOTrainer:
                 self.optimizer.zero_grad()
 
                 self.stats.increment_optim_step()
+                self._maybe_update_ref_policy()
 
                 # All-reduce token count for accurate budget tracking
                 tokens_tensor = torch.tensor([batch_tokens], dtype=torch.long, device=self.device)
@@ -1059,7 +1116,8 @@ class DistributedGRPOTrainer:
         attn_mask = batch["attention_mask"].to(self.device)
         grpo_mask = batch["grpo_mask"].to(self.device)
 
-        gather_indices = old_logprob_ids.unsqueeze(-1)
+        B, T = input_ids.shape
+        V = self.policy.config.vocab_size
 
         # Reference model forward (frozen, no grad)
         with torch.no_grad():
@@ -1067,21 +1125,23 @@ class DistributedGRPOTrainer:
             ref_logits = ref_outputs.logits
             if self.temperature > 0:
                 ref_logits = ref_logits / self.temperature
-            ref_gathered = ref_logits.gather(dim=-1, index=gather_indices)
-            ref_logsumexp = ref_logits.logsumexp(dim=-1, keepdim=True)
-            ref_logprobs = (ref_gathered - ref_logsumexp).squeeze(-1).float()
-            del ref_logits, ref_outputs, ref_gathered, ref_logsumexp
+            # F.cross_entropy computes -log_softmax in fp32 internally
+            ref_logprobs = -F.cross_entropy(
+                ref_logits.view(-1, V), old_logprob_ids.view(-1), reduction='none'
+            ).view(B, T)
+            del ref_logits, ref_outputs
         torch.cuda.empty_cache()
 
-        # Policy forward
+        # Policy forward — F.cross_entropy gives fp32 logprobs while
+        # saving only bf16 logits for backward (no fp32 copy in the graph)
         new_outputs = self.policy(input_ids=input_ids, attention_mask=attn_mask)
         new_logits = new_outputs.logits
         if self.temperature > 0:
             new_logits = new_logits / self.temperature
-        new_gathered = new_logits.gather(dim=-1, index=gather_indices)
-        new_logsumexp = new_logits.logsumexp(dim=-1, keepdim=True)
-        new_logprobs = (new_gathered - new_logsumexp).squeeze(-1).float()
-        del new_logits, new_gathered, new_logsumexp, new_outputs
+        new_logprobs = -F.cross_entropy(
+            new_logits.view(-1, V), old_logprob_ids.view(-1), reduction='none'
+        ).view(B, T)
+        del new_logits, new_outputs
 
         # Importance ratio
         log_ratio = (new_logprobs - old_logprobs.float()).clamp(-20, 20)
@@ -1186,11 +1246,20 @@ class DistributedGRPOTrainer:
             answer = req["answer"]
             r = self.reward_fn(text, answer, req)
             total += 1
-            total_reward += r
-            if r >= 0.1:
-                parsable += 1
-            if r >= 1.0:
-                correct += 1
+
+            if isinstance(r, dict):
+                if r["is_parsable"]:
+                    parsable += 1
+                    total_reward += self.format_reward
+                if r["is_correct"]:
+                    correct += 1
+                    total_reward += 1.0
+            else:
+                total_reward += float(r)
+                if r > 0:
+                    parsable += 1
+                if r > 1.0:
+                    correct += 1
 
         return {
             "correct_rate": correct / max(total, 1),

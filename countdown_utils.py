@@ -8,13 +8,17 @@ Expected answer format: <answer>EXPRESSION</answer>
   e.g. <answer>(25 + 3) * 7</answer>
 
 Reward structure: {0.0, 0.1, 1.1}
-  0.0 — no <answer> tag, empty content, or content fails lexical filter
-  0.1 — format reward: <answer> tags present, non-empty, passes lexical filter
-  1.1 — format + correctness: expression uses all numbers exactly once and evaluates to target
+  0.0 — no <answer> tag, empty content, fails lexical filter, invalid AST,
+        or wrong numbers
+  0.1 — format reward: <answer> tags present, valid AST (only +,-,*,/ and
+        parens over numeric literals), numbers extracted from AST match
+        the given numbers exactly (multiset equality)
+  1.1 — format + correctness: valid format AND expression evaluates to target
 
 Data source: Jiayi-Pan/Countdown-Tasks-3to4 from HuggingFace
 """
 
+import ast
 import re
 import random
 from itertools import permutations, product
@@ -34,6 +38,47 @@ DEFAULT_COUNTDOWN_SYSTEM_MSG = (
 
 ANSWER_PATTERN = re.compile(r"<answer>(.*?)</answer>", re.DOTALL | re.IGNORECASE)
 ALLOWED_EXPR_CHARS = re.compile(r"^[\d\s()+\-*/\.]+$")
+
+
+# ── AST validation ────────────────────────────────────────────────────────
+
+# Allowed AST node types for a valid countdown expression.
+_ALLOWED_AST_NODES = (
+    ast.Expression, ast.BinOp, ast.UnaryOp, ast.Constant,
+    ast.Add, ast.Sub, ast.Mult, ast.Div, ast.USub,
+)
+
+
+def validate_ast(expr: str, numbers: list[int]) -> bool:
+    """Validate that expr is a well-formed arithmetic expression using exactly
+    the given numbers.
+
+    Parses into a Python AST and checks:
+      1. Only allowed node types (binary +,-,*,/, unary -, numeric literals, parens)
+      2. Numeric literals extracted from the AST form the same multiset as `numbers`
+
+    Numbers are extracted from AST nodes, not regex — this prevents the model
+    from smuggling digits inside operator sequences or string tricks.
+    """
+    try:
+        tree = ast.parse(expr, mode='eval')
+    except SyntaxError:
+        return False
+
+    extracted = []
+    for node in ast.walk(tree):
+        if not isinstance(node, _ALLOWED_AST_NODES):
+            return False
+        if isinstance(node, ast.UnaryOp) and not isinstance(node.op, ast.USub):
+            return False
+        if isinstance(node, ast.BinOp) and not isinstance(node.op, (ast.Add, ast.Sub, ast.Mult, ast.Div)):
+            return False
+        if isinstance(node, ast.Constant):
+            if not isinstance(node.value, (int, float)):
+                return False
+            extracted.append(int(node.value))
+
+    return sorted(extracted) == sorted(numbers)
 
 
 # ── Expression validation ──────────────────────────────────────────────────
@@ -73,42 +118,49 @@ def validate_expression(expr: str, numbers: list[int], target: int, tol: float =
 
 # ── Reward function ─────────────────────────────────────────────────────────
 
-def countdown_reward_fn(response: str, answer: float, prompt_data: dict) -> float:
-    """Reward function for countdown problems.
+def countdown_reward_fn(
+    response: str, answer: float, prompt_data: dict,
+) -> dict:
+    """Grade a countdown response, returning structured results.
 
-    Matches the RewardFn protocol: (response, answer, prompt_data) -> float
+    Returns dict with:
+      is_parsable: bool — valid AST using exactly the given numbers
+      is_correct:  bool — is_parsable AND expression evaluates to target
 
-    Format reward (0.1): <answer> tags present, non-empty content, passes lexical filter.
-    Correctness reward (+1.0): expression uses all numbers exactly once, evaluates to target.
-
-    Total reward set: {0.0, 0.1, 1.1}
+    The trainer computes the scalar reward from these flags + its own
+    format_reward weight.
     """
     numbers = prompt_data.get("numbers")
     target = int(answer)
+    result = {"is_parsable": False, "is_correct": False}
 
     # Step 1: Extract answer tag
     matches = ANSWER_PATTERN.findall(response)
     if not matches:
-        return 0.0
+        return result
 
     content = matches[-1].strip()
 
     # Step 2: Non-empty check
     if not content:
-        return 0.0
+        return result
 
-    # Step 3: Lexical filter (cheap structural check)
+    # Step 3: Lexical filter (cheap, rejects obvious junk before parsing)
     if not ALLOWED_EXPR_CHARS.match(content) or "**" in content:
-        return 0.0
+        return result
 
-    # Format reward: valid structure
-    reward = 0.1
+    # Step 4: AST validation — valid expression structure using exactly
+    # the given numbers (extracted from AST, not regex)
+    if numbers is not None and not validate_ast(content, numbers):
+        return result
 
-    # Step 4: Correctness check
+    result["is_parsable"] = True
+
+    # Step 5: Correctness check (evaluates to target)
     if numbers is not None and validate_expression(content, numbers, target):
-        reward += 1.0
+        result["is_correct"] = True
 
-    return reward
+    return result
 
 
 # ── Countdown solver (brute-force for 3-4 numbers) ─────────────────────────
@@ -284,8 +336,8 @@ def generate_countdown_dataset(
             target = grpo_list[i]["answer"]
             sft_response = sft_list[i]["messages"][2]["content"]
             r = countdown_reward_fn(sft_response, target, {"numbers": numbers})
-            assert r == 1.1, (
-                f"{label} sample {i} failed verification: reward={r}, "
+            assert r["is_parsable"] and r["is_correct"], (
+                f"{label} sample {i} failed verification: {r}, "
                 f"target={target}, numbers={numbers}, response={sft_response!r}"
             )
 

@@ -2538,6 +2538,7 @@ def countdown_grpo_train(
     clip_eps: float = typer.Option(0.2, "--clip-eps", help="GRPO clip epsilon"),
     kl_strength: float = typer.Option(0.01, "--kl", help="KL penalty strength"),
     gradient_clip: float = typer.Option(1.0, "--gradient-clip", help="Gradient clipping max norm"),
+    format_reward: float = typer.Option(0.1, "--format-reward", help="Reward for correct format (valid AST + right numbers)"),
 
     # Sampling
     temperature: float = typer.Option(0.7, "-t", "--temp", help="Sampling temperature"),
@@ -2564,6 +2565,10 @@ def countdown_grpo_train(
     vllm_gpus: str = typer.Option("2", "--vllm-gpus", help="Comma-separated GPU indices for vLLM inference"),
     vllm_gpu_memory_utilization: float = typer.Option(0.9, "--vllm-mem", help="vLLM GPU memory utilization"),
     ref_cpu_offload: bool = typer.Option(False, "--ref-cpu-offload", help="CPU offload reference model to save GPU memory"),
+    update_ref_every: int = typer.Option(
+        0, "--update-ref-every",
+        help="Update reference policy every N optimizer steps (0 = never, fixed at base model)"
+    ),
 
     # Wandb
     use_wandb: bool = typer.Option(False, "--wandb", help="Enable wandb logging"),
@@ -2587,8 +2592,15 @@ def countdown_grpo_train(
             --output-dir /out --max-tokens 1000000 \\
             --train-gpus 0,1 --vllm-gpus 2
     """
+    import glob
+    import shutil
     import socket as sock
     import threading
+
+    # Clean up any stale shared-memory checkpoint dirs from previous runs
+    for stale in glob.glob("/dev/shm/active-policy-*"):
+        typer.secho(f"Cleaning up stale checkpoint dir: {stale}", fg=typer.colors.YELLOW)
+        shutil.rmtree(stale, ignore_errors=True)
 
     n_train_gpus = len(train_gpus.split(","))
     n_vllm_gpus = len(vllm_gpus.split(","))
@@ -2619,7 +2631,7 @@ def countdown_grpo_train(
         "--gpu-memory-utilization", str(vllm_gpu_memory_utilization),
         "--max-model-len", str(max_seq_len),
         "--seed", str(seed),
-        "--dtype", "bfloat16",
+        "--dtype", "float16",
         "--trust-remote-code",
         "--disable-log-requests",
         "--data-parallel-size", str(n_vllm_gpus),
@@ -2679,6 +2691,7 @@ def countdown_grpo_train(
             "--clip-eps", str(clip_eps),
             "--kl", str(kl_strength),
             "--gradient-clip", str(gradient_clip),
+            "--format-reward", str(format_reward),
             "--temp", str(temperature),
             "--max-new-tokens", str(max_new_tokens),
             "--top-p", str(top_p),
@@ -2706,6 +2719,8 @@ def countdown_grpo_train(
             train_cmd += ["--validation-path", validation_path]
         if ref_cpu_offload:
             train_cmd.append("--ref-cpu-offload")
+        if update_ref_every > 0:
+            train_cmd += ["--update-ref-every", str(update_ref_every)]
 
         train_env = os.environ.copy()
         train_env["CUDA_VISIBLE_DEVICES"] = train_gpus
@@ -2746,9 +2761,9 @@ def countdown_grpo_train(
         _kill_process(training_process, "training")
         _kill_process(vllm_process, "vLLM")
 
-        # Clean up checkpoint dir
-        import shutil
+        # Clean up checkpoint dir from shared memory
         if os.path.exists(checkpoint_dir):
+            typer.secho(f"Cleaning up {checkpoint_dir}", fg=typer.colors.YELLOW)
             shutil.rmtree(checkpoint_dir, ignore_errors=True)
 
 
@@ -2766,6 +2781,7 @@ def countdown_grpo_worker(
     clip_eps: float = typer.Option(0.2, "--clip-eps"),
     kl_strength: float = typer.Option(0.01, "--kl"),
     gradient_clip: float = typer.Option(1.0, "--gradient-clip"),
+    format_reward: float = typer.Option(0.1, "--format-reward"),
     temperature: float = typer.Option(0.7, "-t", "--temp"),
     max_new_tokens: int = typer.Option(512, "--max-new-tokens"),
     top_p: float = typer.Option(1.0, "--top-p"),
@@ -2780,6 +2796,7 @@ def countdown_grpo_worker(
     vllm_url: str = typer.Option(..., "--vllm-url"),
     vllm_checkpoint_dir: str = typer.Option(..., "--vllm-checkpoint-dir"),
     ref_cpu_offload: bool = typer.Option(False, "--ref-cpu-offload"),
+    update_ref_every: int = typer.Option(0, "--update-ref-every"),
     use_wandb: bool = typer.Option(False, "--wandb"),
     wandb_project: str = typer.Option("countdown-grpo", "--wandb-project"),
     wandb_run_name: str = typer.Option(None, "--wandb-run"),
@@ -2821,6 +2838,8 @@ def countdown_grpo_worker(
         vllm_url=vllm_url,
         vllm_checkpoint_dir=vllm_checkpoint_dir,
         ref_cpu_offload=ref_cpu_offload,
+        update_ref_every=update_ref_every,
+        format_reward=format_reward,
         use_wandb=use_wandb,
         wandb_project=wandb_project,
         wandb_run_name=wandb_run_name,
