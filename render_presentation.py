@@ -902,6 +902,203 @@ def fig_90pct_by_precision(layer_m, outdir):
     print('  Saved fig17_90pct_by_precision')
 
 
+def _plot_spectral_with_k90(svd_cache, ax, optimizer_key, prec_styles, curves_cache):
+    """Plot mean SV decay with k₉₀ markers for one optimizer on given axes."""
+    for prec, plabel, color, ls in prec_styles:
+        exp = f'{optimizer_key}_{prec}'
+        sv = _mean_sv_curve(svd_cache, exp)
+        if len(sv) == 0:
+            continue
+        curves_cache[exp] = sv
+        ranks = np.arange(1, len(sv) + 1)
+
+        energy = np.cumsum(sv ** 2)
+        k90 = int(np.searchsorted(energy, 0.9 * energy[-1]) + 1)
+        sv_at_k90 = sv[k90 - 1]
+
+        ax.semilogy(ranks, sv, color=color, linestyle=ls,
+                    linewidth=2.5, label=f'{plabel}  ($k_{{90}}$={k90})', alpha=0.9)
+        ax.plot(k90, sv_at_k90, 'o', color=color, markersize=9, zorder=5,
+                markeredgecolor='white', markeredgewidth=2)
+
+
+def fig_avg_spectral_sft(svd_cache, outdir):
+    """Mean spectral decay of ΔW with k₉₀ marked: SFT, AdamW vs Muon across precisions."""
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
+
+    prec_styles = [
+        ('fp32', 'FP32', '#2ca02c', '-'),
+        ('bf16', 'BF16', '#d62728', '--'),
+        ('mixed', 'Mixed', '#1f77b4', '-.'),
+    ]
+
+    curves = {}
+    _plot_spectral_with_k90(svd_cache, ax1, 'adamw_sft', prec_styles, curves)
+    _plot_spectral_with_k90(svd_cache, ax2, 'muon_sft', prec_styles, curves)
+
+    all_sv = np.concatenate([v for v in curves.values() if len(v) > 0])
+    ymin, ymax = all_sv[all_sv > 0].min() * 0.5, all_sv.max() * 2
+
+    for ax, title in [(ax1, 'AdamW + SFT'), (ax2, 'Muon + SFT')]:
+        ax.set_xlabel('Singular Value Index $i$', fontsize=12)
+        ax.set_ylabel(r'$\bar{\sigma}_i(\Delta W)$  (log scale)', fontsize=12)
+        ax.set_title(title, fontsize=13, fontweight='bold', pad=10)
+        ax.legend(fontsize=11, loc='upper right')
+        ax.set_xlim(0, 1536)
+        ax.set_ylim(ymin, ymax)
+        ax.grid(True, alpha=0.3)
+
+    fig.suptitle(r'Spectral Decay of $\bar{\sigma}_i(\Delta W)$ with $k_{90}$ Marked'
+                 '\n'
+                 r'($\bar{\sigma}_i$ and $k_{90}$ computed from the mean spectrum across all layers/components)',
+                 fontsize=13, fontweight='bold')
+    fig.subplots_adjust(top=0.82, wspace=0.25)
+    plt.savefig(outdir / 'avg_spectral_sft.png', dpi=200, bbox_inches='tight')
+    plt.savefig(outdir / 'avg_spectral_sft.pdf', bbox_inches='tight')
+    plt.close()
+    print('  Saved avg_spectral_sft')
+
+
+def fig_avg_spectral_combined(svd_cache, outdir):
+    """Mean spectral decay: AdamW (left) vs Muon (right), SFT + GRPO overlaid.
+
+    Color encodes method (SFT=blue, GRPO=red).
+    Shade intensity encodes precision (FP32=darkest, BF16=lightest).
+    k₉₀ values shown in per-panel legends.
+    """
+    from matplotlib.lines import Line2D
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6.5))
+
+    # Color palettes: saturated enough to read, clear shade progression
+    # SFT: blue family;  GRPO: vermilion/red family
+    sft_shades  = {'fp32': '#084594', 'mixed': '#4292c6', 'bf16': '#9ecae1'}
+    grpo_shades = {'fp32': '#99000d', 'mixed': '#ef3b2c', 'bf16': '#fc9272'}
+    # Linestyle doubles as accessibility cue
+    prec_ls = {'fp32': '-', 'mixed': (0, (4, 2)), 'bf16': (0, (2, 2))}
+    prec_lw = {'fp32': 3.0, 'mixed': 2.5, 'bf16': 2.5}
+
+    curves = {}
+    for ax, opt_key, opt_title in [(ax1, 'adamw', 'AdamW'), (ax2, 'muon', 'Muon')]:
+        legend_handles = []
+        for method, method_label, shades in [('sft', 'SFT', sft_shades),
+                                              ('grpo', 'GRPO', grpo_shades)]:
+            for prec in PRECISIONS:
+                exp = f'{opt_key}_{method}_{prec}'
+                sv = _mean_sv_curve(svd_cache, exp)
+                if len(sv) == 0:
+                    continue
+                curves[exp] = sv
+                ranks = np.arange(1, len(sv) + 1)
+
+                energy = np.cumsum(sv ** 2)
+                k90 = int(np.searchsorted(energy, 0.9 * energy[-1]) + 1)
+
+                color = shades[prec]
+                ls = prec_ls[prec]
+                lw = prec_lw[prec]
+                line, = ax.semilogy(ranks, sv, color=color, linestyle=ls,
+                                    linewidth=lw, alpha=0.92)
+                ax.plot(k90, sv[k90 - 1], 'o', color=color, markersize=8, zorder=5,
+                        markeredgecolor='white', markeredgewidth=1.5)
+
+                legend_handles.append(
+                    Line2D([0], [0], color=color, lw=lw, linestyle=ls,
+                           label=f'{method_label} {PREC_LABELS[prec]}  ($k_{{90}}$={k90})'))
+
+            # Spacer between SFT and GRPO groups
+            if method == 'sft':
+                legend_handles.append(Line2D([0], [0], color='none', lw=0, label=' '))
+
+        ax.set_xlabel('Singular Value Index $i$', fontsize=12)
+        ax.set_ylabel(r'$\bar{\sigma}_i(\Delta W)$  (log scale)', fontsize=12)
+        ax.set_title(opt_title, fontsize=14, fontweight='bold', pad=10)
+        ax.set_xlim(0, 1536)
+        ax.grid(True, alpha=0.2, which='major')
+        ax.legend(handles=legend_handles, fontsize=8.5, loc='upper right',
+                  framealpha=0.92, edgecolor='#cccccc', handlelength=2.5)
+
+    # Shared y-axis limits
+    all_sv = np.concatenate([v for v in curves.values() if len(v) > 0])
+    ymin, ymax = all_sv[all_sv > 0].min() * 0.5, all_sv.max() * 2
+    ax1.set_ylim(ymin, ymax)
+    ax2.set_ylim(ymin, ymax)
+
+    fig.suptitle(
+        r'Spectral Decay of $\bar{\sigma}_i(\Delta W)$ with $k_{90}$ Marked'
+        '\n'
+        r'($\bar{\sigma}_i$ and $k_{90}$ computed from the mean spectrum across all layers/components)',
+        fontsize=13, fontweight='bold')
+    fig.subplots_adjust(top=0.82, wspace=0.22)
+    plt.savefig(outdir / 'avg_spectral_combined.png', dpi=200, bbox_inches='tight')
+    plt.savefig(outdir / 'avg_spectral_combined.pdf', bbox_inches='tight')
+    plt.close()
+    print('  Saved avg_spectral_combined')
+
+
+def fig_rank90_standalone(layer_m, outdir):
+    """Standalone rank@90% bar chart using same color scheme as avg_spectral_combined.
+
+    Blue family = SFT, Red family = GRPO. Shade intensity encodes precision.
+    """
+    from matplotlib.patches import Patch
+
+    fig, ax = plt.subplots(figsize=(8, 5))
+
+    conditions = ['AdamW\n+GRPO', 'Muon\n+GRPO', 'AdamW\n+SFT', 'Muon\n+SFT']
+    cond_prefixes = [k for k, _, _ in COND_KEYS]
+    x = np.arange(len(conditions))
+    width = 0.25
+
+    sft_shades  = {'fp32': '#084594', 'mixed': '#4292c6', 'bf16': '#9ecae1'}
+    grpo_shades = {'fp32': '#99000d', 'mixed': '#ef3b2c', 'bf16': '#fc9272'}
+
+    def _shade(prefix, prec):
+        return sft_shades[prec] if 'sft' in prefix else grpo_shades[prec]
+
+    for i, prec in enumerate(PRECISIONS):
+        vals, bar_colors = [], []
+        for pref in cond_prefixes:
+            sub = layer_m[layer_m['experiment'] == f'{pref}_{prec}']
+            vals.append(sub['rank_90'].mean())
+            bar_colors.append(_shade(pref, prec))
+        offset = (i - 1) * width
+        bars = ax.bar(x + offset, vals, width, color=bar_colors,
+                      alpha=0.88, edgecolor='white', linewidth=0.5)
+        for bar, v in zip(bars, vals):
+            ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 8,
+                    f'{v:.0f}', ha='center', va='bottom', fontsize=8)
+
+    ax.set_xticks(x)
+    ax.set_xticklabels(conditions, fontsize=11)
+    ax.set_ylabel('Rank $k$  (max = 1536)', fontsize=12)
+    ax.set_title(
+        r'Rank at 90% Energy: $k_{90}(\Delta W)$'
+        '\n(mean over all 28 layers, all component types)',
+        fontsize=13)
+
+    legend_elements = [
+        Patch(facecolor=grpo_shades['fp32'], label='GRPO — FP32'),
+        Patch(facecolor=grpo_shades['mixed'], label='GRPO — Mixed'),
+        Patch(facecolor=grpo_shades['bf16'], label='GRPO — BF16'),
+        Patch(facecolor='none', edgecolor='none', label=' '),
+        Patch(facecolor=sft_shades['fp32'], label='SFT — FP32'),
+        Patch(facecolor=sft_shades['mixed'], label='SFT — Mixed'),
+        Patch(facecolor=sft_shades['bf16'], label='SFT — BF16'),
+    ]
+    ax.legend(handles=legend_elements, fontsize=8.5, loc='lower right',
+              framealpha=0.92, edgecolor='#cccccc')
+
+    ax.grid(axis='y', alpha=0.25)
+    ax.set_ylim(0, ax.get_ylim()[1] * 1.12)
+
+    plt.tight_layout()
+    plt.savefig(outdir / 'rank90_standalone.png', dpi=200, bbox_inches='tight')
+    plt.savefig(outdir / 'rank90_standalone.pdf', bbox_inches='tight')
+    plt.close()
+    print('  Saved rank90_standalone')
+
+
 COMPONENT_ORDER = ['q_proj', 'k_proj', 'v_proj', 'o_proj', 'gate_proj', 'up_proj', 'down_proj']
 
 
@@ -1915,6 +2112,9 @@ def main():
     fig_sv_distribution_stats(svd_cache, outdir)
     fig_bf16_energy_ratio(svd_cache, outdir)
     fig_90pct_by_precision(layer_m, outdir)
+    fig_rank90_standalone(layer_m, outdir)
+    fig_avg_spectral_sft(svd_cache, outdir)
+    fig_avg_spectral_combined(svd_cache, outdir)
 
     print()
     print('Tables:')

@@ -1357,6 +1357,156 @@ def plot_optimizer_scatter(df: pd.DataFrame, metric: str, title: str, output_pat
 
 
 # =============================================================================
+# AVERAGE SPECTRAL PROFILE (model-wide averaged normalized SV decay)
+# =============================================================================
+
+
+def compute_average_spectral_profiles(
+    all_results: dict[str, dict],
+    experiment_names: list[str],
+) -> dict[str, tuple[np.ndarray, np.ndarray, np.ndarray]]:
+    """Compute average normalized SV decay across all weight matrices.
+
+    For each experiment, normalizes each parameter's SVs by σ₁, then
+    averages across all parameters of the same dimension.
+
+    Returns:
+        Dict mapping experiment name to (ranks, mean_normalized_sv, std_normalized_sv)
+    """
+    profiles = {}
+
+    for exp_name in experiment_names:
+        if exp_name not in all_results:
+            continue
+
+        result = all_results[exp_name]
+
+        # Collect normalized SV arrays grouped by length
+        sv_by_length: dict[int, list[np.ndarray]] = {}
+        for param_name, data in result["parameters"].items():
+            sv = np.array(data["singular_values"])
+            if len(sv) < 2 or sv[0] == 0:
+                continue
+            sv_normalized = sv / sv[0]
+            length = len(sv)
+            if length not in sv_by_length:
+                sv_by_length[length] = []
+            sv_by_length[length].append(sv_normalized)
+
+        if not sv_by_length:
+            continue
+
+        # Use the most common length (typically min(hidden_dim, hidden_dim) = 1536)
+        most_common_length = max(sv_by_length, key=lambda k: len(sv_by_length[k]))
+        sv_arrays = np.array(sv_by_length[most_common_length])
+
+        mean_sv = np.mean(sv_arrays, axis=0)
+        std_sv = np.std(sv_arrays, axis=0)
+        ranks = np.arange(1, most_common_length + 1)
+
+        profiles[exp_name] = (ranks, mean_sv, std_sv)
+
+    return profiles
+
+
+def plot_average_spectral(
+    profiles: dict[str, tuple],
+    experiment_configs: dict[str, dict],
+    title: str,
+    output_path: Path,
+    xlim: int | None = 500,
+):
+    """Plot average normalized spectral decay curves."""
+    fig, ax = plt.subplots(figsize=(8, 6))
+
+    # Determine linestyle: solid for first method, dashed for second
+    # Group by method (sft, grpo, rs) to assign linestyles
+    method_styles = {}
+    for exp_name in profiles:
+        if "sft" in exp_name:
+            method_styles[exp_name] = "-"
+        elif "grpo" in exp_name:
+            method_styles[exp_name] = "--"
+        elif "rs" in exp_name:
+            method_styles[exp_name] = ":"
+        else:
+            method_styles[exp_name] = "-"
+
+    # If only one method type, use solid for all
+    unique_methods = set(method_styles.values())
+    if len(unique_methods) == 1:
+        method_styles = {k: "-" for k in profiles}
+
+    y_min_global = 1.0
+    for exp_name, (ranks, mean_sv, std_sv) in profiles.items():
+        config = experiment_configs[exp_name]
+        color = config["color"]
+        label = config["label"]
+        ls = method_styles[exp_name]
+
+        ax.semilogy(ranks, mean_sv, color=color, linewidth=2.5, label=label, linestyle=ls)
+        lower = np.maximum(mean_sv - std_sv, 1e-12)
+        upper = mean_sv + std_sv
+        ax.fill_between(ranks, lower, upper, color=color, alpha=0.10)
+
+        # Track actual data range for y-axis
+        y_min_global = min(y_min_global, mean_sv[-1])
+
+    ax.set_xlabel("Singular Value Index $i$", fontsize=13)
+    ax.set_ylabel(r"$\langle \sigma_i / \sigma_1 \rangle_{\mathrm{layers}}$", fontsize=13)
+    ax.set_title(title, fontsize=14)
+    ax.legend(fontsize=11, loc="lower left")
+    ax.grid(True, alpha=0.25, which="major")
+    ax.grid(True, alpha=0.1, which="minor")
+
+    if xlim:
+        ax.set_xlim(1, xlim)
+    # Set y-axis to show data range with 1 order of magnitude padding below
+    ax.set_ylim(y_min_global * 0.3, 1.5)
+
+    plt.tight_layout()
+    plt.savefig(output_path, dpi=200, bbox_inches="tight")
+    plt.close(fig)
+
+
+def plot_rank90_standalone(df: pd.DataFrame, output_path: Path):
+    """Standalone bar chart of rank for 90% energy by component."""
+    layer_df = df[(df["layer"] >= 0) & (df["layer"] < 28)].copy()
+    layer_df = layer_df[layer_df["component"].isin(COMPONENT_ORDER)]
+    agg_df = layer_df.groupby(["experiment", "component"])["rank_90"].mean().reset_index()
+
+    fig, ax = plt.subplots(figsize=(10, 5))
+
+    n_experiments = len(EXPERIMENTS)
+    n_components = len(COMPONENT_ORDER)
+    width = 0.8 / n_experiments
+    x = np.arange(n_components)
+
+    for i, (exp_name, exp_config) in enumerate(EXPERIMENTS.items()):
+        exp_data = agg_df[agg_df["experiment"] == exp_name].set_index("component")["rank_90"]
+        values = [exp_data.get(c, 0) for c in COMPONENT_ORDER]
+        offset = (i - n_experiments / 2 + 0.5) * width
+        ax.bar(x + offset, values, width, label=exp_config["label"],
+               color=exp_config["color"], alpha=0.85, edgecolor="white", linewidth=0.3)
+
+    ax.set_xlabel("Component", fontsize=13)
+    ax.set_ylabel("Rank $k$ for 90% Energy", fontsize=13)
+    ax.set_title(
+        r"Rank at 90% Energy: min $k$ s.t."
+        r" $\sum_{i=1}^{k} \sigma_i^2(\Delta W) \geq 0.9\,\|\Delta W\|_F^2$",
+        fontsize=12,
+    )
+    ax.set_xticks(x)
+    ax.set_xticklabels(COMPONENT_ORDER, fontsize=11)
+    ax.legend(fontsize=9, ncol=2, loc="upper left")
+    ax.grid(axis="y", alpha=0.25)
+
+    plt.tight_layout()
+    plt.savefig(output_path, dpi=200, bbox_inches="tight")
+    plt.close(fig)
+
+
+# =============================================================================
 # SPARSITY ANALYSIS: sparsity(θ₀, θ_f) = 1 - ||θ_f - θ₀||₀ / n
 # =============================================================================
 
@@ -1848,6 +1998,44 @@ def main():
     plot_rank_and_magnitude_by_layer(df, "rank_99", "sv_sum_at_rank_99", "sv_at_rank_99", "99%", output_dir / "sv_magnitude_99_by_layer.png")
     plot_rank_and_magnitude_by_component(df, "rank_90", "sv_sum_at_rank_90", "sv_at_rank_90", "90%", output_dir / "sv_magnitude_90_by_component.png")
     plot_rank_and_magnitude_by_component(df, "rank_95", "sv_sum_at_rank_95", "sv_at_rank_95", "95%", output_dir / "sv_magnitude_95_by_component.png")
+
+    # Standalone rank@90% plot
+    print("  - Standalone rank@90% by component...")
+    plot_rank90_standalone(df, output_dir / "rank90_standalone.png")
+
+    # Average spectral profiles (model-wide averaged normalized SV decay)
+    print("  - Average spectral profiles...")
+    all_profiles = compute_average_spectral_profiles(all_results, list(EXPERIMENTS.keys()))
+
+    # GRPO only: Muon vs AdamW
+    grpo_keys = [k for k in EXPERIMENTS if "grpo" in k]
+    grpo_profiles = {k: all_profiles[k] for k in grpo_keys if k in all_profiles}
+    if grpo_profiles:
+        plot_average_spectral(
+            grpo_profiles, EXPERIMENTS,
+            r"Average Spectral Decay of $\Delta W$: GRPO",
+            output_dir / "avg_spectral_grpo.png",
+        )
+
+    # SFT only: Muon vs AdamW
+    sft_keys = [k for k in EXPERIMENTS if "sft" in k]
+    sft_profiles = {k: all_profiles[k] for k in sft_keys if k in all_profiles}
+    if sft_profiles:
+        plot_average_spectral(
+            sft_profiles, EXPERIMENTS,
+            r"Average Spectral Decay of $\Delta W$: SFT",
+            output_dir / "avg_spectral_sft.png",
+        )
+
+    # Combined: all 4 (GRPO + SFT)
+    combined_keys = [k for k in EXPERIMENTS if "grpo" in k or "sft" in k]
+    combined_profiles = {k: all_profiles[k] for k in combined_keys if k in all_profiles}
+    if combined_profiles:
+        plot_average_spectral(
+            combined_profiles, EXPERIMENTS,
+            r"Average Spectral Decay of $\Delta W$: All Methods",
+            output_dir / "avg_spectral_combined.png",
+        )
 
     # Spectral decay plots
     print("  - Spectral decay plots...")
