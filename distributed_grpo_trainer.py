@@ -110,11 +110,14 @@ class GRPOSample(pd.BaseModel):
 
 
 class StatsTracker:
-    def __init__(self, token_budget: int, checkpoint_frequency: int):
+    def __init__(self, token_budget: int = 0, step_budget: int = 0, save_every_n_tokens: int = 0, save_every_n_steps: int = 0):
         self.token_budget = token_budget
-        self.checkpoint_frequency = checkpoint_frequency
+        self.step_budget = step_budget
+        self._save_every_n_tokens = save_every_n_tokens
+        self._save_every_n_steps = save_every_n_steps
         self._tokens_seen = 0
-        self._last_checkpoint = 0
+        self._last_checkpoint_tokens = 0
+        self._last_checkpoint_steps = 0
         self._optim_steps = 0
         self._iteration = 0
 
@@ -125,15 +128,20 @@ class StatsTracker:
         self._optim_steps += 1
 
     def should_save(self) -> bool:
-        return self.checkpoint_frequency > 0 and (
-            self._tokens_seen - self._last_checkpoint
-        ) >= self.checkpoint_frequency
+        if self._save_every_n_steps > 0:
+            return (self._optim_steps - self._last_checkpoint_steps) >= self._save_every_n_steps
+        if self._save_every_n_tokens > 0:
+            return (self._tokens_seen - self._last_checkpoint_tokens) >= self._save_every_n_tokens
+        return False
 
     def mark_checkpointed(self):
-        self._last_checkpoint = self._tokens_seen
+        self._last_checkpoint_tokens = self._tokens_seen
+        self._last_checkpoint_steps = self._optim_steps
 
     def completed(self) -> bool:
-        return self._tokens_seen >= self.token_budget
+        if self.step_budget > 0:
+            return self._optim_steps >= self.step_budget
+        return self.token_budget > 0 and self._tokens_seen >= self.token_budget
 
     def advance_iteration(self):
         self._iteration += 1
@@ -180,10 +188,12 @@ class DistributedGRPOTrainer:
         data_path: str,
         model_name: str,
         output_dir: str | None,
-        token_budget: int,
+        token_budget: int = 0,
+        max_steps: int = 0,
         inner_epochs: int = 2,
         inner_batch_size: int = 32,
         save_every_n_tokens: int = 0,
+        save_every_n_steps: int = 0,
         # GRPO
         group_size: int = 16,
         batch_size: int = 64,
@@ -266,7 +276,10 @@ class DistributedGRPOTrainer:
         self.format_reward = format_reward
         self.reward_fn = reward_fn or (lambda resp, ans, pd: reward_response(resp, ans))
 
-        self.stats = StatsTracker(token_budget, save_every_n_tokens)
+        self.stats = StatsTracker(
+            token_budget=token_budget, step_budget=max_steps,
+            save_every_n_tokens=save_every_n_tokens, save_every_n_steps=save_every_n_steps,
+        )
         self.update_ref_every = update_ref_every
         self._steps_since_ref_update = 0
 
@@ -942,6 +955,10 @@ class DistributedGRPOTrainer:
                 total_loss = 0.0
                 total_kl = 0.0
                 total_ir = 0.0
+                total_entropy = 0.0
+                total_adv_sum = 0.0
+                total_adv_sq_sum = 0.0
+                total_adv_count = 0
                 valid_mbs = 0
                 batch_tokens = 0
 
@@ -966,6 +983,10 @@ class DistributedGRPOTrainer:
                         total_loss += loss.item()
                         total_kl += metrics["kl_div"]
                         total_ir += metrics["importance_ratio"]
+                        total_entropy += metrics["entropy"]
+                        total_adv_sum += metrics["adv_sum"]
+                        total_adv_sq_sum += metrics["adv_sq_sum"]
+                        total_adv_count += metrics["adv_count"]
                         valid_mbs += 1
                         batch_tokens += mb["rollout_lens"].sum().item()
 
@@ -991,16 +1012,30 @@ class DistributedGRPOTrainer:
                     avg_loss = total_loss / valid_mbs
                     avg_kl = total_kl / valid_mbs
                     avg_ir = total_ir / valid_mbs
+                    avg_entropy = total_entropy / valid_mbs
                 else:
-                    avg_loss = avg_kl = avg_ir = 0.0
+                    avg_loss = avg_kl = avg_ir = avg_entropy = 0.0
+
+                # Global advantage stats (all-reduce across ranks)
+                adv_stats = torch.tensor(
+                    [total_adv_sum, total_adv_sq_sum, total_adv_count],
+                    dtype=torch.float64, device=self.device,
+                )
+                dist.all_reduce(adv_stats, op=dist.ReduceOp.SUM)
+                g_sum, g_sq_sum, g_count = adv_stats.tolist()
+                if g_count > 0:
+                    adv_mean = g_sum / g_count
+                    adv_var = g_sq_sum / g_count - adv_mean ** 2
+                else:
+                    adv_mean = adv_var = 0.0
 
                 log_rank_0(
                     "epoch %d/%d | step %d | loss: %.4f | kl: %.4f | "
-                    "ir: %.4f | gradnorm: %.4f | tokens: %d/%d",
+                    "ir: %.4f | entropy: %.4f | gradnorm: %.4f | tokens: %d",
                     epoch + 1, self.inner_epochs,
-                    self.stats.optim_steps, avg_loss, avg_kl, avg_ir,
+                    self.stats.optim_steps, avg_loss, avg_kl, avg_ir, avg_entropy,
                     gradnorm.item() if hasattr(gradnorm, "item") else gradnorm,
-                    self.stats.tokens_seen, self.stats.token_budget,
+                    self.stats.tokens_seen,
                 )
 
                 if self.use_wandb and WANDB_AVAILABLE and self.rank == 0:
@@ -1008,6 +1043,9 @@ class DistributedGRPOTrainer:
                         "train/loss": avg_loss,
                         "train/kl_divergence": avg_kl,
                         "train/importance_ratio": avg_ir,
+                        "train/entropy": avg_entropy,
+                        "train/advantage_mean": adv_mean,
+                        "train/advantage_var": adv_var,
                         "train/grad_norm": gradnorm.item() if hasattr(gradnorm, "item") else gradnorm,
                         "train/optim_step": self.stats.optim_steps,
                         "train/tokens_trained": self.stats.tokens_seen,
@@ -1141,7 +1179,12 @@ class DistributedGRPOTrainer:
         new_logprobs = -F.cross_entropy(
             new_logits.view(-1, V), old_logprob_ids.view(-1), reduction='none'
         ).view(B, T)
+
         del new_logits, new_outputs
+
+        # Policy entropy estimate: E_π[-log p(a)] ≈ H(π)
+        # Unbiased estimate using the sampled tokens' logprobs (already computed, free)
+        policy_entropy = (-new_logprobs[grpo_mask]).mean().item() if grpo_mask.any() else 0.0
 
         # Importance ratio
         log_ratio = (new_logprobs - old_logprobs.float()).clamp(-20, 20)
@@ -1171,6 +1214,10 @@ class DistributedGRPOTrainer:
         metrics = {
             "kl_div": dkl_approx[grpo_mask].mean().item() if grpo_mask.any() else 0.0,
             "importance_ratio": importance_ratio[grpo_mask].mean().item() if grpo_mask.any() else 1.0,
+            "entropy": policy_entropy,
+            "adv_sum": advantages.sum().item(),
+            "adv_sq_sum": (advantages ** 2).sum().item(),
+            "adv_count": len(advantages),
         }
         return grpo_loss, metrics
 
@@ -1188,7 +1235,8 @@ class DistributedGRPOTrainer:
         outputs = self.policy(input_ids=dummy_ids, attention_mask=dummy_mask)
         loss = outputs.logits.sum() * 0.0  # zero loss, but graph exists for backward
 
-        metrics = {"kl_div": 0.0, "importance_ratio": 1.0}
+        metrics = {"kl_div": 0.0, "importance_ratio": 1.0, "entropy": 0.0,
+                   "adv_sum": 0.0, "adv_sq_sum": 0.0, "adv_count": 0}
         return loss, metrics
 
     # ── Validation ─────────────────────────────────────────────────────

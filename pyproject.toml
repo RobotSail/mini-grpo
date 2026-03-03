@@ -12,3 +12,9 @@ dependencies = [
     "typer>=0.21.0",
     "wandb>=0.18.0",
 ]
+
+[project.optional-dependencies]
+flash = ["flash-attn>=2.7.0"]
+
+[tool.uv]
+no-build-isolation-package = ["flash-attn"]

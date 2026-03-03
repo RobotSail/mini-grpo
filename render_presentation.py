@@ -1873,6 +1873,286 @@ def table_full_picture(layer_m, layer_s, svd_cache, outdir):
 
 
 # =============================================================================
+# CONFIG-DRIVEN FIGURES (work with any experiment set, no precision assumption)
+# =============================================================================
+
+
+def fig_mean_spectral_decay(svd_cache, experiments, outdir):
+    """Mean spectral decay σ̄ᵢ(ΔW) averaged over all layers and components, with k90 markers."""
+    fig, ax = plt.subplots(figsize=(10, 6))
+
+    exp_items = [(k, v.get('label', k), v.get('color', '#333333')) for k, v in experiments.items()]
+
+    for exp_key, label, color in exp_items:
+        sv = _mean_sv_curve(svd_cache, exp_key)
+        if len(sv) == 0:
+            continue
+        ranks = np.arange(1, len(sv) + 1)
+
+        energy = np.cumsum(sv ** 2)
+        k90 = int(np.searchsorted(energy, 0.9 * energy[-1]) + 1)
+
+        ax.semilogy(ranks, sv, color=color, linewidth=2.5, alpha=0.9,
+                     label=f'{label}  ($k_{{90}}$={k90})')
+        ax.plot(k90, sv[k90 - 1], 'o', color=color, markersize=10, zorder=5,
+                markeredgecolor='white', markeredgewidth=2)
+
+    ax.set_xlabel('Singular Value Index $i$', fontsize=13)
+    ax.set_ylabel(r'$\bar{\sigma}_i(\Delta W)$  (log scale)', fontsize=13)
+    ax.set_title(
+        r'Mean Spectral Decay of $\Delta W = W_{exp} - W_{base}$' + '\n'
+        r'($\bar{\sigma}_i$ averaged over all transformer layers and components)',
+        fontsize=13, fontweight='bold')
+    ax.legend(fontsize=12, loc='upper right')
+    ax.grid(True, alpha=0.3)
+
+    plt.tight_layout()
+    plt.savefig(outdir / 'mean_spectral_decay.png', dpi=200, bbox_inches='tight')
+    plt.savefig(outdir / 'mean_spectral_decay.pdf', bbox_inches='tight')
+    plt.close()
+    print('  Saved mean_spectral_decay')
+
+
+def fig_cumulative_energy_comparison(svd_cache, experiments, outdir):
+    """Cumulative energy curves, all experiments on one plot (layer 13, down_proj)."""
+    fig, ax = plt.subplots(figsize=(10, 6))
+
+    exp_items = [(k, v.get('label', k), v.get('color', '#333333')) for k, v in experiments.items()]
+    component = 'down_proj'
+    layer_idx = 13
+    param_name = f'model.layers.{layer_idx}.mlp.{component}.weight'
+
+    for exp_key, label, color in exp_items:
+        if exp_key not in svd_cache or param_name not in svd_cache[exp_key]['parameters']:
+            continue
+        sv = np.array(svd_cache[exp_key]['parameters'][param_name]['singular_values'])
+        cum_energy = np.cumsum(sv ** 2) / np.sum(sv ** 2)
+        ranks = np.arange(1, len(sv) + 1)
+        ax.plot(ranks, cum_energy, color=color, linewidth=2, label=label, alpha=0.9)
+
+    ax.axhline(y=0.9, color='gray', linestyle=':', alpha=0.5, linewidth=1)
+    ax.text(50, 0.91, '90%', color='gray', fontsize=10)
+    ax.axhline(y=0.99, color='gray', linestyle=':', alpha=0.4, linewidth=1)
+    ax.text(50, 0.995, '99%', color='gray', fontsize=10)
+
+    ax.set_xlabel('Singular Value Rank')
+    ax.set_ylabel('Cumulative Energy Fraction')
+    ax.set_title(f'Cumulative Energy of $\\Delta W$ (Layer {layer_idx}, {component})',
+                 fontsize=13, fontweight='bold')
+    ax.legend(loc='lower right', fontsize=11)
+    ax.set_ylim(0, 1.05)
+    ax.grid(True, alpha=0.3)
+
+    plt.tight_layout()
+    plt.savefig(outdir / 'cumulative_energy_comparison.png', dpi=200, bbox_inches='tight')
+    plt.savefig(outdir / 'cumulative_energy_comparison.pdf', bbox_inches='tight')
+    plt.close()
+    print('  Saved cumulative_energy_comparison')
+
+
+def fig_spectral_rank_comparison(layer_m, experiments, outdir):
+    """Bar chart of stable rank and rank@90% for all experiments."""
+    exp_items = [(k, v.get('label', k), v.get('color', '#333333')) for k, v in experiments.items()]
+    labels = [label for _, label, _ in exp_items]
+    colors = [color for _, _, color in exp_items]
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(13, 5.5))
+
+    for ax, metric, ylabel, title in [
+        (ax1, 'stable_rank', 'Stable Rank',
+         r'Stable Rank: $\|\Delta W\|_F^2 / \sigma_1^2$'),
+        (ax2, 'rank_90', 'Rank $k$ for 90% Energy',
+         r'Rank for 90% Energy'),
+    ]:
+        vals = []
+        for exp_key, _, _ in exp_items:
+            sub = layer_m[layer_m['experiment'] == exp_key]
+            vals.append(sub[metric].mean() if len(sub) > 0 else 0)
+
+        bars = ax.bar(range(len(vals)), vals, color=colors, alpha=0.85, edgecolor='white')
+        for bar, v in zip(bars, vals):
+            ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + max(vals) * 0.03,
+                    f'{v:.0f}', ha='center', va='bottom', fontsize=11, fontweight='bold')
+
+        ax.set_xticks(range(len(labels)))
+        ax.set_xticklabels(labels, fontsize=10, rotation=15, ha='right')
+        ax.set_ylabel(ylabel)
+        ax.set_title(title, fontsize=12, fontweight='bold')
+        ax.grid(axis='y', alpha=0.3)
+
+    plt.suptitle(r'Spectral Sparsity of Weight Updates $\Delta W$',
+                 fontsize=14, fontweight='bold', y=1.02)
+    plt.tight_layout()
+    plt.savefig(outdir / 'spectral_rank_comparison.png', dpi=200, bbox_inches='tight')
+    plt.savefig(outdir / 'spectral_rank_comparison.pdf', bbox_inches='tight')
+    plt.close()
+    print('  Saved spectral_rank_comparison')
+
+
+def fig_spectral_entropy_comparison(layer_m, experiments, outdir):
+    """Spectral entropy bar chart for all experiments."""
+    exp_items = [(k, v.get('label', k), v.get('color', '#333333')) for k, v in experiments.items()]
+    labels = [label for _, label, _ in exp_items]
+    colors = [color for _, _, color in exp_items]
+
+    fig, ax = plt.subplots(figsize=(8, 5.5))
+
+    vals = []
+    for exp_key, _, _ in exp_items:
+        sub = layer_m[layer_m['experiment'] == exp_key]
+        vals.append(sub['spectral_entropy'].mean() if len(sub) > 0 else 0)
+
+    bars = ax.bar(range(len(vals)), vals, color=colors, alpha=0.85, edgecolor='white')
+    for bar, v in zip(bars, vals):
+        ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.01,
+                f'{v:.3f}', ha='center', va='bottom', fontsize=11, fontweight='bold')
+
+    ax.set_xticks(range(len(labels)))
+    ax.set_xticklabels(labels, fontsize=11)
+    ax.set_ylabel('Spectral Entropy $H$')
+    ax.set_title('Spectral Entropy of Weight Updates\n'
+                 r'$H = 0$: rank-1 update, $H = 1$: uniform SVs',
+                 fontsize=13, fontweight='bold')
+    ax.set_ylim(0, 1.05)
+    ax.grid(axis='y', alpha=0.3)
+
+    plt.tight_layout()
+    plt.savefig(outdir / 'spectral_entropy_comparison.png', dpi=200, bbox_inches='tight')
+    plt.savefig(outdir / 'spectral_entropy_comparison.pdf', bbox_inches='tight')
+    plt.close()
+    print('  Saved spectral_entropy_comparison')
+
+
+def fig_frobenius_by_layer_comparison(layer_m, experiments, outdir):
+    """Frobenius norm by layer for all experiments."""
+    exp_items = [(k, v.get('label', k), v.get('color', '#333333')) for k, v in experiments.items()]
+
+    fig, ax = plt.subplots(figsize=(16, 6))
+    n_layers = 28
+    x = np.arange(n_layers)
+    n_exp = len(exp_items)
+    width = 0.8 / n_exp
+
+    for i, (exp_key, label, color) in enumerate(exp_items):
+        agg = layer_m[layer_m['experiment'] == exp_key].groupby('layer')['frobenius_norm'].mean()
+        vals = [agg.get(l, 0) for l in range(n_layers)]
+        offset = (i - n_exp / 2 + 0.5) * width
+        ax.bar(x + offset, vals, width, label=label, color=color, alpha=0.85)
+
+    ax.set_xlabel('Layer Index')
+    ax.set_ylabel(r'Mean $\|\Delta W\|_F$')
+    ax.set_title(r'Update Magnitude by Layer: $\|\Delta W\|_F$',
+                 fontsize=13, fontweight='bold')
+    ax.set_xticks(x)
+    ax.set_xticklabels(x)
+    ax.legend(loc='upper right')
+    ax.grid(axis='y', alpha=0.3)
+
+    plt.tight_layout()
+    plt.savefig(outdir / 'frobenius_by_layer_comparison.png', dpi=200, bbox_inches='tight')
+    plt.savefig(outdir / 'frobenius_by_layer_comparison.pdf', bbox_inches='tight')
+    plt.close()
+    print('  Saved frobenius_by_layer_comparison')
+
+
+def fig_sparsity_comparison(layer_s, experiments, outdir):
+    """% parameters changed bar chart for all experiments."""
+    exp_items = [(k, v.get('label', k), v.get('color', '#333333')) for k, v in experiments.items()]
+    labels = [label for _, label, _ in exp_items]
+    colors = [color for _, _, color in exp_items]
+
+    fig, ax = plt.subplots(figsize=(8, 5.5))
+
+    vals = []
+    for exp_key, _, _ in exp_items:
+        sub = layer_s[layer_s['experiment'] == exp_key]
+        vals.append((1 - sub['sparsity'].mean()) * 100 if len(sub) > 0 else 0)
+
+    bars = ax.bar(range(len(vals)), vals, color=colors, alpha=0.85, edgecolor='white')
+    for bar, v in zip(bars, vals):
+        ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.5,
+                f'{v:.1f}%', ha='center', va='bottom', fontsize=11, fontweight='bold')
+
+    ax.set_xticks(range(len(labels)))
+    ax.set_xticklabels(labels, fontsize=11)
+    ax.set_ylabel('Parameters Changed (%)')
+    ax.set_title(r'Parameter-Level Sparsity: $\|\Delta W\|_0 / n$',
+                 fontsize=13, fontweight='bold')
+    ax.set_ylim(0, max(vals) * 1.15 if vals else 10)
+    ax.grid(axis='y', alpha=0.3)
+
+    plt.tight_layout()
+    plt.savefig(outdir / 'sparsity_comparison.png', dpi=200, bbox_inches='tight')
+    plt.savefig(outdir / 'sparsity_comparison.pdf', bbox_inches='tight')
+    plt.close()
+    print('  Saved sparsity_comparison')
+
+
+def fig_spectral_entropy_by_layer_comparison(layer_m, experiments, outdir):
+    """Spectral entropy by layer for all experiments."""
+    exp_items = [(k, v.get('label', k), v.get('color', '#333333')) for k, v in experiments.items()]
+
+    fig, ax = plt.subplots(figsize=(16, 6))
+    n_layers = 28
+    x = np.arange(n_layers)
+    n_exp = len(exp_items)
+    width = 0.8 / n_exp
+
+    for i, (exp_key, label, color) in enumerate(exp_items):
+        agg = layer_m[layer_m['experiment'] == exp_key].groupby('layer')['spectral_entropy'].mean()
+        vals = [agg.get(l, 0) for l in range(n_layers)]
+        offset = (i - n_exp / 2 + 0.5) * width
+        ax.bar(x + offset, vals, width, label=label, color=color, alpha=0.85)
+
+    ax.set_xlabel('Layer Index')
+    ax.set_ylabel('Spectral Entropy $H$')
+    ax.set_title('Spectral Entropy by Layer\n'
+                 r'$H \in [0,1]$: lower = more energy concentrated in top SVs',
+                 fontsize=13, fontweight='bold')
+    ax.set_xticks(x)
+    ax.set_xticklabels(x)
+    ax.legend(loc='lower right', ncol=2)
+    ax.grid(axis='y', alpha=0.3)
+
+    plt.tight_layout()
+    plt.savefig(outdir / 'spectral_entropy_by_layer_comparison.png', dpi=200, bbox_inches='tight')
+    plt.savefig(outdir / 'spectral_entropy_by_layer_comparison.pdf', bbox_inches='tight')
+    plt.close()
+    print('  Saved spectral_entropy_by_layer_comparison')
+
+
+def fig_rank90_by_layer_comparison(layer_m, experiments, outdir):
+    """Rank@90% by layer for all experiments."""
+    exp_items = [(k, v.get('label', k), v.get('color', '#333333')) for k, v in experiments.items()]
+
+    fig, ax = plt.subplots(figsize=(16, 6))
+    n_layers = 28
+    x = np.arange(n_layers)
+    n_exp = len(exp_items)
+    width = 0.8 / n_exp
+
+    for i, (exp_key, label, color) in enumerate(exp_items):
+        agg = layer_m[layer_m['experiment'] == exp_key].groupby('layer')['rank_90'].mean()
+        vals = [agg.get(l, 0) for l in range(n_layers)]
+        offset = (i - n_exp / 2 + 0.5) * width
+        ax.bar(x + offset, vals, width, label=label, color=color, alpha=0.85)
+
+    ax.set_xlabel('Layer Index')
+    ax.set_ylabel('Rank $k$ for 90% Energy')
+    ax.set_title('Rank for 90% Energy by Layer', fontsize=13, fontweight='bold')
+    ax.set_xticks(x)
+    ax.set_xticklabels(x)
+    ax.legend(loc='upper right')
+    ax.grid(axis='y', alpha=0.3)
+
+    plt.tight_layout()
+    plt.savefig(outdir / 'rank90_by_layer_comparison.png', dpi=200, bbox_inches='tight')
+    plt.savefig(outdir / 'rank90_by_layer_comparison.pdf', bbox_inches='tight')
+    plt.close()
+    print('  Saved rank90_by_layer_comparison')
+
+
+# =============================================================================
 # MAIN
 # =============================================================================
 
@@ -1893,38 +2173,60 @@ def main():
 
     print(f'Rendering to {outdir}/')
     print()
-    print('Figures:')
-    fig_l0_by_precision(layer_s, outdir)
-    fig_spectral_rank(layer_m, outdir)
-    fig_cumulative_energy(svd_cache, outdir)
-    fig_param_vs_spectral(layer_m, layer_s, outdir)
-    fig_90pct_energy(layer_m, outdir)
-    fig_90pct_by_layer(layer_m, outdir)
-    fig_cumulative_4panel(svd_cache, outdir)
-    fig_l0_vs_rank90(layer_m, layer_s, svd_cache, outdir)
-    fig_absolute_sv(svd_cache, outdir)
-    fig_spectral_l0(layer_m, layer_s, svd_cache, outdir)
-    fig_total_magnitude(layer_m, layer_s, svd_cache, outdir)
-    fig_spectral_entropy(layer_m, outdir)
-    fig_spectral_entropy_by_layer(layer_m, outdir)
-    fig_spectral_l0_multi_threshold(layer_m, layer_s, svd_cache, outdir)
-    fig_standup_1_bf16_artifact(layer_s, svd_cache, layer_m, outdir)
-    fig_standup_2_fp32_rank(layer_m, outdir)
-    fig_standup_3_bf16_destroys_structure(svd_cache, outdir)
-    fig_spectral_energy_by_dtype(svd_cache, outdir)
-    fig_sv_distribution_stats(svd_cache, outdir)
-    fig_bf16_energy_ratio(svd_cache, outdir)
-    fig_90pct_by_precision(layer_m, outdir)
 
-    print()
-    print('Tables:')
-    table_precision_artifact(layer_m, layer_s, outdir)
-    table_spectral_fp32(layer_m, layer_s, outdir)
-    table_2x2_punchline(layer_m, outdir)
-    table_full_picture(layer_m, layer_s, svd_cache, outdir)
-    table_spectral_summary(layer_m, layer_s, svd_cache, outdir)
-    table_spectral_energy(svd_cache, outdir)
-    table_90pct_all_precisions(layer_m, layer_s, outdir)
+    # Detect mode: precision-comparison (keys end with _fp32/_bf16/_mixed)
+    # vs direct comparison (keys are just experiment names)
+    has_precision_suffix = any(
+        k.endswith(('_fp32', '_bf16', '_mixed')) for k in experiments
+    )
+
+    if has_precision_suffix:
+        print('Mode: precision comparison (dtype study)')
+        print()
+        print('Figures:')
+        fig_l0_by_precision(layer_s, outdir)
+        fig_spectral_rank(layer_m, outdir)
+        fig_cumulative_energy(svd_cache, outdir)
+        fig_param_vs_spectral(layer_m, layer_s, outdir)
+        fig_90pct_energy(layer_m, outdir)
+        fig_90pct_by_layer(layer_m, outdir)
+        fig_cumulative_4panel(svd_cache, outdir)
+        fig_l0_vs_rank90(layer_m, layer_s, svd_cache, outdir)
+        fig_absolute_sv(svd_cache, outdir)
+        fig_spectral_l0(layer_m, layer_s, svd_cache, outdir)
+        fig_total_magnitude(layer_m, layer_s, svd_cache, outdir)
+        fig_spectral_entropy(layer_m, outdir)
+        fig_spectral_entropy_by_layer(layer_m, outdir)
+        fig_spectral_l0_multi_threshold(layer_m, layer_s, svd_cache, outdir)
+        fig_standup_1_bf16_artifact(layer_s, svd_cache, layer_m, outdir)
+        fig_standup_2_fp32_rank(layer_m, outdir)
+        fig_standup_3_bf16_destroys_structure(svd_cache, outdir)
+        fig_spectral_energy_by_dtype(svd_cache, outdir)
+        fig_sv_distribution_stats(svd_cache, outdir)
+        fig_bf16_energy_ratio(svd_cache, outdir)
+        fig_90pct_by_precision(layer_m, outdir)
+
+        print()
+        print('Tables:')
+        table_precision_artifact(layer_m, layer_s, outdir)
+        table_spectral_fp32(layer_m, layer_s, outdir)
+        table_2x2_punchline(layer_m, outdir)
+        table_full_picture(layer_m, layer_s, svd_cache, outdir)
+        table_spectral_summary(layer_m, layer_s, svd_cache, outdir)
+        table_spectral_energy(svd_cache, outdir)
+        table_90pct_all_precisions(layer_m, layer_s, outdir)
+    else:
+        print('Mode: direct comparison (optimizer × algorithm)')
+        print()
+        print('Figures:')
+        fig_mean_spectral_decay(svd_cache, experiments, outdir)
+        fig_cumulative_energy_comparison(svd_cache, experiments, outdir)
+        fig_spectral_rank_comparison(layer_m, experiments, outdir)
+        fig_spectral_entropy_comparison(layer_m, experiments, outdir)
+        fig_spectral_entropy_by_layer_comparison(layer_m, experiments, outdir)
+        fig_frobenius_by_layer_comparison(layer_m, experiments, outdir)
+        fig_rank90_by_layer_comparison(layer_m, experiments, outdir)
+        fig_sparsity_comparison(layer_s, experiments, outdir)
 
     n_files = len(list(outdir.glob('*.*')))
     print(f'\nDone! {n_files} files saved to {outdir}/')

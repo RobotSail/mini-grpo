@@ -2313,6 +2313,8 @@ def generate_countdown_datasets(
     output_dir: str = typer.Option("generated_data", "--output-dir", help="Directory to save datasets"),
     val_split: float = typer.Option(0.05, "--val-split", help="Fraction of data for validation set"),
     test_split: float = typer.Option(0.05, "--test-split", help="Fraction of data for test set"),
+    skip_verify: bool = typer.Option(False, "--skip-verify", help="Skip reward function verification of generated solutions"),
+    grpo_only: bool = typer.Option(False, "--grpo-only", help="Skip solving problems (no SFT splits, much faster)"),
 ):
     """
     Generate paired GRPO and SFT countdown datasets from Jiayi-Pan/Countdown-Tasks-3to4.
@@ -2336,11 +2338,17 @@ def generate_countdown_datasets(
         seed=seed,
         val_split=val_split,
         test_split=test_split,
+        verify=not skip_verify,
+        grpo_only=grpo_only,
     )
 
     os.makedirs(output_dir, exist_ok=True)
 
-    for split_name in ["grpo_train", "grpo_val", "grpo_test", "sft_train", "sft_val", "sft_test"]:
+    splits = ["grpo_train", "grpo_val", "grpo_test"]
+    if not grpo_only:
+        splits += ["sft_train", "sft_val", "sft_test"]
+
+    for split_name in splits:
         samples = result[split_name]
         ds = datasets.Dataset.from_list(samples)
         path = os.path.join(output_dir, f"countdown_{split_name}.jsonl")
@@ -2364,7 +2372,6 @@ def generate_countdown_datasets(
 
     for ex_idx in range(num_examples):
         grpo_sample = result["grpo_train"][ex_idx]
-        sft_sample = result["sft_train"][ex_idx]
 
         typer.secho(f"\n{'─' * 70}", fg=typer.colors.WHITE)
         typer.secho(f"  Example {ex_idx + 1}", fg=typer.colors.BRIGHT_CYAN, bold=True)
@@ -2381,16 +2388,69 @@ def generate_countdown_datasets(
                 content = content[:80] + "..." if len(content) > 80 else content
             typer.secho(f"    [{role}]: {content}", fg=typer.colors.WHITE)
 
-        typer.secho(f"\n  [SFT Format] (includes assistant response)", fg=typer.colors.GREEN, bold=True)
-        for msg in sft_sample["messages"]:
-            role = msg["role"].upper()
-            content = msg["content"]
-            if role == "SYSTEM":
-                content = content[:80] + "..." if len(content) > 80 else content
-            color = typer.colors.BRIGHT_GREEN if role == "ASSISTANT" else typer.colors.WHITE
-            typer.secho(f"    [{role}]: {content}", fg=color)
+        if not grpo_only and ex_idx < len(result["sft_train"]):
+            sft_sample = result["sft_train"][ex_idx]
+            typer.secho(f"\n  [SFT Format] (includes assistant response)", fg=typer.colors.GREEN, bold=True)
+            for msg in sft_sample["messages"]:
+                role = msg["role"].upper()
+                content = msg["content"]
+                if role == "SYSTEM":
+                    content = content[:80] + "..." if len(content) > 80 else content
+                color = typer.colors.BRIGHT_GREEN if role == "ASSISTANT" else typer.colors.WHITE
+                typer.secho(f"    [{role}]: {content}", fg=color)
 
     typer.secho(f"\n{'=' * 70}\n", fg=typer.colors.BRIGHT_CYAN)
+
+
+@app.command()
+def convert_grpo_to_sft(
+    input_path: str = typer.Option(..., "--input", "-i", help="Path to GRPO jsonl file"),
+    output_path: str = typer.Option(None, "--output", "-o", help="Output SFT jsonl path (default: replace 'grpo' with 'sft' in input name)"),
+):
+    """
+    Convert a GRPO countdown dataset to SFT format by solving each problem.
+
+    Reads a GRPO jsonl (with 'numbers' and 'answer' fields), solves each
+    problem via brute-force, and outputs an SFT jsonl with the assistant
+    response included. Skips unsolvable problems.
+    """
+    from countdown_utils import solve_countdown
+
+    if output_path is None:
+        output_path = input_path.replace("grpo", "sft")
+        if output_path == input_path:
+            output_path = input_path.replace(".jsonl", "_sft.jsonl")
+
+    with open(input_path) as f:
+        samples = [json.loads(line) for line in f]
+
+    typer.secho(f"Loaded {len(samples)} GRPO samples from {input_path}", fg=typer.colors.CYAN)
+
+    sft_samples = []
+    skipped = 0
+    for sample in tqdm(samples, desc="Solving"):
+        numbers = sample["numbers"]
+        target = int(sample["answer"])
+        expression = solve_countdown(numbers, target)
+        if expression is None:
+            skipped += 1
+            continue
+
+        messages = list(sample["messages"]) + [
+            {"role": "assistant", "content": f"<answer>{expression}</answer>"},
+        ]
+        sft_samples.append({
+            "messages": messages,
+            "answer": target,
+            "numbers": numbers,
+        })
+
+    ds = datasets.Dataset.from_list(sft_samples)
+    ds.to_json(output_path)
+
+    typer.secho(f"Saved {len(sft_samples)} SFT samples to {output_path}", fg=typer.colors.GREEN)
+    if skipped > 0:
+        typer.secho(f"Skipped {skipped} unsolvable problems", fg=typer.colors.YELLOW)
 
 
 def _is_vllm_line_important(text: str) -> bool:
@@ -2524,12 +2584,16 @@ def countdown_grpo_train(
         "Qwen/Qwen2-1.5B-Instruct", "--model", "-m", help="Model name or path",
     ),
 
-    max_tokens: int = typer.Option(..., "--max-tokens", help="Total token budget (loss-counted tokens backpropped on)"),
+    max_tokens: int = typer.Option(0, "--max-tokens", help="Total token budget (0 = use --max-steps instead)"),
+    max_steps: int = typer.Option(0, "--max-steps", help="Total optimizer step budget (0 = use --max-tokens instead)"),
     inner_epochs: int = typer.Option(2, "--inner-epochs", help="Inner epochs per rollout batch"),
     inner_batch_size: int = typer.Option(32, "--inner-batch-size", help="Training batch size for GRPO inner loop"),
 
     save_every_n_tokens: int = typer.Option(
         0, "--save-every-n-tokens", help="Save checkpoint every N tokens (0 = disabled)"
+    ),
+    save_every_n_steps: int = typer.Option(
+        0, "--save-every-n-steps", help="Save checkpoint every N optimizer steps (0 = disabled)"
     ),
 
     # GRPO settings
@@ -2683,9 +2747,11 @@ def countdown_grpo_train(
             "--output-dir", output_dir,
             "--model", model_name,
             "--max-tokens", str(max_tokens),
+            "--max-steps", str(max_steps),
             "--inner-epochs", str(inner_epochs),
             "--inner-batch-size", str(inner_batch_size),
             "--save-every-n-tokens", str(save_every_n_tokens),
+            "--save-every-n-steps", str(save_every_n_steps),
             "--group-size", str(group_size),
             "--batch-size", str(batch_size),
             "--clip-eps", str(clip_eps),
@@ -2772,10 +2838,12 @@ def countdown_grpo_worker(
     data_path: str = typer.Option(..., "--data-path"),
     output_dir: str = typer.Option(..., "--output-dir"),
     model_name: str = typer.Option("Qwen/Qwen2-1.5B-Instruct", "--model", "-m"),
-    max_tokens: int = typer.Option(..., "--max-tokens"),
+    max_tokens: int = typer.Option(0, "--max-tokens"),
+    max_steps: int = typer.Option(0, "--max-steps"),
     inner_epochs: int = typer.Option(2, "--inner-epochs"),
     inner_batch_size: int = typer.Option(32, "--inner-batch-size"),
     save_every_n_tokens: int = typer.Option(0, "--save-every-n-tokens"),
+    save_every_n_steps: int = typer.Option(0, "--save-every-n-steps"),
     group_size: int = typer.Option(16, "-G", "--group-size"),
     batch_size: int = typer.Option(64, "-B", "--batch-size"),
     clip_eps: float = typer.Option(0.2, "--clip-eps"),
@@ -2816,9 +2884,11 @@ def countdown_grpo_worker(
         model_name=model_name,
         output_dir=output_dir,
         token_budget=max_tokens,
+        max_steps=max_steps,
         inner_epochs=inner_epochs,
         inner_batch_size=inner_batch_size,
         save_every_n_tokens=save_every_n_tokens,
+        save_every_n_steps=save_every_n_steps,
         group_size=group_size,
         batch_size=batch_size,
         clip_eps=clip_eps,

@@ -24,6 +24,7 @@ import random
 from itertools import permutations, product
 
 import datasets
+from tqdm import tqdm
 
 # ── Constants ───────────────────────────────────────────────────────────────
 
@@ -229,6 +230,8 @@ def generate_countdown_dataset(
     seed: int = 42,
     val_split: float = 0.05,
     test_split: float = 0.05,
+    verify: bool = True,
+    grpo_only: bool = False,
 ) -> dict[str, list[dict]]:
     """Load countdown problems from HuggingFace and generate paired GRPO/SFT datasets.
 
@@ -261,24 +264,31 @@ def generate_countdown_dataset(
     # Shuffle deterministically
     raw_dataset = raw_dataset.shuffle(seed=seed)
 
-    # Solve all problems, collect solvable ones
+    # Collect problems (solve for SFT ground truth unless grpo_only)
     solved = []  # list of (numbers, target, expression)
     skipped = 0
     limit = total_samples if total_samples > 0 else len(raw_dataset)
 
-    for sample in raw_dataset:
+    desc = "Loading problems" if grpo_only else "Solving problems"
+    pbar = tqdm(raw_dataset, total=limit, desc=desc)
+    for sample in pbar:
         if len(solved) >= limit:
             break
 
         target = sample["target"]
         numbers = list(sample["nums"])
 
-        expression = solve_countdown(numbers, target)
-        if expression is None:
-            skipped += 1
-            continue
-
-        solved.append((numbers, target, expression))
+        if grpo_only:
+            solved.append((numbers, target, None))
+        else:
+            expression = solve_countdown(numbers, target)
+            if expression is None:
+                skipped += 1
+                pbar.total = min(pbar.total + 1, len(raw_dataset))
+                continue
+            solved.append((numbers, target, expression))
+        pbar.update(0)  # refresh display
+    pbar.close()
 
     if skipped > 0:
         print(f"Skipped {skipped} unsolvable problems")
@@ -297,7 +307,6 @@ def generate_countdown_dataset(
         grpo, sft = [], []
         for numbers, target, expression in items:
             user_prompt = _format_user_prompt(numbers, target)
-            sft_response = f"<answer>{expression}</answer>"
 
             grpo.append({
                 "messages": [
@@ -310,15 +319,16 @@ def generate_countdown_dataset(
                 "operation": "countdown",
             })
 
-            sft.append({
-                "messages": [
-                    {"role": "system", "content": system_msg},
-                    {"role": "user", "content": user_prompt},
-                    {"role": "assistant", "content": sft_response},
-                ],
-                "answer": target,
-                "numbers": numbers,
-            })
+            if expression is not None:
+                sft.append({
+                    "messages": [
+                        {"role": "system", "content": system_msg},
+                        {"role": "user", "content": user_prompt},
+                        {"role": "assistant", "content": f"<answer>{expression}</answer>"},
+                    ],
+                    "answer": target,
+                    "numbers": numbers,
+                })
         return grpo, sft
 
     grpo_train, sft_train = _to_formats(train_solved)
@@ -326,20 +336,21 @@ def generate_countdown_dataset(
     grpo_test, sft_test = _to_formats(test_solved)
 
     # ── Verify all solutions pass the reward function ──
-    for label, grpo_list, sft_list in [
-        ("train", grpo_train, sft_train),
-        ("val", grpo_val, sft_val),
-        ("test", grpo_test, sft_test),
-    ]:
-        for i in range(len(grpo_list)):
-            numbers = grpo_list[i]["numbers"]
-            target = grpo_list[i]["answer"]
-            sft_response = sft_list[i]["messages"][2]["content"]
-            r = countdown_reward_fn(sft_response, target, {"numbers": numbers})
-            assert r["is_parsable"] and r["is_correct"], (
-                f"{label} sample {i} failed verification: {r}, "
-                f"target={target}, numbers={numbers}, response={sft_response!r}"
-            )
+    if verify and not grpo_only:
+        for label, grpo_list, sft_list in [
+            ("train", grpo_train, sft_train),
+            ("val", grpo_val, sft_val),
+            ("test", grpo_test, sft_test),
+        ]:
+            for i in range(len(grpo_list)):
+                numbers = grpo_list[i]["numbers"]
+                target = grpo_list[i]["answer"]
+                sft_response = sft_list[i]["messages"][2]["content"]
+                r = countdown_reward_fn(sft_response, target, {"numbers": numbers})
+                assert r["is_parsable"] and r["is_correct"], (
+                    f"{label} sample {i} failed verification: {r}, "
+                    f"target={target}, numbers={numbers}, response={sft_response!r}"
+                )
 
     return {
         "grpo_train": grpo_train,

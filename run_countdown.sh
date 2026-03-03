@@ -13,19 +13,20 @@ set -eo pipefail
 CHECKPOINT_PREFIX="/mnt/nvme2n1/checkpoints/countdown"
 DATA_DIR="generated_data"
 MODEL="Qwen/Qwen2-1.5B-Instruct"
-TOTAL_SAMPLES=15000
-VAL_SPLIT=0.1
-TEST_SPLIT=0.1
+TOTAL_SAMPLES=400000
+VAL_SPLIT=0.00375
+TEST_SPLIT=0.05
 
-# ── Step 0: Generate countdown data (50K samples, seed 67) ──
+# ── Step 0: Generate countdown data ──
 if [ ! -f "${DATA_DIR}/countdown_grpo_train.jsonl" ]; then
-    echo "Generating 50K countdown samples..."
+    echo "Generating ${TOTAL_SAMPLES} countdown samples..."
     python cli.py generate-countdown-datasets \
         --total-samples "${TOTAL_SAMPLES}" \
         --output-dir "${DATA_DIR}" \
         --val-split "${VAL_SPLIT}" \
         --test-split "${TEST_SPLIT}" \
-        --seed 67
+        --seed 67 \
+        --grpo-only
 fi
 
 GRPO_DATA="${DATA_DIR}/countdown_grpo_train.jsonl"
@@ -37,13 +38,13 @@ SFT_DATA="${DATA_DIR}/countdown_sft_train.jsonl"
 #   inner_epochs=1, inner_batch_size=128 → 1 gradient step per rollout batch
 # SFT: batch_size=128 → 128 samples per gradient step (matching GRPO)
 LR="3e-7"
-GROUP_SIZE=16
-BATCH_SIZE=32
+GROUP_SIZE=8
+BATCH_SIZE=16
 INNER_BATCH_SIZE=128
 INNER_EPOCHS=1
 SFT_BATCH_SIZE=128
-MAX_TOKENS=15000000
-SAVE_EVERY=1000000
+MAX_STEPS=2000
+SAVE_EVERY_STEPS=25
 TEMPERATURE=1.0
 KL=0
 FORMAT_REWARD=0.00
@@ -69,8 +70,8 @@ python cli.py countdown-grpo-train \
     --group-size ${GROUP_SIZE} \
     --inner-batch-size ${INNER_BATCH_SIZE} \
     --inner-epochs ${INNER_EPOCHS} \
-    --max-tokens ${MAX_TOKENS} \
-    --save-every-n-tokens ${SAVE_EVERY} \
+    --max-steps ${MAX_STEPS} \
+    --save-every-n-steps ${SAVE_EVERY_STEPS} \
     --seed ${SEED} \
     --temp ${TEMPERATURE} \
     --kl ${KL} \
@@ -103,8 +104,8 @@ python cli.py countdown-grpo-train \
     --group-size ${GROUP_SIZE} \
     --inner-batch-size ${INNER_BATCH_SIZE} \
     --inner-epochs ${INNER_EPOCHS} \
-    --max-tokens ${MAX_TOKENS} \
-    --save-every-n-tokens ${SAVE_EVERY} \
+    --max-steps ${MAX_STEPS} \
+    --save-every-n-steps ${SAVE_EVERY_STEPS} \
     --seed ${SEED} \
     --temp ${TEMPERATURE} \
     --kl ${KL} \
@@ -134,8 +135,8 @@ python cli.py countdown-sft-train \
     --optimizer adamw --precision mixed \
     --lr ${LR} \
     --batch-size ${SFT_BATCH_SIZE} \
-    --max-tokens ${MAX_TOKENS} \
-    --save-every-n-tokens ${SAVE_EVERY} \
+    --max-steps ${MAX_STEPS} \
+    --save-every-n-steps ${SAVE_EVERY_STEPS} \
     --seed ${SEED} \
     --lr-scheduler constant \
     --max-tokens-per-gpu ${MAX_TOKENS_PER_GPU} \
@@ -160,8 +161,8 @@ python cli.py countdown-sft-train \
     --optimizer muon --precision mixed \
     --lr ${LR} \
     --batch-size ${SFT_BATCH_SIZE} \
-    --max-tokens ${MAX_TOKENS} \
-    --save-every-n-tokens ${SAVE_EVERY} \
+    --max-steps ${MAX_STEPS} \
+    --save-every-n-steps ${SAVE_EVERY_STEPS} \
     --seed ${SEED} \
     --lr-scheduler constant \
     --max-tokens-per-gpu ${MAX_TOKENS_PER_GPU} \
