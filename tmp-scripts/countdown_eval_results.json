@@ -1,0 +1,32 @@
+{
+  "grpo_adamw": {
+    "step": 4286212,
+    "path": "/mnt/nvme2n1/checkpoints/countdown/grpo/adamw/checkpoint-4286212",
+    "accuracy": 0.088,
+    "parsable_rate": 0.5993333333333334,
+    "correct": 132,
+    "total_samples": 1500,
+    "forward_kl": 0.12558470217471623,
+    "forward_kl_std": 0.0472392812371254,
+    "ece": 0.8424702662524023,
+    "mce": 0.8560367123306404,
+    "brier": 0.7986232511340556,
+    "nll": 2.7822153669952994,
+    "mean_confidence": 0.938610106019336
+  },
+  "grpo_muon": {
+    "step": 12495890,
+    "path": "/mnt/nvme2n1/checkpoints/countdown/grpo/muon/checkpoint-12495890",
+    "accuracy": 0.11466666666666667,
+    "parsable_rate": 0.286,
+    "correct": 172,
+    "total_samples": 1500,
+    "forward_kl": 0.27319559117824743,
+    "forward_kl_std": 0.17263643443584442,
+    "ece": 0.7571776574789207,
+    "mce": 0.8317306025935545,
+    "brier": 0.6766558344799251,
+    "nll": 2.0971258635839396,
+    "mean_confidence": 0.888877504339564
+  }
+}

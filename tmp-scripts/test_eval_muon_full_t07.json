@@ -1,0 +1,18 @@
+{
+  "checkpoint": "/mnt/nvme2n1/checkpoints/countdown/grpo/muon/checkpoint-17657432",
+  "base_model": "Qwen/Qwen2-1.5B-Instruct",
+  "correct": 4669,
+  "parsable": 17289,
+  "total": 20000,
+  "accuracy": 0.23345,
+  "parsable_rate": 0.86445,
+  "forward_kl": 0.8427487258353408,
+  "forward_kl_std": 0.18541663885116577,
+  "kl_tokens": 831166,
+  "ece": 0.7251583180879229,
+  "mce": 0.8078702742549673,
+  "brier": 0.699040201242764,
+  "nll": 3.3365196671857307,
+  "mean_confidence": 0.9640185012362322,
+  "n_calibration_samples": 19547
+}

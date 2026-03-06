@@ -5,6 +5,10 @@ build/
 dist/
 wheels/
 *.egg-info
+eval_results
+countdown_weight_updates
+countdown_svd_cache
+generated_data_thinking
 
 # Virtual environments
 .venv

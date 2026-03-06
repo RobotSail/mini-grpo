@@ -1,0 +1,9 @@
+{
+  "checkpoint": "/mnt/nvme2n1/checkpoints/countdown/grpo/adamw/checkpoint-4264617",
+  "test_data": "generated_data/countdown_grpo_test.jsonl",
+  "total": 20000,
+  "correct": 4970,
+  "parsable": 18308,
+  "accuracy": 0.2485,
+  "parsable_rate": 0.9154
+}

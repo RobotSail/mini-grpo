@@ -1,0 +1,18 @@
+{
+  "checkpoint": "/mnt/nvme2n1/checkpoints/countdown/grpo/adamw/checkpoint-4286212",
+  "base_model": "Qwen/Qwen2-1.5B-Instruct",
+  "correct": 132,
+  "parsable": 899,
+  "total": 1500,
+  "accuracy": 0.088,
+  "parsable_rate": 0.5993333333333334,
+  "forward_kl": 0.12558470217471623,
+  "forward_kl_std": 0.0472392812371254,
+  "kl_tokens": 234084,
+  "ece": 0.8424702662524023,
+  "mce": 0.8560367123306404,
+  "brier": 0.7986232511340556,
+  "nll": 2.7822153669952994,
+  "mean_confidence": 0.938610106019336,
+  "n_calibration_samples": 1373
+}

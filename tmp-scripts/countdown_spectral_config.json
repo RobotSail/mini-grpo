@@ -1,0 +1,12 @@
+{
+    "adamw_grpo": {
+        "path": "/mnt/nvme2n1/checkpoints/countdown/grpo/adamw/checkpoint-4286212",
+        "label": "AdamW + GRPO",
+        "color": "#1f77b4"
+    },
+    "muon_grpo": {
+        "path": "/mnt/nvme2n1/checkpoints/countdown/grpo/muon/checkpoint-12495890",
+        "label": "Muon + GRPO",
+        "color": "#d62728"
+    }
+}
