@@ -4,16 +4,16 @@ Countdown Numbers Game: dataset loading, expression validation, and reward funct
 The countdown task: given N numbers and a target, find an arithmetic expression
 using +, -, *, / where each number is used exactly once that equals the target.
 
-Expected answer format: <answer>EXPRESSION</answer>
-  e.g. <answer>(25 + 3) * 7</answer>
+Expected response format (R1-style):
+  <think>...step-by-step reasoning...</think>
+  <answer>EXPRESSION</answer>
+  e.g. <think>I can try 25 + 3 = 28, then 28 * 7 = 196...</think>
+       <answer>(25 + 3) * 7</answer>
 
-Reward structure: {0.0, 0.1, 1.1}
-  0.0 — no <answer> tag, empty content, fails lexical filter, invalid AST,
-        or wrong numbers
-  0.1 — format reward: <answer> tags present, valid AST (only +,-,*,/ and
-        parens over numeric literals), numbers extracted from AST match
-        the given numbers exactly (multiset equality)
-  1.1 — format + correctness: valid format AND expression evaluates to target
+Reward structure: {0.0, format_reward, 1.0 + format_reward}
+  0.0            — missing format OR missing/invalid answer
+  format_reward  — </think> appears before <answer>, and <answer> tags present
+  1.0 + format   — correct format AND expression evaluates to target
 
 Data source: Jiayi-Pan/Countdown-Tasks-3to4 from HuggingFace
 """
@@ -29,13 +29,12 @@ from tqdm import tqdm
 # ── Constants ───────────────────────────────────────────────────────────────
 
 DEFAULT_COUNTDOWN_SYSTEM_MSG = (
-    "You are a countdown numbers game solver. Given a set of numbers and a target, "
-    "find an arithmetic expression using +, -, *, / that equals the target. Each "
-    "number must be used exactly once. Show your reasoning, then put your final "
-    "expression inside <answer>...</answer> tags.\n\n"
-    "Example: numbers [1, 3, 4, 6], target 24\n"
-    "<answer>6 / (1 - 3 / 4)</answer>"
+    "You are a helpful assistant that solves arithmetic problems. "
+    "You always think step by step before answering."
 )
+
+# Assistant prefix that forces the model to begin chain-of-thought
+R1_ASSISTANT_PREFIX = "<think>\n"
 
 ANSWER_PATTERN = re.compile(r"<answer>(.*?)</answer>", re.DOTALL | re.IGNORECASE)
 ALLOWED_EXPR_CHARS = re.compile(r"^[\d\s()+\-*/\.]+$")
@@ -124,40 +123,51 @@ def countdown_reward_fn(
 ) -> dict:
     """Grade a countdown response, returning structured results.
 
+    The model must produce the full format including opening tags:
+
+        <think>...reasoning...</think>
+        <answer>(3 + 4) * 2</answer>
+
     Returns dict with:
+      has_format:  bool — ``<think>...</think>`` before ``<answer>...</answer>``
       is_parsable: bool — valid AST using exactly the given numbers
       is_correct:  bool — is_parsable AND expression evaluates to target
-
-    The trainer computes the scalar reward from these flags + its own
-    format_reward weight.
     """
     numbers = prompt_data.get("numbers")
     target = int(answer)
-    result = {"is_parsable": False, "is_correct": False}
+    result = {"has_format": False, "is_parsable": False, "is_correct": False}
 
-    # Step 1: Extract answer tag
+    # ── Format check: <think>...</think> before <answer>...</answer> ──
+    resp_lower = response.lower()
+    think_start = resp_lower.find("<think>")
+    think_end = resp_lower.find("</think>")
+    answer_start = resp_lower.find("<answer>")
+    has_think = think_start != -1 and think_end != -1 and think_start < think_end
+    has_answer_tag = answer_start != -1
+    if has_think and has_answer_tag and think_end < answer_start:
+        result["has_format"] = True
+
+    # ── Answer validation (same as before) ──
     matches = ANSWER_PATTERN.findall(response)
     if not matches:
         return result
 
     content = matches[-1].strip()
 
-    # Step 2: Non-empty check
     if not content:
         return result
 
-    # Step 3: Lexical filter (cheap, rejects obvious junk before parsing)
+    # Lexical filter (cheap, rejects obvious junk before parsing)
     if not ALLOWED_EXPR_CHARS.match(content) or "**" in content:
         return result
 
-    # Step 4: AST validation — valid expression structure using exactly
-    # the given numbers (extracted from AST, not regex)
+    # AST validation — valid expression structure using exactly the given numbers
     if numbers is not None and not validate_ast(content, numbers):
         return result
 
     result["is_parsable"] = True
 
-    # Step 5: Correctness check (evaluates to target)
+    # Correctness check (evaluates to target)
     if numbers is not None and validate_expression(content, numbers, target):
         result["is_correct"] = True
 
@@ -219,8 +229,18 @@ def solve_countdown(numbers: list[int], target: int, tol: float = 1e-6) -> str |
 def _format_user_prompt(numbers: list[int], target: int) -> str:
     nums_str = ", ".join(str(n) for n in numbers)
     return (
-        f"Using the numbers [{nums_str}], reach the target {target}. "
-        f"Each number must be used exactly once. Available operations: +, -, *, /."
+        f"Using the numbers [{nums_str}], create an equation that equals {target}. "
+        f"Each number must be used exactly once. "
+        f"You may use the following operations:\n"
+        f"  - Addition (+): e.g. 3 + 5 = 8\n"
+        f"  - Subtraction (-): e.g. 10 - 4 = 6\n"
+        f"  - Multiplication (*): e.g. 6 * 7 = 42\n"
+        f"  - Division (/): e.g. 20 / 4 = 5\n"
+        f"You may also use parentheses to change the order of operations.\n\n"
+        f"Reason step by step inside <think>...</think> tags, then give your "
+        f"final equation inside <answer>...</answer> tags. Examples:\n"
+        f"<answer>(1 + 2) * 3</answer>\n"
+        f"<answer>(8 - 3) * (12 / 4)</answer>"
     )
 
 

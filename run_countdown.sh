@@ -11,7 +11,7 @@ set -eo pipefail
 # ========================================
 
 CHECKPOINT_PREFIX="/mnt/nvme2n1/checkpoints/countdown"
-DATA_DIR="generated_data"
+DATA_DIR="generated_data_thinking"
 MODEL="Qwen/Qwen2-1.5B-Instruct"
 TOTAL_SAMPLES=400000
 VAL_SPLIT=0.00375
@@ -38,19 +38,20 @@ SFT_DATA="${DATA_DIR}/countdown_sft_train.jsonl"
 #   inner_epochs=1, inner_batch_size=128 → 1 gradient step per rollout batch
 # SFT: batch_size=128 → 128 samples per gradient step (matching GRPO)
 LR="3e-7"
-GROUP_SIZE=8
-BATCH_SIZE=16
-INNER_BATCH_SIZE=128
+GROUP_SIZE=16
+BATCH_SIZE=32
+INNER_BATCH_SIZE=512
 INNER_EPOCHS=1
-SFT_BATCH_SIZE=128
-MAX_STEPS=2000
-SAVE_EVERY_STEPS=25
+SFT_BATCH_SIZE=512
+MAX_STEPS=5_000
+SAVE_EVERY_STEPS=105
 TEMPERATURE=1.0
 KL=0
-FORMAT_REWARD=0.00
+FORMAT_REWARD=0.10
 UPDATE_REF_EVERY=0
 SEED=67
 MAX_TOKENS_PER_GPU=8192
+MAX_NEW_TOKENS=1024
 
 # ========================================
 # Run 1: GRPO AdamW
@@ -76,6 +77,7 @@ python cli.py countdown-grpo-train \
     --temp ${TEMPERATURE} \
     --kl ${KL} \
     --format-reward ${FORMAT_REWARD} \
+    --max-new-tokens ${MAX_NEW_TOKENS} \
     --update-ref-every ${UPDATE_REF_EVERY} \
     --train-gpus 0,1 \
     --vllm-gpus 2,3,4,5,6,7 \
@@ -109,6 +111,7 @@ python cli.py countdown-grpo-train \
     --seed ${SEED} \
     --temp ${TEMPERATURE} \
     --kl ${KL} \
+    --max-new-tokens ${MAX_NEW_TOKENS} \
     --format-reward ${FORMAT_REWARD} \
     --update-ref-every ${UPDATE_REF_EVERY} \
     --train-gpus 0,1 \

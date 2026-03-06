@@ -521,36 +521,24 @@ class DistributedGRPOTrainer:
         dist.barrier()
 
     def _sync_weights_to_vllm(self):
-        """Sync updated policy weights to vLLM via sleep/wake API."""
+        """Sync updated policy weights to vLLM via collective_rpc reload."""
         log_rank_0("syncing weights to vLLM...")
         self._save_weights_to_checkpoint()
 
         if self.rank == 0:
             timeout = httpx.Timeout(timeout=600.0, connect=30.0)
-            time.sleep(2)
 
             with httpx.Client(timeout=timeout) as client:
-                for step_name, url in [
-                    ("pause", f"{self._vllm_base_url}/pause?wait_for_inflight_requests=false&clear_cache=true"),
-                    ("sleep", f"{self._vllm_base_url}/sleep?level=2"),
-                    ("wake_up weights", f"{self._vllm_base_url}/wake_up?tags=weights"),
-                ]:
-                    log_rank_0("calling %s...", step_name)
-                    client.post(url).raise_for_status()
-
                 log_rank_0("reloading weights...")
                 client.post(
                     f"{self._vllm_base_url}/collective_rpc",
                     json={"method": "reload_weights"},
                 ).raise_for_status()
 
-                for step_name, url in [
-                    ("wake_up kv_cache", f"{self._vllm_base_url}/wake_up?tags=kv_cache"),
-                    ("reset_prefix_cache", f"{self._vllm_base_url}/reset_prefix_cache"),
-                    ("resume", f"{self._vllm_base_url}/resume"),
-                ]:
-                    log_rank_0("calling %s...", step_name)
-                    client.post(url).raise_for_status()
+                log_rank_0("resetting caches...")
+                client.post(
+                    f"{self._vllm_base_url}/reset_prefix_cache",
+                ).raise_for_status()
 
         dist.barrier()
         log_rank_0("weight sync complete")
@@ -566,10 +554,18 @@ class DistributedGRPOTrainer:
         prompts = []
         for _ in range(self.batch_size):
             sample = next(self.train_iterator)
+
+            # If the last message is an assistant prefix (e.g. "<think>\n"),
+            # use continue_final_message so the template doesn't close the turn.
+            messages = sample["messages"]
+            has_assistant_prefix = (
+                messages and messages[-1]["role"] == "assistant"
+            )
             prompt_ids = (
                 self.tokenizer.apply_chat_template(
-                    sample["messages"],
-                    add_generation_prompt=True,
+                    messages,
+                    add_generation_prompt=not has_assistant_prefix,
+                    continue_final_message=has_assistant_prefix,
                     return_tensors="pt",
                 )
                 .squeeze(0)
@@ -670,8 +666,11 @@ class DistributedGRPOTrainer:
         groups = []
         total_correct = 0
         total_parsable = 0
+        total_formatted = 0
         total_completions = 0
         total_reward = 0.0
+        total_format_reward = 0.0
+        total_correct_reward = 0.0
 
         iterator = (
             tqdm(zip(prompts, vllm_results), total=len(prompts), desc="processing rollouts")
@@ -715,21 +714,27 @@ class DistributedGRPOTrainer:
 
                 # Structured result (dict) — grade and reward are separate
                 if isinstance(result, dict):
-                    is_parsable = result["is_parsable"]
-                    is_correct = result["is_correct"]
-                    reward = 0.0
-                    if is_parsable:
-                        reward += self.format_reward
-                    if is_correct:
-                        reward += 1.0
+                    has_format = result.get("has_format", result.get("is_parsable", False))
+                    is_parsable = result.get("is_parsable", False)
+                    is_correct = result.get("is_correct", False)
+                    fmt_reward = self.format_reward if has_format else 0.0
+                    correct_reward = 1.0 if is_correct else 0.0
+                    reward = fmt_reward + correct_reward
                 else:
                     # Legacy float result — infer flags from value
                     reward = float(result)
+                    has_format = reward > 0
                     is_parsable = reward > 0
                     is_correct = reward > 1.0
+                    fmt_reward = self.format_reward if has_format else 0.0
+                    correct_reward = 1.0 if is_correct else 0.0
 
                 total_completions += 1
                 total_reward += reward
+                total_format_reward += fmt_reward
+                total_correct_reward += correct_reward
+                if has_format:
+                    total_formatted += 1
                 if is_parsable:
                     total_parsable += 1
                 if is_correct:
@@ -748,21 +753,29 @@ class DistributedGRPOTrainer:
             self._compute_advantages(group)
             groups.append(group)
 
-        avg_reward = total_reward / max(total_completions, 1)
+        n = max(total_completions, 1)
+        avg_reward = total_reward / n
+        avg_format_reward = total_format_reward / n
+        avg_correct_reward = total_correct_reward / n
         log_rank_0(
             "rollout stats: %d groups, %d completions, "
-            "correct=%.1f%%, parsable=%.1f%%, avg_reward=%.4f",
+            "correct=%.1f%%, format=%.1f%%, parsable=%.1f%%, "
+            "avg_reward=%.4f (fmt=%.4f, correct=%.4f)",
             len(groups), total_completions,
-            100 * total_correct / max(total_completions, 1),
-            100 * total_parsable / max(total_completions, 1),
-            avg_reward,
+            100 * total_correct / n,
+            100 * total_formatted / n,
+            100 * total_parsable / n,
+            avg_reward, avg_format_reward, avg_correct_reward,
         )
 
         if self.use_wandb and WANDB_AVAILABLE and self.rank == 0:
             wandb.log({
-                "rollout/correct_rate": total_correct / max(total_completions, 1),
-                "rollout/parsable_rate": total_parsable / max(total_completions, 1),
+                "rollout/correct_rate": total_correct / n,
+                "rollout/format_rate": total_formatted / n,
+                "rollout/parsable_rate": total_parsable / n,
                 "rollout/avg_reward": avg_reward,
+                "rollout/avg_format_reward": avg_format_reward,
+                "rollout/avg_correct_reward": avg_correct_reward,
                 "rollout/total_completions": total_completions,
                 "rollout/num_groups": len(groups),
             }, step=self.stats.optim_steps)
