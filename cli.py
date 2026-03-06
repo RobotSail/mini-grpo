@@ -52,7 +52,7 @@ from data_utils import (
     load_gsm8k,
     split_batch_into_microbatches,
 )
-from utils import preview_tokenization, display_scorecard
+from utils import preview_tokenization, display_scorecard, set_determinism
 from optimizers import create_optimizer, create_fsdp2_muon_optimizer
 from type_defs import (
     Problem,

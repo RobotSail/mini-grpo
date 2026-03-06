@@ -66,8 +66,11 @@ def get_step_from_path(path: Path | str, include_parent: bool = False) -> tuple[
         return tokens, f"{parent_prefix}tokens_{tokens}"
     # checkpoint-N format (rejection sampling)
     elif name.startswith("checkpoint-"):
-        tokens = int(name.split("-")[1])
-        return tokens, f"{parent_prefix}checkpoint-{tokens}"
+        suffix = name.split("-", 1)[1]
+        if suffix.isdigit():
+            tokens = int(suffix)
+            return tokens, f"{parent_prefix}checkpoint-{tokens}"
+        return -1, f"{parent_prefix}{name}"
     else:
         return 0, f"{parent_prefix}{name}"
 
@@ -111,7 +114,10 @@ def get_checkpoint_dirs(base_path: str) -> list[Path | str]:
         elif "_tokens_" in name:
             return int(name.split("_tokens_")[1])
         elif name.startswith("checkpoint-"):
-            return int(name.split("-")[1])
+            suffix = name.split("-", 1)[1]
+            if suffix.isdigit():
+                return int(suffix)
+            return -1  # e.g. checkpoint-initial
         return 0
 
     checkpoint_dirs = sorted(checkpoint_dirs, key=get_sort_key)

@@ -2070,6 +2070,492 @@ def table_full_picture(layer_m, layer_s, svd_cache, outdir):
 
 
 # =============================================================================
+# ALGORITHM MODE — algorithm × optimizer comparison (no precision dimension)
+# =============================================================================
+
+# Color scheme: paired by algorithm, AdamW vs Muon shades
+# SFT = darkest, GRPO = medium, RS = warm accent
+ALGO_COLORS = {
+    'adamw_sft':  '#084594',
+    'muon_sft':   '#99000d',
+    'adamw_grpo': '#4292c6',
+    'muon_grpo':  '#ef3b2c',
+    'adamw_rs':   '#74c476',
+    'muon_rs':    '#fd8d3c',
+}
+
+# Ordered experiment list for consistent bar ordering
+ALGO_ORDER_FULL = [
+    ('adamw_sft',  'AdamW\n+ SFT'),
+    ('muon_sft',   'Muon\n+ SFT'),
+    ('adamw_grpo', 'AdamW\n+ GRPO'),
+    ('muon_grpo',  'Muon\n+ GRPO'),
+    ('adamw_rs',   'AdamW\n+ RS'),
+    ('muon_rs',    'Muon\n+ RS'),
+]
+
+ALGO_LEGEND_LABELS = {
+    'adamw_sft':  'AdamW + SFT',
+    'muon_sft':   'Muon + SFT',
+    'adamw_grpo': 'AdamW + GRPO',
+    'muon_grpo':  'Muon + GRPO',
+    'adamw_rs':   'AdamW + RS',
+    'muon_rs':    'Muon + RS',
+}
+
+ALGO_LINESTYLES = {
+    'sft':  '-',
+    'grpo': (0, (4, 2)),
+    'rs':   (0, (6, 2, 2, 2)),
+}
+
+ALGO_LINEWIDTHS = {
+    'sft':  3.0,
+    'grpo': 2.5,
+    'rs':   2.5,
+}
+
+
+def _algo_experiments(include_rs=True):
+    """Return ordered experiment list, optionally excluding RS."""
+    if include_rs:
+        return ALGO_ORDER_FULL
+    return [(k, l) for k, l in ALGO_ORDER_FULL if '_rs' not in k]
+
+
+def fig_algo_rank90(layer_m, outdir, include_rs=True):
+    """Bar chart: average k₉₀(ΔW) per algorithm×optimizer condition."""
+    from matplotlib.patches import Patch
+
+    exps = _algo_experiments(include_rs)
+    n = len(exps)
+    fig, ax = plt.subplots(figsize=(max(8, n * 1.4), 5.5))
+
+    vals, colors, labels = [], [], []
+    for key, label in exps:
+        sub = layer_m[layer_m['experiment'] == key]
+        vals.append(sub['rank_90'].mean())
+        colors.append(ALGO_COLORS[key])
+        labels.append(label)
+
+    bars = ax.bar(range(n), vals, color=colors, alpha=0.88,
+                  edgecolor='white', linewidth=0.5, width=0.6)
+    for bar, v in zip(bars, vals):
+        ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 12,
+                f'{v:.0f}', ha='center', va='bottom', fontsize=13, fontweight='bold')
+
+    ax.set_xticks(range(n))
+    ax.set_xticklabels(labels, fontsize=11)
+    ax.set_ylabel(r'Rank $k$ at 90% Energy  (max = 1536)', fontsize=12)
+    ax.set_ylim(0, max(vals) * 1.18)
+    ax.grid(axis='y', alpha=0.25)
+
+    ax.set_title(
+        r'Average $k_{90}(\Delta W)$ Across Model'
+        '\n(mean over all 28 layers, mixed-precision training, FP32 checkpoints)',
+        fontsize=13, fontweight='bold', pad=10)
+
+    legend_elements = [Patch(facecolor=ALGO_COLORS[k], label=ALGO_LEGEND_LABELS[k])
+                       for k, _ in exps]
+    ax.legend(handles=legend_elements, fontsize=9, loc='lower right',
+              framealpha=0.92, edgecolor='#cccccc')
+
+    plt.tight_layout()
+    plt.savefig(outdir / 'algo_rank90.png', dpi=200, bbox_inches='tight')
+    plt.savefig(outdir / 'algo_rank90.pdf', bbox_inches='tight')
+    plt.close()
+    print('  Saved algo_rank90')
+
+
+def fig_algo_avg_spectral(svd_cache, outdir, include_rs=True):
+    """Side-by-side spectral decay: AdamW (left) vs Muon (right), all algorithms overlaid."""
+    from matplotlib.lines import Line2D
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6.5))
+
+    methods = [('sft', 'SFT'), ('grpo', 'GRPO')]
+    if include_rs:
+        methods.append(('rs', 'RS'))
+
+    curves = {}
+    for ax, opt_key, opt_title in [(ax1, 'adamw', 'AdamW'), (ax2, 'muon', 'Muon')]:
+        legend_handles = []
+        for method_key, method_label in methods:
+            exp = f'{opt_key}_{method_key}'
+            sv = _mean_sv_curve(svd_cache, exp)
+            if len(sv) == 0:
+                continue
+            curves[exp] = sv
+            ranks = np.arange(1, len(sv) + 1)
+
+            energy = np.cumsum(sv ** 2)
+            k90 = int(np.searchsorted(energy, 0.9 * energy[-1]) + 1)
+
+            color = ALGO_COLORS[exp]
+            ls = ALGO_LINESTYLES[method_key]
+            lw = ALGO_LINEWIDTHS[method_key]
+
+            ax.semilogy(ranks, sv, color=color, linestyle=ls,
+                        linewidth=lw, alpha=0.92)
+            ax.plot(k90, sv[k90 - 1], 'o', color=color, markersize=8, zorder=5,
+                    markeredgecolor='white', markeredgewidth=1.5)
+
+            legend_handles.append(
+                Line2D([0], [0], color=color, lw=lw, linestyle=ls,
+                       label=f'{method_label}  ($k_{{90}}$={k90})'))
+
+        ax.set_xlabel('Singular Value Index $i$', fontsize=12)
+        ax.set_ylabel(r'$\bar{\sigma}_i(\Delta W)$  (log scale)', fontsize=12)
+        ax.set_title(opt_title, fontsize=14, fontweight='bold', pad=10)
+        ax.set_xlim(0, 1536)
+        ax.grid(True, alpha=0.2, which='major')
+        ax.legend(handles=legend_handles, fontsize=10, loc='upper right',
+                  framealpha=0.92, edgecolor='#cccccc', handlelength=2.5)
+
+    # Shared y-axis limits
+    all_sv = np.concatenate([v for v in curves.values() if len(v) > 0])
+    ymin, ymax = all_sv[all_sv > 0].min() * 0.5, all_sv.max() * 2
+    ax1.set_ylim(ymin, ymax)
+    ax2.set_ylim(ymin, ymax)
+
+    fig.suptitle(
+        r'Spectral Decay of $\Delta W$: Mean Singular Values with $k_{90}$ Marked'
+        '\n(mixed-precision training, FP32 checkpoints)',
+        fontsize=13, fontweight='bold')
+    fig.text(0.5, -0.01,
+             r'$\bar{\sigma}_i$ = mean singular value at index $i$ across all 28 layers and component types.  '
+             r'$k_{90}$ = rank where this mean spectrum reaches 90% cumulative energy.',
+             ha='center', fontsize=9.5, style='italic', color='#444444')
+    fig.subplots_adjust(top=0.84, wspace=0.22, bottom=0.12)
+
+    plt.savefig(outdir / 'algo_avg_spectral.png', dpi=200, bbox_inches='tight')
+    plt.savefig(outdir / 'algo_avg_spectral.pdf', bbox_inches='tight')
+    plt.close()
+    print('  Saved algo_avg_spectral')
+
+
+def fig_algo_rank90_dual(layer_m, svd_cache, outdir, include_rs=True):
+    """Grouped bar chart: per-layer avg k₉₀ vs k₉₀ of the avg spectrum, side by side."""
+    from matplotlib.patches import Patch
+
+    exps = _algo_experiments(include_rs)
+    n = len(exps)
+    fig, ax = plt.subplots(figsize=(max(10, n * 1.8), 6))
+
+    width = 0.35
+    x = np.arange(n)
+
+    vals_per_layer = []  # mean of per-layer k₉₀
+    vals_avg_spec = []   # k₉₀ of the mean spectrum
+    bar_colors = []
+
+    for key, _ in exps:
+        # Per-layer average from metrics.csv
+        sub = layer_m[layer_m['experiment'] == key]
+        vals_per_layer.append(sub['rank_90'].mean())
+
+        # k₉₀ of the averaged spectrum from SVD cache
+        sv = _mean_sv_curve(svd_cache, key)
+        if len(sv) > 0:
+            energy = np.cumsum(sv ** 2)
+            k90_avg = int(np.searchsorted(energy, 0.9 * energy[-1]) + 1)
+        else:
+            k90_avg = 0
+        vals_avg_spec.append(k90_avg)
+        bar_colors.append(ALGO_COLORS[key])
+
+    # Lighter version of each color for the second bar
+    import matplotlib.colors as mcolors
+    lighter_colors = []
+    for c in bar_colors:
+        rgb = mcolors.to_rgb(c)
+        lighter = tuple(min(1.0, v + (1.0 - v) * 0.45) for v in rgb)
+        lighter_colors.append(lighter)
+
+    bars1 = ax.bar(x - width / 2, vals_per_layer, width, color=bar_colors,
+                   alpha=0.88, edgecolor='white', linewidth=0.5,
+                   label='Avg. per-layer $k_{90}$')
+    bars2 = ax.bar(x + width / 2, vals_avg_spec, width, color=lighter_colors,
+                   alpha=0.88, edgecolor='#aaaaaa', linewidth=0.8,
+                   hatch='///', label='$k_{90}$ of avg. spectrum')
+
+    for bar, v in zip(bars1, vals_per_layer):
+        ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 10,
+                f'{v:.0f}', ha='center', va='bottom', fontsize=10, fontweight='bold')
+    for bar, v in zip(bars2, vals_avg_spec):
+        ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 10,
+                f'{v:.0f}', ha='center', va='bottom', fontsize=10, fontweight='bold')
+
+    labels = [l for _, l in exps]
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels, fontsize=11)
+    ax.set_ylabel(r'Rank $k$  (max = 1536)', fontsize=12)
+    all_vals = vals_per_layer + vals_avg_spec
+    ax.set_ylim(0, max(all_vals) * 1.18)
+    ax.grid(axis='y', alpha=0.25)
+
+    ax.set_title(
+        r'$k_{90}(\Delta W)$: Two Complementary Views'
+        '\n(mixed-precision training, FP32 checkpoints)',
+        fontsize=13, fontweight='bold', pad=10)
+
+    # Two-type legend (solid = per-layer avg, hatched = avg spectrum)
+    legend_elements = [
+        Patch(facecolor='#666666', alpha=0.88, label=r'Avg. per-layer $k_{90}$'),
+        Patch(facecolor='#bbbbbb', edgecolor='#aaaaaa', hatch='///', alpha=0.88,
+              label=r'$k_{90}$ of avg. spectrum'),
+    ]
+    ax.legend(handles=legend_elements, fontsize=10, loc='upper left',
+              framealpha=0.92, edgecolor='#cccccc')
+
+    fig.text(0.5, -0.02,
+             r'Left bar: average of $k_{90}$ computed independently for each layer.    '
+             r'Right bar: $k_{90}$ of the mean spectrum $\bar{\sigma}_i$ averaged across all layers.',
+             ha='center', fontsize=9.5, style='italic', color='#444444')
+    fig.subplots_adjust(bottom=0.15)
+
+    plt.tight_layout()
+    plt.savefig(outdir / 'algo_rank90_dual.png', dpi=200, bbox_inches='tight')
+    plt.savefig(outdir / 'algo_rank90_dual.pdf', bbox_inches='tight')
+    plt.close()
+    print('  Saved algo_rank90_dual')
+
+
+# =============================================================================
+# MULTISEED MODE — show 3 seeds per condition, disambiguated visually
+# =============================================================================
+
+# Each condition gets a color; seeds are distinguished by alpha + linestyle
+SEED_LINESTYLES = ['-', (0, (4, 2)), (0, (2, 2))]
+SEED_ALPHAS = [1.0, 0.65, 0.40]
+
+MULTISEED_CONDITIONS = [
+    # (prefix, label, color, marker)
+    ('adamw_grpo', 'AdamW + GRPO', '#4292c6', 'o'),
+    ('muon_grpo',  'Muon + GRPO',  '#ef3b2c', 'o'),
+    ('adamw_sft',  'AdamW + SFT',  '#084594', 's'),
+    ('muon_sft',   'Muon + SFT',   '#99000d', 's'),
+]
+
+
+def fig_multiseed_avg_spectral(svd_cache, layer_m, outdir):
+    """Spectral decay: AdamW (left) vs Muon (right), 3 seeds per condition shown as
+    separate lines with decreasing opacity. k₉₀ shown as mean ± range."""
+    from matplotlib.lines import Line2D
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6.5))
+
+    methods = [('sft', 'SFT', '-', 3.0), ('grpo', 'GRPO', (0, (4, 2)), 2.5)]
+
+    curves = {}
+    for ax, opt_key, opt_title in [(ax1, 'adamw', 'AdamW'), (ax2, 'muon', 'Muon')]:
+        legend_handles = []
+        for method_key, method_label, base_ls, base_lw in methods:
+            prefix = f'{opt_key}_{method_key}'
+            color = None
+            for p, _, c, _ in MULTISEED_CONDITIONS:
+                if p == prefix:
+                    color = c
+                    break
+
+            k90_vals = []
+            for seed_idx in range(3):
+                exp = f'{prefix}_{seed_idx + 1}'
+                sv = _mean_sv_curve(svd_cache, exp)
+                if len(sv) == 0:
+                    continue
+                curves[exp] = sv
+                ranks = np.arange(1, len(sv) + 1)
+                energy = np.cumsum(sv ** 2)
+                k90 = int(np.searchsorted(energy, 0.9 * energy[-1]) + 1)
+                k90_vals.append(k90)
+
+                alpha = SEED_ALPHAS[seed_idx]
+                ax.semilogy(ranks, sv, color=color, linestyle=base_ls,
+                            linewidth=base_lw, alpha=alpha)
+                ax.plot(k90, sv[k90 - 1], 'o', color=color, markersize=6,
+                        alpha=alpha, zorder=5, markeredgecolor='white',
+                        markeredgewidth=1.0)
+
+            if k90_vals:
+                k90_mean = int(np.mean(k90_vals))
+                k90_min, k90_max = min(k90_vals), max(k90_vals)
+                if k90_min == k90_max:
+                    k90_str = f'{k90_mean}'
+                else:
+                    k90_str = f'{k90_mean} [{k90_min}\u2013{k90_max}]'
+                legend_handles.append(
+                    Line2D([0], [0], color=color, lw=base_lw, linestyle=base_ls,
+                           label=f'{method_label}  ($k_{{90}}$={k90_str})'))
+
+        ax.set_xlabel('Singular Value Index $i$', fontsize=12)
+        ax.set_ylabel(r'$\bar{\sigma}_i(\Delta W)$  (log scale)', fontsize=12)
+        ax.set_title(opt_title, fontsize=14, fontweight='bold', pad=10)
+        ax.set_xlim(0, 1536)
+        ax.grid(True, alpha=0.2, which='major')
+        ax.legend(handles=legend_handles, fontsize=10, loc='upper right',
+                  framealpha=0.92, edgecolor='#cccccc', handlelength=2.5)
+
+    # Shared y-axis
+    all_sv = np.concatenate([v for v in curves.values() if len(v) > 0])
+    ymin, ymax = all_sv[all_sv > 0].min() * 0.5, all_sv.max() * 2
+    ax1.set_ylim(ymin, ymax)
+    ax2.set_ylim(ymin, ymax)
+
+    fig.suptitle(
+        r'Spectral Decay of $\Delta W$: 3 Seeds Per Condition'
+        '\n(mixed-precision training, FP32 checkpoints; opacity decreases across seeds)',
+        fontsize=13, fontweight='bold')
+    fig.text(0.5, -0.01,
+             r'Each line = one seed. $\bar{\sigma}_i$ = mean SV at index $i$ across all layers. '
+             r'$k_{90}$ shown as mean [min\u2013max] across seeds.',
+             ha='center', fontsize=9.5, style='italic', color='#444444')
+    fig.subplots_adjust(top=0.84, wspace=0.22, bottom=0.12)
+
+    plt.savefig(outdir / 'multiseed_avg_spectral.png', dpi=200, bbox_inches='tight')
+    plt.savefig(outdir / 'multiseed_avg_spectral.pdf', bbox_inches='tight')
+    plt.close()
+    print('  Saved multiseed_avg_spectral')
+
+
+def fig_multiseed_rank90(layer_m, outdir):
+    """Bar chart: k₉₀ for each seed, grouped by condition. Individual seed bars shown
+    side-by-side with decreasing opacity."""
+    from matplotlib.patches import Patch
+
+    conditions = MULTISEED_CONDITIONS
+    n_cond = len(conditions)
+    n_seeds = 3
+    fig, ax = plt.subplots(figsize=(12, 5.5))
+
+    width = 0.22
+    x = np.arange(n_cond)
+
+    for seed_idx in range(n_seeds):
+        vals, colors_list = [], []
+        for prefix, label, color, _ in conditions:
+            exp = f'{prefix}_{seed_idx + 1}'
+            sub = layer_m[layer_m['experiment'] == exp]
+            val = sub['rank_90'].mean() if len(sub) > 0 else 0
+            vals.append(val)
+            colors_list.append(color)
+
+        offset = (seed_idx - 1) * width
+        alpha = SEED_ALPHAS[seed_idx]
+        bars = ax.bar(x + offset, vals, width, color=colors_list,
+                      alpha=alpha * 0.88, edgecolor='white', linewidth=0.5)
+        for bar, v in zip(bars, vals):
+            if v > 0:
+                ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 8,
+                        f'{v:.0f}', ha='center', va='bottom', fontsize=8, fontweight='bold')
+
+    ax.set_xticks(x)
+    ax.set_xticklabels([l for _, l, _, _ in conditions], fontsize=11)
+    ax.set_ylabel(r'Rank $k$ at 90% Energy  (max = 1536)', fontsize=12)
+    ax.grid(axis='y', alpha=0.25)
+
+    # Legend: condition colors + seed opacity
+    legend_elements = [Patch(facecolor=c, label=l) for _, l, c, _ in conditions]
+    legend_elements.append(Patch(facecolor='none', edgecolor='none', label=' '))
+    for i in range(n_seeds):
+        legend_elements.append(Patch(facecolor='#888888', alpha=SEED_ALPHAS[i] * 0.88,
+                                     label=f'Seed {i + 1}'))
+    ax.legend(handles=legend_elements, fontsize=8.5, loc='lower right',
+              framealpha=0.92, edgecolor='#cccccc', ncol=2)
+
+    ax.set_ylim(0, ax.get_ylim()[1] * 1.15)
+    ax.set_title(
+        r'Average $k_{90}(\Delta W)$ Across Seeds'
+        '\n(mean over all 28 layers, mixed-precision training, FP32 checkpoints)',
+        fontsize=13, fontweight='bold', pad=10)
+
+    plt.tight_layout()
+    plt.savefig(outdir / 'multiseed_rank90.png', dpi=200, bbox_inches='tight')
+    plt.savefig(outdir / 'multiseed_rank90.pdf', bbox_inches='tight')
+    plt.close()
+    print('  Saved multiseed_rank90')
+
+
+def fig_multiseed_rank90_dual(layer_m, svd_cache, outdir):
+    """Dual k₉₀ bar chart with seeds: per-layer avg vs avg-spectrum k₉₀, 3 seeds each."""
+    from matplotlib.patches import Patch
+
+    conditions = MULTISEED_CONDITIONS
+    n_cond = len(conditions)
+    n_seeds = 3
+    fig, ax = plt.subplots(figsize=(14, 6))
+
+    group_width = 0.7
+    bar_width = group_width / (n_seeds * 2)
+    x = np.arange(n_cond) * 1.5  # extra spacing between groups
+
+    for seed_idx in range(n_seeds):
+        vals_pl, vals_as = [], []
+        colors_list = []
+        for prefix, _, color, _ in conditions:
+            exp = f'{prefix}_{seed_idx + 1}'
+            sub = layer_m[layer_m['experiment'] == exp]
+            vals_pl.append(sub['rank_90'].mean() if len(sub) > 0 else 0)
+
+            sv = _mean_sv_curve(svd_cache, exp)
+            if len(sv) > 0:
+                energy = np.cumsum(sv ** 2)
+                vals_as.append(int(np.searchsorted(energy, 0.9 * energy[-1]) + 1))
+            else:
+                vals_as.append(0)
+            colors_list.append(color)
+
+        import matplotlib.colors as mcolors
+        lighter = [tuple(min(1.0, v + (1.0 - v) * 0.45) for v in mcolors.to_rgb(c))
+                   for c in colors_list]
+
+        alpha = SEED_ALPHAS[seed_idx]
+        offset_pl = (seed_idx - 1) * bar_width * 2
+        offset_as = offset_pl + bar_width
+
+        bars1 = ax.bar(x + offset_pl, vals_pl, bar_width, color=colors_list,
+                       alpha=alpha * 0.88, edgecolor='white', linewidth=0.5)
+        bars2 = ax.bar(x + offset_as, vals_as, bar_width, color=lighter,
+                       alpha=alpha * 0.88, edgecolor='#aaaaaa', linewidth=0.5, hatch='///')
+
+        for bar, v in zip(list(bars1) + list(bars2), list(vals_pl) + list(vals_as)):
+            if v > 0:
+                ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 8,
+                        f'{v:.0f}', ha='center', va='bottom', fontsize=6.5)
+
+    ax.set_xticks(x)
+    ax.set_xticklabels([l for _, l, _, _ in conditions], fontsize=11)
+    ax.set_ylabel(r'Rank $k$  (max = 1536)', fontsize=12)
+    ax.grid(axis='y', alpha=0.25)
+    ax.set_ylim(0, ax.get_ylim()[1] * 1.15)
+
+    legend_elements = [
+        Patch(facecolor='#666666', alpha=0.88, label=r'Avg. per-layer $k_{90}$'),
+        Patch(facecolor='#bbbbbb', edgecolor='#aaaaaa', hatch='///', alpha=0.88,
+              label=r'$k_{90}$ of avg. spectrum'),
+    ]
+    ax.legend(handles=legend_elements, fontsize=9.5, loc='upper left',
+              framealpha=0.92, edgecolor='#cccccc')
+
+    ax.set_title(
+        r'$k_{90}(\Delta W)$: Two Views × 3 Seeds'
+        '\n(mixed-precision training, FP32 checkpoints; opacity decreases across seeds)',
+        fontsize=13, fontweight='bold', pad=10)
+
+    fig.text(0.5, -0.02,
+             r'Solid bar: average of per-layer $k_{90}$.  '
+             r'Hatched bar: $k_{90}$ of the mean spectrum $\bar{\sigma}_i$.',
+             ha='center', fontsize=9.5, style='italic', color='#444444')
+    fig.subplots_adjust(bottom=0.14)
+
+    plt.tight_layout()
+    plt.savefig(outdir / 'multiseed_rank90_dual.png', dpi=200, bbox_inches='tight')
+    plt.savefig(outdir / 'multiseed_rank90_dual.pdf', bbox_inches='tight')
+    plt.close()
+    print('  Saved multiseed_rank90_dual')
+
+
+# =============================================================================
 # MAIN
 # =============================================================================
 
@@ -2080,6 +2566,11 @@ def main():
     parser.add_argument('--config', type=str, default='sparsity_experiments_config.json')
     parser.add_argument('--output-dir', type=str, default=None,
                         help='Output dir for presentation files (default: <analysis-dir>/presentation)')
+    parser.add_argument('--mode', choices=['precision', 'algorithm', 'multiseed'], default='precision',
+                        help='precision: dtype comparison. algorithm: optimizer × algorithm comparison. '
+                             'multiseed: 3-seed comparison with per-seed spectral lines.')
+    parser.add_argument('--no-rs', action='store_true',
+                        help='Exclude rejection sampling (algorithm mode only).')
     args = parser.parse_args()
 
     outdir = Path(args.output_dir) if args.output_dir else Path(args.analysis_dir) / 'presentation'
@@ -2088,43 +2579,58 @@ def main():
     print(f'Loading data from {args.analysis_dir}...')
     layer_m, layer_s, experiments, svd_cache = load_data(args.analysis_dir, args.cache_dir, args.config)
 
-    print(f'Rendering to {outdir}/')
-    print()
-    print('Figures:')
-    fig_l0_by_precision(layer_s, outdir)
-    fig_spectral_rank(layer_m, outdir)
-    fig_cumulative_energy(svd_cache, outdir)
-    fig_param_vs_spectral(layer_m, layer_s, outdir)
-    fig_90pct_energy(layer_m, outdir)
-    fig_90pct_by_layer(layer_m, outdir)
-    fig_cumulative_4panel(svd_cache, outdir)
-    fig_l0_vs_rank90(layer_m, layer_s, svd_cache, outdir)
-    fig_absolute_sv(svd_cache, outdir)
-    fig_spectral_l0(layer_m, layer_s, svd_cache, outdir)
-    fig_total_magnitude(layer_m, layer_s, svd_cache, outdir)
-    fig_spectral_entropy(layer_m, outdir)
-    fig_spectral_entropy_by_layer(layer_m, outdir)
-    fig_spectral_l0_multi_threshold(layer_m, layer_s, svd_cache, outdir)
-    fig_standup_1_bf16_artifact(layer_s, svd_cache, layer_m, outdir)
-    fig_standup_2_fp32_rank(layer_m, outdir)
-    fig_standup_3_bf16_destroys_structure(svd_cache, outdir)
-    fig_spectral_energy_by_dtype(svd_cache, outdir)
-    fig_sv_distribution_stats(svd_cache, outdir)
-    fig_bf16_energy_ratio(svd_cache, outdir)
-    fig_90pct_by_precision(layer_m, outdir)
-    fig_rank90_standalone(layer_m, outdir)
-    fig_avg_spectral_sft(svd_cache, outdir)
-    fig_avg_spectral_combined(svd_cache, outdir)
+    if args.mode == 'algorithm':
+        include_rs = not args.no_rs
+        rs_note = ' (no RS)' if args.no_rs else ''
+        print(f'Rendering algorithm-mode plots to {outdir}/{rs_note}')
+        print()
+        fig_algo_rank90(layer_m, outdir, include_rs=include_rs)
+        fig_algo_avg_spectral(svd_cache, outdir, include_rs=include_rs)
+        fig_algo_rank90_dual(layer_m, svd_cache, outdir, include_rs=include_rs)
+    elif args.mode == 'multiseed':
+        print(f'Rendering multiseed-mode plots to {outdir}/')
+        print()
+        fig_multiseed_avg_spectral(svd_cache, layer_m, outdir)
+        fig_multiseed_rank90(layer_m, outdir)
+        fig_multiseed_rank90_dual(layer_m, svd_cache, outdir)
+    else:
+        print(f'Rendering to {outdir}/')
+        print()
+        print('Figures:')
+        fig_l0_by_precision(layer_s, outdir)
+        fig_spectral_rank(layer_m, outdir)
+        fig_cumulative_energy(svd_cache, outdir)
+        fig_param_vs_spectral(layer_m, layer_s, outdir)
+        fig_90pct_energy(layer_m, outdir)
+        fig_90pct_by_layer(layer_m, outdir)
+        fig_cumulative_4panel(svd_cache, outdir)
+        fig_l0_vs_rank90(layer_m, layer_s, svd_cache, outdir)
+        fig_absolute_sv(svd_cache, outdir)
+        fig_spectral_l0(layer_m, layer_s, svd_cache, outdir)
+        fig_total_magnitude(layer_m, layer_s, svd_cache, outdir)
+        fig_spectral_entropy(layer_m, outdir)
+        fig_spectral_entropy_by_layer(layer_m, outdir)
+        fig_spectral_l0_multi_threshold(layer_m, layer_s, svd_cache, outdir)
+        fig_standup_1_bf16_artifact(layer_s, svd_cache, layer_m, outdir)
+        fig_standup_2_fp32_rank(layer_m, outdir)
+        fig_standup_3_bf16_destroys_structure(svd_cache, outdir)
+        fig_spectral_energy_by_dtype(svd_cache, outdir)
+        fig_sv_distribution_stats(svd_cache, outdir)
+        fig_bf16_energy_ratio(svd_cache, outdir)
+        fig_90pct_by_precision(layer_m, outdir)
+        fig_rank90_standalone(layer_m, outdir)
+        fig_avg_spectral_sft(svd_cache, outdir)
+        fig_avg_spectral_combined(svd_cache, outdir)
 
-    print()
-    print('Tables:')
-    table_precision_artifact(layer_m, layer_s, outdir)
-    table_spectral_fp32(layer_m, layer_s, outdir)
-    table_2x2_punchline(layer_m, outdir)
-    table_full_picture(layer_m, layer_s, svd_cache, outdir)
-    table_spectral_summary(layer_m, layer_s, svd_cache, outdir)
-    table_spectral_energy(svd_cache, outdir)
-    table_90pct_all_precisions(layer_m, layer_s, outdir)
+        print()
+        print('Tables:')
+        table_precision_artifact(layer_m, layer_s, outdir)
+        table_spectral_fp32(layer_m, layer_s, outdir)
+        table_2x2_punchline(layer_m, outdir)
+        table_full_picture(layer_m, layer_s, svd_cache, outdir)
+        table_spectral_summary(layer_m, layer_s, svd_cache, outdir)
+        table_spectral_energy(svd_cache, outdir)
+        table_90pct_all_precisions(layer_m, layer_s, outdir)
 
     n_files = len(list(outdir.glob('*.*')))
     print(f'\nDone! {n_files} files saved to {outdir}/')

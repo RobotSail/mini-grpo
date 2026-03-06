@@ -466,7 +466,7 @@ def evaluate_checkpoint(
         model=model_path,
         tensor_parallel_size=1,
         gpu_memory_utilization=0.9 if not calibration else 0.45,
-        dtype="bfloat16",
+        dtype="float16",
     )
 
     # Setup sampling params
@@ -629,7 +629,7 @@ def compute_kl_divergence(
         model=generator_path,
         tensor_parallel_size=1,
         gpu_memory_utilization=0.45,  # Leave room for HF models
-        dtype="bfloat16",
+        dtype="float16",
     )
 
     sampling_params = SamplingParams(
@@ -654,19 +654,19 @@ def compute_kl_divergence(
     del llm
     torch.cuda.empty_cache()
 
-    # Step 2: Load both HF models for log prob computation
-    print(f"Loading checkpoint model for log probs: {checkpoint_path}")
+    # Step 2: Load both HF models for log prob computation in FP32
+    print(f"Loading checkpoint model for log probs (FP32): {checkpoint_path}")
     checkpoint_model = AutoModelForCausalLM.from_pretrained(
         checkpoint_path,
-        torch_dtype=torch.bfloat16,
+        torch_dtype=torch.float32,
         device_map=device,
     )
     checkpoint_model.eval()
 
-    print(f"Loading base model for log probs: {base_model_path}")
+    print(f"Loading base model for log probs (FP32): {base_model_path}")
     base_model = AutoModelForCausalLM.from_pretrained(
         base_model_path,
-        torch_dtype=torch.bfloat16,
+        torch_dtype=torch.float32,
         device_map=device,
     )
     base_model.eval()

@@ -606,16 +606,19 @@ class RSTrainer:
         raise RuntimeError(f"vLLM server did not become ready within {timeout}s")
 
     def _get_policy_state_dict(self) -> dict[str, torch.Tensor]:
-        """Extract state dict from FSDP2 model, converting DTensors to regular tensors."""
+        """Extract state dict from FSDP2 model, converting DTensors to regular tensors.
+
+        Always saves in fp32 to avoid bf16 precision artifacts in spectral analysis.
+        """
         from torch.distributed.tensor import DTensor
-        
+
         state_dict = {}
         for name, param in self.policy.named_parameters():
             if isinstance(param.data, DTensor):
                 # gather full tensor from DTensor (handles sharding)
-                state_dict[name] = param.data.full_tensor().detach().clone()
+                state_dict[name] = param.data.full_tensor().detach().clone().float()
             else:
-                state_dict[name] = param.data.detach().clone()
+                state_dict[name] = param.data.detach().clone().float()
         return state_dict
 
     def _sync_weights_to_vllm(self):
