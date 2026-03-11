@@ -481,10 +481,11 @@ class GRPOTrainer:
         """
         Extract state dict, converting FSDP2 DTensors to regular tensors.
 
+        Always saves in fp32 to avoid bf16 precision artifacts in spectral analysis.
         For non-FSDP2 models this is just a regular state_dict().
         """
         if self.precision != "mixed":
-            return {k: v.detach().clone() for k, v in self.policy.state_dict().items()}
+            return {k: v.detach().clone().float() for k, v in self.policy.state_dict().items()}
 
         from torch.distributed.tensor import DTensor
 
