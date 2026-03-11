@@ -301,7 +301,9 @@ class GRPOTrainer:
             # FSDP2 + flash attention handles memory well; no gradient
             # checkpointing needed.
 
-            # Optimizer: FSDP2-compatible Muon or regular AdamW
+            # Optimizer: FSDP2-compatible Muon or AdamW
+            # Both go through create_fsdp2_muon_optimizer for update norm tracking.
+            # For AdamW, all params are placed in the use_muon=False group.
             if optimizer_type.lower() == "muon":
                 self.optimizer = create_fsdp2_muon_optimizer(
                     model=self.policy,
@@ -312,14 +314,12 @@ class GRPOTrainer:
                     weight_decay=weight_decay,
                 )
             else:
-                self.optimizer = create_optimizer(
-                    model=self.policy,
-                    optimizer_type="adamw",
+                from adamw_tracked import AdamWTracked
+                self.optimizer = AdamWTracked(
+                    self.policy.parameters(),
                     lr=lr,
-                    beta1=beta1,
-                    beta2=beta2,
+                    betas=(beta1, beta2),
                     weight_decay=weight_decay,
-                    muon_lr=lr,
                 )
         else:
             # ── Pure FP32 or pure BF16: no FSDP2, no flash attention ──
