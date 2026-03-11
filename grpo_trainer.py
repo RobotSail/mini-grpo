@@ -14,6 +14,7 @@ Supports --precision {fp32, bf16} for paired sparsity experiments:
 An initial checkpoint is saved automatically for pre/post comparison.
 """
 
+import json
 import random
 import re
 import utils
@@ -343,6 +344,12 @@ class GRPOTrainer:
                 muon_lr=lr,
             )
 
+        # Initialize per-parameter update norm tracking
+        if hasattr(self.optimizer, 'set_param_names'):
+            self.optimizer.set_param_names(self.policy)
+        if hasattr(self.optimizer, 'init_update_tracking'):
+            self.optimizer.init_update_tracking(output_dir)
+
         # Align pad token
         for m in [self.policy, self.ref_policy]:
             if self.tokenizer.pad_token_id and not m.config.pad_token_id:
@@ -386,6 +393,7 @@ class GRPOTrainer:
         self.vllm_gpu_count = len(vllm_gpus.split(","))
         self.vllm_gpu_memory_utilization = vllm_gpu_memory_utilization
         self._start_vllm_server()
+
 
     @property
     def train_iterator(self):
@@ -1080,6 +1088,13 @@ class GRPOTrainer:
                 self.stats.increment_optim_step()
                 self.stats.accumulate_tokens(batch_tokens)
 
+                # Flush per-parameter update norms (captured inside optimizer.step)
+                avg_update_norm = 0.0
+                if hasattr(self.optimizer, 'flush_update_norms'):
+                    avg_update_norm = self.optimizer.flush_update_norms(
+                        self.stats.optim_steps, self.stats.tokens_seen
+                    )
+
                 avg_loss = total_loss / valid_mbs
                 avg_kl = total_kl / valid_mbs
                 avg_ir = total_ir / valid_mbs
@@ -1087,7 +1102,8 @@ class GRPOTrainer:
 
                 logger.info(
                     "epoch %d/%d | step %d | loss: %.4f | kl: %.4f | "
-                    "ir: %.4f | entropy: %.4f | gradnorm: %.4f | tokens: %d/%d",
+                    "ir: %.4f | entropy: %.4f | gradnorm: %.4f | "
+                    "update_norm: %.6f | tokens: %d/%d",
                     epoch + 1,
                     self.inner_epochs,
                     self.stats.optim_steps,
@@ -1098,6 +1114,7 @@ class GRPOTrainer:
                     gradnorm.item()
                     if hasattr(gradnorm, "item")
                     else gradnorm,
+                    avg_update_norm,
                     self.stats.tokens_seen,
                     self.stats.token_budget,
                 )
@@ -1112,6 +1129,7 @@ class GRPOTrainer:
                             "train/grad_norm": gradnorm.item()
                             if hasattr(gradnorm, "item")
                             else gradnorm,
+                            "train/avg_update_frobenius": avg_update_norm,
                             "train/optim_step": self.stats.optim_steps,
                             "train/tokens_trained": self.stats.tokens_seen,
                         },

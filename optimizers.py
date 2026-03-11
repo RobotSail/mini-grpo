@@ -50,9 +50,9 @@ def create_fsdp2_muon_optimizer(
         muon_fsdp2.Muon optimizer
     """
     try:
-        from muon_fsdp2 import Muon
+        from muon_fsdp2_tracked import Muon
     except ImportError:
-        raise ImportError("FSDP2 Muon requires the 'muon-fsdp2' package. Install with: pip install muon-fsdp2")
+        raise ImportError("FSDP2 Muon requires muon_fsdp2_tracked.py (local fork of muon-fsdp2 with update norm tracking)")
 
     muon_params, adamw_params = get_muon_param_groups(model)
 

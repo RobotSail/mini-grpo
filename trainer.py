@@ -1,3 +1,4 @@
+import json
 import random
 import re
 import utils
@@ -405,7 +406,12 @@ class RSTrainer:
         self.vllm_gpu_count = len(vllm_gpus.split(","))
         self.vllm_gpu_memory_utilization = vllm_gpu_memory_utilization
         self._start_vllm_server()
-        
+
+        # Initialize per-parameter update norm tracking
+        if hasattr(self.optimizer, 'set_param_names'):
+            self.optimizer.set_param_names(self.policy)
+        if hasattr(self.optimizer, 'init_update_tracking'):
+            self.optimizer.init_update_tracking(self.output_dir)
 
     @property
     def train_iterator(self):
@@ -1102,7 +1108,14 @@ class RSTrainer:
         gradnorm = clip_grad_norm_(self.policy.parameters(), max_norm=1.0)
         self.optimizer.step()
         self.optimizer.zero_grad()
-        return gradnorm
+
+        # Flush per-parameter update norms (captured inside optimizer.step)
+        avg_update_norm = 0.0
+        if hasattr(self.optimizer, 'flush_update_norms'):
+            avg_update_norm = self.optimizer.flush_update_norms(
+                self.stats_tracker.optim_steps, self.stats_tracker.train_tokens_seen
+            )
+        return gradnorm, avg_update_norm
 
 
     def _train_policy(self, samples: list[RejectionSample]):
@@ -1183,13 +1196,14 @@ class RSTrainer:
                             kl_token_count += valid_mask.sum().item()
 
                 # finally we would backprop here
-                gradnorm = self._optimizer_step(total_loss_tokens)
+                gradnorm, avg_update_norm = self._optimizer_step(total_loss_tokens)
                 avg_kl_div = total_kl_div / max(kl_token_count, 1)
                 logger.info(
-                    'loss: %.4f | gradnorm: %.4f | kl_div: %.4f | tokens: %d/%d',
+                    'loss: %.4f | gradnorm: %.4f | kl_div: %.4f | update_norm: %.6f | tokens: %d/%d',
                     total_loss,
                     gradnorm.item() if hasattr(gradnorm, 'item') else gradnorm,
                     avg_kl_div,
+                    avg_update_norm,
                     self.stats_tracker.train_tokens_seen,
                     self.stats_tracker.token_training_budget
                 )
@@ -1200,6 +1214,7 @@ class RSTrainer:
                         "train/loss": total_loss,
                         "train/grad_norm": gradnorm.item() if hasattr(gradnorm, 'item') else gradnorm,
                         "train/kl_divergence": avg_kl_div,
+                        "train/avg_update_frobenius": avg_update_norm,
                         "train/optim_step": self.stats_tracker.optim_steps,
                         "train/tokens_trained": self.stats_tracker.train_tokens_seen,
                     }, step=self.stats_tracker.optim_steps)
