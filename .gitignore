@@ -8,6 +8,10 @@ wheels/
 
 results
 
+countdown_svd_cache
+countdown_weight_updates
+eval_results
+
 # Virtual environments
 .venv
 
