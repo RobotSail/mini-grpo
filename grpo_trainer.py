@@ -192,6 +192,7 @@ class GRPOTrainer:
         batch_size: int = 64,
         clip_eps: float = 0.2,
         kl_strength: float = 0.01,
+        entropy_strength: float = 0.0,
         # Sampling
         temperature: float = 0.7,
         top_k: int = 0,
@@ -235,6 +236,7 @@ class GRPOTrainer:
         self.batch_size = batch_size
         self.clip_eps = clip_eps
         self.kl_strength = kl_strength
+        self.entropy_strength = entropy_strength
         self.temperature = temperature
         self.top_k = top_k
         self.top_p = top_p
@@ -489,9 +491,9 @@ class GRPOTrainer:
         state_dict = {}
         for name, param in self.policy.named_parameters():
             if isinstance(param.data, DTensor):
-                state_dict[name] = param.data.full_tensor().detach().clone()
+                state_dict[name] = param.data.full_tensor().detach().clone().float()
             else:
-                state_dict[name] = param.data.detach().clone()
+                state_dict[name] = param.data.detach().clone().float()
         return state_dict
 
     # ── vLLM Server Management ──────────────────────────────────────
@@ -648,44 +650,23 @@ class GRPOTrainer:
             return ""
 
     def _sync_weights_to_vllm(self):
-        """Sync updated policy weights to vLLM via sleep/wake API."""
+        """Sync updated policy weights to vLLM via collective_rpc reload."""
         logger.info("syncing weights to vLLM...")
         self._save_weights_to_checkpoint()
 
         timeout = httpx.Timeout(timeout=600.0, connect=30.0)
-        time.sleep(2)
 
         with httpx.Client(timeout=timeout) as client:
-            for step_name, url in [
-                (
-                    "pause",
-                    f"{self._vllm_base_url}/pause?wait_for_inflight_requests=false&clear_cache=true",
-                ),
-                ("sleep", f"{self._vllm_base_url}/sleep?level=2"),
-                ("wake_up weights", f"{self._vllm_base_url}/wake_up?tags=weights"),
-            ]:
-                logger.info("calling %s...", step_name)
-                client.post(url).raise_for_status()
-
             logger.info("reloading weights...")
             client.post(
                 f"{self._vllm_base_url}/collective_rpc",
                 json={"method": "reload_weights"},
             ).raise_for_status()
 
-            for step_name, url in [
-                (
-                    "wake_up kv_cache",
-                    f"{self._vllm_base_url}/wake_up?tags=kv_cache",
-                ),
-                (
-                    "reset_prefix_cache",
-                    f"{self._vllm_base_url}/reset_prefix_cache",
-                ),
-                ("resume", f"{self._vllm_base_url}/resume"),
-            ]:
-                logger.info("calling %s...", step_name)
-                client.post(url).raise_for_status()
+            logger.info("resetting caches...")
+            client.post(
+                f"{self._vllm_base_url}/reset_prefix_cache",
+            ).raise_for_status()
 
         logger.info("weight sync complete")
 
@@ -1036,6 +1017,7 @@ class GRPOTrainer:
                 total_loss = 0.0
                 total_kl = 0.0
                 total_ir = 0.0
+                total_entropy = 0.0
                 valid_mbs = 0
                 batch_tokens = 0
 
@@ -1057,6 +1039,7 @@ class GRPOTrainer:
                     total_loss += loss.item()
                     total_kl += metrics["kl_div"]
                     total_ir += metrics["importance_ratio"]
+                    total_entropy += metrics["entropy"]
                     valid_mbs += 1
                     batch_tokens += mb["rollout_lens"].sum().item()
 
@@ -1099,16 +1082,18 @@ class GRPOTrainer:
                 avg_loss = total_loss / valid_mbs
                 avg_kl = total_kl / valid_mbs
                 avg_ir = total_ir / valid_mbs
+                avg_entropy = total_entropy / valid_mbs
 
                 logger.info(
                     "epoch %d/%d | step %d | loss: %.4f | kl: %.4f | "
-                    "ir: %.4f | gradnorm: %.4f | tokens: %d/%d",
+                    "ir: %.4f | entropy: %.4f | gradnorm: %.4f | tokens: %d/%d",
                     epoch + 1,
                     self.inner_epochs,
                     self.stats.optim_steps,
                     avg_loss,
                     avg_kl,
                     avg_ir,
+                    avg_entropy,
                     gradnorm.item()
                     if hasattr(gradnorm, "item")
                     else gradnorm,
@@ -1122,6 +1107,7 @@ class GRPOTrainer:
                             "train/loss": avg_loss,
                             "train/kl_divergence": avg_kl,
                             "train/importance_ratio": avg_ir,
+                            "train/entropy": avg_entropy,
                             "train/grad_norm": gradnorm.item()
                             if hasattr(gradnorm, "item")
                             else gradnorm,
@@ -1338,6 +1324,9 @@ class GRPOTrainer:
 
         # Per-token loss
         per_token_loss = clipped_surrogate - self.kl_strength * dkl_approx
+        # Entropy bonus: sample-based estimate H ≈ -log p(x_sampled)
+        if self.entropy_strength > 0:
+            per_token_loss = per_token_loss + self.entropy_strength * (-new_logprobs)
         grpo_token_loss = per_token_loss * grpo_mask.float()
 
         # Sequence-level averaging
@@ -1353,6 +1342,9 @@ class GRPOTrainer:
             "importance_ratio": importance_ratio[grpo_mask].mean().item()
             if grpo_mask.any()
             else 1.0,
+            "entropy": (-new_logprobs)[grpo_mask].mean().item()
+            if grpo_mask.any()
+            else 0.0,
         }
         return grpo_loss, metrics
 

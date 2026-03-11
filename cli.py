@@ -2028,6 +2028,7 @@ def grpo_train(
     batch_size: int = typer.Option(64, "-B", "--batch-size", help="Prompts per rollout iteration"),
     clip_eps: float = typer.Option(0.2, "--clip-eps", help="GRPO clip epsilon"),
     kl_strength: float = typer.Option(0.01, "--kl", help="KL penalty strength"),
+    entropy_strength: float = typer.Option(0.0, "--entropy-strength", help="Entropy bonus strength (0 = disabled)"),
     gradient_clip: float = typer.Option(1.0, "--gradient-clip", help="Gradient clipping max norm"),
 
     # Sampling
@@ -2094,6 +2095,7 @@ def grpo_train(
         batch_size=batch_size,
         clip_eps=clip_eps,
         kl_strength=kl_strength,
+        entropy_strength=entropy_strength,
         temperature=temperature,
         top_k=top_k,
         top_p=top_p,
