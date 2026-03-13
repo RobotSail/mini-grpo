@@ -334,15 +334,24 @@ class GRPOTrainer:
             )
             logger.info("gradient checkpointing enabled on policy model")
 
-            self.optimizer = create_optimizer(
-                model=self.policy,
-                optimizer_type=optimizer_type,
-                lr=lr,
-                beta1=beta1,
-                beta2=beta2,
-                weight_decay=weight_decay,
-                muon_lr=lr,
-            )
+            if optimizer_type.lower() == "adamw":
+                from adamw_tracked import AdamWTracked
+                self.optimizer = AdamWTracked(
+                    self.policy.parameters(),
+                    lr=lr,
+                    betas=(beta1, beta2),
+                    weight_decay=weight_decay,
+                )
+            else:
+                self.optimizer = create_optimizer(
+                    model=self.policy,
+                    optimizer_type=optimizer_type,
+                    lr=lr,
+                    beta1=beta1,
+                    beta2=beta2,
+                    weight_decay=weight_decay,
+                    muon_lr=lr,
+                )
 
         # Initialize per-parameter update norm tracking
         if hasattr(self.optimizer, 'set_param_names'):
