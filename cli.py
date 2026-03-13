@@ -2623,7 +2623,7 @@ def countdown_grpo_train(
         "--seed", str(seed),
         "--dtype", "bfloat16",
         "--trust-remote-code",
-        "--disable-log-requests",
+        "--no-enable-log-requests",
         "--data-parallel-size", str(n_vllm_gpus),
         "--enable-sleep-mode",
     ]

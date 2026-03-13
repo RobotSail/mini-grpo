@@ -518,7 +518,7 @@ class RSTrainer:
             "--seed", str(self.seed),
             "--dtype", "bfloat16",
             "--trust-remote-code",
-            "--disable-log-requests",
+            "--no-enable-log-requests",
             "--data-parallel-size", str(self.vllm_gpu_count),
             "--enable-sleep-mode",
         ]
