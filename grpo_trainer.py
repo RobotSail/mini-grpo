@@ -343,14 +343,16 @@ class GRPOTrainer:
                     weight_decay=weight_decay,
                 )
             else:
-                self.optimizer = create_optimizer(
+                # Use the tracked Muon (muon_fsdp2_tracked) which handles
+                # single-device tensors via SingelDeviceWork and supports
+                # per-parameter update norm tracking.
+                self.optimizer = create_fsdp2_muon_optimizer(
                     model=self.policy,
-                    optimizer_type=optimizer_type,
-                    lr=lr,
+                    muon_lr=lr,
+                    adamw_lr=lr,
                     beta1=beta1,
                     beta2=beta2,
                     weight_decay=weight_decay,
-                    muon_lr=lr,
                 )
 
         # Initialize per-parameter update norm tracking
