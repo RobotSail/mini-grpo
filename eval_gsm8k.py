@@ -448,7 +448,7 @@ def evaluate_checkpoint(
     eval_dataset: datasets.Dataset,
     gpu: int,
     max_new_tokens: int = 512,
-    temperature: float = 0.7,
+    temperature: float = 0.0,
     top_k: int = 0,
     top_p: float = 1.0,
     repetition_penalty: float = 1.0,
@@ -804,8 +804,8 @@ def main():
         "--temperature",
         "-t",
         type=float,
-        default=0.7,
-        help="Sampling temperature (default: 0.7)",
+        default=0.0,
+        help="Sampling temperature (default: 0.0 for greedy decoding)",
     )
     parser.add_argument(
         "--top-k",

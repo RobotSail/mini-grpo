@@ -1379,7 +1379,7 @@ class GRPOTrainer:
     # ── Validation ──────────────────────────────────────────────────
 
     async def _run_validation_async(self) -> dict:
-        """Validate current policy using vLLM with training sampling params."""
+        """Validate current policy using vLLM (greedy decoding)."""
         if not self.validation_dataset:
             return {}
 
@@ -1425,13 +1425,9 @@ class GRPOTrainer:
                         "model": self._vllm_served_model_name,
                         "prompt": req["prompt_text"],
                         "max_tokens": self.max_new_tokens,
-                        "temperature": self.temperature,
+                        "temperature": 0.0,
                         "n": 1,
                     }
-                    if self.top_k > 0:
-                        body["top_k"] = self.top_k
-                    if self.top_p < 1.0:
-                        body["top_p"] = self.top_p
                     resp = await client.post(completions_url, json=body)
                     resp.raise_for_status()
                     return resp.json(), req

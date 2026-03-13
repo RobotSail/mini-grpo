@@ -280,8 +280,8 @@ def main():
         "--temperature",
         "-t",
         type=float,
-        default=0.7,
-        help="Sampling temperature (default: 0.7)",
+        default=0.0,
+        help="Sampling temperature (default: 0.0 for greedy decoding)",
     )
     parser.add_argument(
         "--top-k",
