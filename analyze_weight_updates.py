@@ -37,25 +37,25 @@ from transformers import AutoModelForCausalLM
 
 BASELINE_MODEL = "Qwen/Qwen2-1.5B-Instruct"
 
-# Fixed budget checkpoints at ~1.1M tokens for fair comparison
+# Best-validated FP32 checkpoints for fair comparison
 DEFAULT_EXPERIMENTS = {
     "adamw_sft": {
-        "path": "/mnt/nvme2n1/checkpoints/verify-exps-variable-seeds/qwen2-1.5b-gsm8k-sft-adamw_verify_1_fp32/hf_format/samples_11098.0_tokens_1053913",
+        "path": "/mnt/nvme2n1/checkpoints/verify-exps-variable-seeds/sparsity/sft_adamw_fp32/hf_format/samples_12660.0_tokens_1204593",
         "label": "AdamW + SFT",
         "color": "#1f77b4",
     },
     "muon_sft": {
-        "path": "/mnt/nvme2n1/checkpoints/verify-exps-variable-seeds/qwen2-1.5b-gsm8k-sft-muon_verify_1_fp32/hf_format/samples_11098.0_tokens_1053913",
+        "path": "/mnt/nvme2n1/checkpoints/verify-exps-variable-seeds/sparsity/sft_muon_fp32/hf_format/samples_12660.0_tokens_1204593",
         "label": "Muon + SFT",
         "color": "#ff7f0e",
     },
     "adamw_grpo": {
-        "path": "/mnt/nvme2n1/checkpoints/verify-exps-variable-seeds/qwen2-1.5b-gsm8k-grpo-adamw_verify_1/tokens_1055958",
+        "path": "/mnt/nvme2n1/checkpoints/verify-exps-variable-seeds/sparsity/adamw_fp32/checkpoint-314820",
         "label": "AdamW + GRPO",
         "color": "#2ca02c",
     },
     "muon_grpo": {
-        "path": "/mnt/nvme2n1/checkpoints/verify-exps-variable-seeds/qwen2-1.5b-gsm8k-grpo-muon_verify_1/tokens_1066148",
+        "path": "/mnt/nvme2n1/checkpoints/verify-exps-variable-seeds/sparsity/muon_fp32/checkpoint-918610",
         "label": "Muon + GRPO",
         "color": "#d62728",
     },
@@ -176,7 +176,7 @@ def compute_update_metrics(sv: list[float]) -> dict:
     # Nuclear norm: ||ΔW||_* = Σσᵢ
     nuclear_norm = np.sum(sv_arr)
 
-    # Effective rank: (Σσᵢ)² / Σσᵢ²
+    # Effective rank (Vershynin): (Σσᵢ)² / Σσᵢ²
     # Ranges from 1 (rank-1) to n (full-rank uniform)
     effective_rank = (nuclear_norm**2) / (frobenius_norm**2) if frobenius_norm > 0 else 0
 
@@ -199,6 +199,17 @@ def compute_update_metrics(sv: list[float]) -> dict:
         spectral_entropy = (-1.0 / np.log(n)) * np.sum(p * np.log(p))
     else:
         spectral_entropy = 0.0
+
+    # Shannon effective rank: exp(H) where H = -Σ pᵢ log(pᵢ), pᵢ = σᵢ²/Σσⱼ²
+    # Equivalent to n^(normalized_entropy). Ranges from 1 to n.
+    # Roy & Bhavsar (2007): "Measuring cellular phenotypic diversity"
+    if total_energy > 0 and n > 1:
+        p = (sv_arr**2) / total_energy
+        p = p[p > 0]
+        shannon_entropy = -np.sum(p * np.log(p))
+        effective_rank_shannon = np.exp(shannon_entropy)
+    else:
+        effective_rank_shannon = 0.0
 
     # Rank for X% energy: minimum k such that Σσᵢ²(1:k) / ||ΔW||_F² >= threshold
     # More interpretable measure of low-rank structure
@@ -238,6 +249,7 @@ def compute_update_metrics(sv: list[float]) -> dict:
         "spectral_norm": spectral_norm,
         "nuclear_norm": nuclear_norm,
         "effective_rank": effective_rank,
+        "effective_rank_shannon": effective_rank_shannon,
         "stable_rank": stable_rank,
         "spectral_entropy": spectral_entropy,
         "gini_coefficient": gini,

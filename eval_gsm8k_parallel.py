@@ -215,7 +215,9 @@ def run_single_eval(
                 status_parts.append(f"Parsable={metrics['parsable_rate']:.2%}")
             if "kl_divergence" in metrics:
                 status_parts.append(f"KL={metrics['kl_divergence']:.4f}")
-            if "reverse_kl" in metrics:
+            if "forward_kl" in metrics:
+                status_parts.append(f"FwdKL={metrics['forward_kl']:.4f}")
+            elif "reverse_kl" in metrics:
                 status_parts.append(f"RevKL={metrics['reverse_kl']:.4f}")
             if "ece" in metrics:
                 status_parts.append(f"ECE={metrics['ece']:.4f}")
@@ -348,7 +350,12 @@ def main():
     parser.add_argument(
         "--reverse-kl",
         action="store_true",
-        help="Compute reverse KL: generate from base, compute KL(base || checkpoint)",
+        help="[Legacy name] Forward KL: generate from base (π₀), compute KL(π₀||π). Use --forward-kl.",
+    )
+    parser.add_argument(
+        "--forward-kl",
+        action="store_true",
+        help="Forward KL: generate from base (π₀), compute KL(π₀||π). Measures drift from base.",
     )
     parser.add_argument(
         "--kl-dataset",
@@ -407,7 +414,7 @@ def main():
         "kl_batch_size": args.kl_batch_size,
         "kl_max_new_tokens": args.kl_max_new_tokens,
         "kl_max_prompt_length": args.kl_max_prompt_length,
-        "reverse_kl": args.reverse_kl,
+        "reverse_kl": args.reverse_kl or args.forward_kl,
         "kl_dataset": args.kl_dataset,
         "calibration": args.calibration,
     }
@@ -470,7 +477,7 @@ def main():
     has_accuracy = not args.kl_only
     has_kl = args.compute_kl or args.kl_only
 
-    kl_header = "Rev KL" if args.reverse_kl else "KL Div"
+    kl_header = "Fwd KL" if (args.reverse_kl or args.forward_kl) else "Rev KL"
     header = f"{'Checkpoint':<20}"
     if has_accuracy:
         header += f" {'Accuracy':>12} {'Parsable':>12}"
@@ -479,7 +486,7 @@ def main():
     print(header)
     print("-" * len(header))
 
-    kl_metric_key = "reverse_kl" if args.reverse_kl else "kl_divergence"
+    kl_metric_key = "forward_kl" if (args.reverse_kl or args.forward_kl) else "kl_divergence"
     for label, metrics in sorted(results.items(), key=lambda x: x[1]["step"]):
         row = f"{label:<20}"
         if has_accuracy:

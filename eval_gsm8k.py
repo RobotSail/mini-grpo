@@ -581,14 +581,15 @@ def compute_kl_divergence(
     Compute KL divergence on generated rollouts.
 
     By default (reverse=False):
-        Generate from checkpoint, compute KL(checkpoint || base)
-        = E_{x ~ checkpoint}[log checkpoint(x) - log base(x)]
-        Measures: "How different is checkpoint's behavior from base?"
+        Generate from checkpoint (π), compute KL(π || π₀)
+        = E_{y ~ π}[log π(y) - log π₀(y)]
+        This is the REVERSE KL (mode-seeking).
 
     With reverse=True:
-        Generate from base, compute KL(base || checkpoint)
-        = E_{x ~ base}[log base(x) - log checkpoint(x)]
-        Measures: "How much has checkpoint drifted from base behavior?"
+        Generate from base (π₀), compute KL(π₀ || π)
+        = E_{y ~ π₀}[log π₀(y) - log π(y)]
+        This is the FORWARD KL (mean-seeking).
+        Use --forward-kl on the CLI for this.
 
     Args:
         base_model_path: Path to the reference/base model
@@ -740,16 +741,31 @@ def compute_kl_divergence(
     mean_kl = total_kl / total_tokens if total_tokens > 0 else 0.0
     std_kl = torch.tensor(all_seq_kl).std().item() if all_seq_kl else 0.0
 
-    kl_key = "reverse_kl" if reverse else "kl_divergence"
-    return {
-        kl_key: mean_kl,
-        f"{kl_key}_std": std_kl,
+    # Output keys: use correct statistical names + legacy aliases for compat
+    if reverse:
+        # Forward KL: KL(π₀ || π), y ~ π₀
+        result = {
+            "forward_kl": mean_kl,
+            "forward_kl_std": std_kl,
+            "reverse_kl": mean_kl,       # legacy alias
+            "reverse_kl_std": std_kl,     # legacy alias
+        }
+    else:
+        # Reverse KL: KL(π || π₀), y ~ π
+        result = {
+            "reverse_kl_actual": mean_kl,
+            "reverse_kl_actual_std": std_kl,
+            "kl_divergence": mean_kl,     # legacy alias
+            "kl_divergence_std": std_kl,  # legacy alias
+        }
+    result.update({
         "total_tokens": int(total_tokens),
         "num_sequences": len(prompts),
         "avg_generated_tokens": total_tokens / len(prompts) if prompts else 0,
         "kl_direction": kl_direction,
         "generator": "base" if reverse else "checkpoint",
-    }
+    })
+    return result
 
 
 def main():
@@ -835,7 +851,8 @@ def main():
     parser.add_argument(
         "--compute-kl",
         action="store_true",
-        help="Compute KL divergence from base model (requires --base-model)",
+        help="Compute reverse KL: generate from checkpoint, compute KL(π||π₀). "
+             "Legacy name; use --reverse-kl for clarity.",
     )
     parser.add_argument(
         "--base-model",
@@ -869,8 +886,15 @@ def main():
     parser.add_argument(
         "--reverse-kl",
         action="store_true",
-        help="Compute reverse KL: generate from base, compute KL(base || checkpoint). "
-             "Measures drift from base model behavior.",
+        help="[MISLEADING NAME — this is actually the FORWARD KL] "
+             "Generate from base (π₀), compute KL(π₀||π). "
+             "Use --forward-kl instead for clarity.",
+    )
+    parser.add_argument(
+        "--forward-kl",
+        action="store_true",
+        help="Compute forward KL: generate from base (π₀), compute KL(π₀||π). "
+             "Measures how much the checkpoint has drifted from base behavior.",
     )
     parser.add_argument(
         "--kl-dataset",
@@ -881,6 +905,10 @@ def main():
     )
 
     args = parser.parse_args()
+
+    # --forward-kl is the correct name; --reverse-kl is kept for backwards compat
+    if args.forward_kl:
+        args.reverse_kl = True
 
     # Load evaluation dataset
     print("Loading evaluation dataset...")
@@ -978,7 +1006,7 @@ def main():
             )
             metrics.update(kl_metrics)
             print(f"\nKL Divergence Results for {label}:")
-            kl_key = "reverse_kl" if args.reverse_kl else "kl_divergence"
+            kl_key = "forward_kl" if args.reverse_kl else "kl_divergence"
             kl_std_key = f"{kl_key}_std"
             kl_direction = kl_metrics.get("kl_direction", "KL")
             print(f"  {kl_direction}: {metrics[kl_key]:.4f} (± {metrics[kl_std_key]:.4f})")
@@ -1000,7 +1028,7 @@ def main():
     has_accuracy = not args.kl_only
     has_kl = args.compute_kl or args.kl_only
 
-    kl_header = "Rev KL" if args.reverse_kl else "KL Div"
+    kl_header = "Fwd KL" if args.reverse_kl else "Rev KL"
     header = f"{'Checkpoint':<20}"
     if has_accuracy:
         header += f" {'Accuracy':>12} {'Parsable':>12}"
@@ -1009,7 +1037,7 @@ def main():
     print(header)
     print("-" * len(header))
 
-    kl_metric_key = "reverse_kl" if args.reverse_kl else "kl_divergence"
+    kl_metric_key = "forward_kl" if args.reverse_kl else "kl_divergence"
     for label, metrics in sorted(results.items(), key=lambda x: x[1]["step"]):
         row = f"{label:<20}"
         if has_accuracy:
