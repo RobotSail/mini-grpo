@@ -29,20 +29,29 @@ DEFAULT_SYSTEM_MSG = (
 )
 
 
-def load_eval_dataset(system_msg: str, max_samples: int | None = None) -> datasets.Dataset:
-    """Load GSM8K test dataset."""
-    ds = datasets.load_dataset("openai/gsm8k", "main", split="test")
-    data = []
-    for item in ds:
-        messages = [
-            {"role": "system", "content": system_msg},
-            {"role": "user", "content": item["question"]},
-        ]
-        data.append({"messages": messages})
-    dataset = datasets.Dataset.from_list(data)
+def load_eval_dataset(system_msg: str, max_samples: int | None = None, eval_path: str | None = None) -> datasets.Dataset:
+    """Load evaluation dataset. Uses a local jsonl if provided, otherwise GSM8K test."""
+    if eval_path:
+        ds = datasets.load_dataset("json", data_files=eval_path, split="train")
+        # Strip assistant messages to avoid leaking answers
+        def _strip_assistant(sample):
+            if "messages" in sample:
+                return {"messages": [m for m in sample["messages"] if m["role"] in ("system", "user")]}
+            return {}
+        ds = ds.map(_strip_assistant)
+    else:
+        ds = datasets.load_dataset("openai/gsm8k", "main", split="test")
+        data = []
+        for item in ds:
+            messages = [
+                {"role": "system", "content": system_msg},
+                {"role": "user", "content": item["question"]},
+            ]
+            data.append({"messages": messages})
+        ds = datasets.Dataset.from_list(data)
     if max_samples:
-        dataset = dataset.select(range(min(max_samples, len(dataset))))
-    return dataset
+        ds = ds.select(range(min(max_samples, len(ds))))
+    return ds
 
 
 def generate_base_rollouts(
@@ -337,6 +346,8 @@ def main():
     parser.add_argument("--max-new-tokens", type=int, default=256)
     parser.add_argument("--max-samples", type=int, default=None)
     parser.add_argument("--temperature", type=float, default=0.7)
+    parser.add_argument("--eval-path", type=str, default=None,
+                        help="Path to evaluation data (jsonl). If not provided, loads GSM8K test split")
 
     args = parser.parse_args()
 
@@ -349,7 +360,7 @@ def main():
 
     # Step 1: Load dataset
     print("Loading evaluation dataset...")
-    eval_dataset = load_eval_dataset(DEFAULT_SYSTEM_MSG, args.max_samples)
+    eval_dataset = load_eval_dataset(DEFAULT_SYSTEM_MSG, args.max_samples, args.eval_path)
     print(f"Using {len(eval_dataset)} samples")
 
     # Step 2: Generate base model rollouts (cached)
