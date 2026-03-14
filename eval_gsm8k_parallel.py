@@ -172,6 +172,7 @@ def run_single_eval(
         cmd.extend(["--kl-batch-size", str(eval_kwargs["kl_batch_size"])])
         cmd.extend(["--kl-max-new-tokens", str(eval_kwargs["kl_max_new_tokens"])])
         cmd.extend(["--kl-max-prompt-length", str(eval_kwargs["kl_max_prompt_length"])])
+        cmd.extend(["--kl-temperature", str(eval_kwargs["kl_temperature"])])
     if eval_kwargs.get("compute_kl"):
         cmd.append("--compute-kl")
     if eval_kwargs.get("kl_only"):
@@ -365,6 +366,12 @@ def main():
              "'gsm8k', or path to jsonl file.",
     )
     parser.add_argument(
+        "--kl-temperature",
+        type=float,
+        default=0.0,
+        help="Sampling temperature for KL rollout generation (default: 0.0 for greedy)",
+    )
+    parser.add_argument(
         "--calibration",
         action="store_true",
         help="Compute ECE (Expected Calibration Error) using answer token confidence",
@@ -416,6 +423,7 @@ def main():
         "kl_max_prompt_length": args.kl_max_prompt_length,
         "reverse_kl": args.reverse_kl or args.forward_kl,
         "kl_dataset": args.kl_dataset,
+        "kl_temperature": args.kl_temperature,
         "calibration": args.calibration,
     }
 

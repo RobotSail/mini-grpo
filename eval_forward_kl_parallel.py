@@ -218,7 +218,7 @@ def run_single_checkpoint(
     batch_size: int = 4,
     max_new_tokens: int = 256,
     max_samples: int | None = None,
-    temperature: float = 0.7,
+    temperature: float = 0.0,
 ):
     """Evaluate forward KL for a single checkpoint. Runs in its own process."""
     os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu_id)
@@ -357,7 +357,7 @@ def main():
     parser.add_argument("--batch-size", type=int, default=4)
     parser.add_argument("--max-new-tokens", type=int, default=256)
     parser.add_argument("--max-samples", type=int, default=None)
-    parser.add_argument("--temperature", type=float, default=0.7)
+    parser.add_argument("--temperature", type=float, default=0.0)
 
     args = parser.parse_args()
 
