@@ -454,6 +454,7 @@ def evaluate_checkpoint(
     repetition_penalty: float = 1.0,
     group_size: int = 1,
     calibration: bool = False,
+    sampling_dtype: str = "float16",
 ) -> dict:
     """Evaluate a single checkpoint on the dataset using vLLM."""
     model_path = str(model_path)
@@ -466,7 +467,7 @@ def evaluate_checkpoint(
         model=model_path,
         tensor_parallel_size=1,
         gpu_memory_utilization=0.9 if not calibration else 0.45,
-        dtype="float16",
+        dtype=sampling_dtype,
     )
 
     # Setup sampling params
@@ -577,6 +578,7 @@ def compute_kl_divergence(
     max_prompt_length: int = 256,
     reverse: bool = False,
     temperature: float = 0.0,
+    sampling_dtype: str = "float16",
 ) -> dict:
     """
     Compute KL divergence on generated rollouts.
@@ -631,7 +633,7 @@ def compute_kl_divergence(
         model=generator_path,
         tensor_parallel_size=1,
         gpu_memory_utilization=0.45,  # Leave room for HF models
-        dtype="float16",
+        dtype=sampling_dtype,
     )
 
     sampling_params = SamplingParams(
@@ -910,6 +912,13 @@ def main():
         help="Dataset for KL computation. Options: 'ifeval' (recommended for drift), "
              "'gsm8k', or path to jsonl file. If not provided, uses eval dataset.",
     )
+    parser.add_argument(
+        "--sampling-dtype",
+        type=str,
+        default="float16",
+        help="vLLM dtype for generation/sampling (default: float16). "
+             "Use 'auto' to infer from model weights, 'bfloat16' for native Qwen precision.",
+    )
 
     args = parser.parse_args()
 
@@ -991,6 +1000,7 @@ def main():
                 repetition_penalty=args.repetition_penalty,
                 group_size=args.group_size,
                 calibration=args.calibration,
+                sampling_dtype=args.sampling_dtype,
             )
             metrics.update(accuracy_metrics)
             print(f"\nAccuracy Results for {label}:")
@@ -1011,6 +1021,7 @@ def main():
                 max_prompt_length=args.kl_max_prompt_length,
                 reverse=args.reverse_kl,
                 temperature=args.kl_temperature,
+                sampling_dtype=args.sampling_dtype,
             )
             metrics.update(kl_metrics)
             print(f"\nKL Divergence Results for {label}:")

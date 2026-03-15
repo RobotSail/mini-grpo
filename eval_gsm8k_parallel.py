@@ -161,6 +161,8 @@ def run_single_eval(
         str(eval_kwargs["group_size"]),
         "--system-msg",
         system_msg,
+        "--sampling-dtype",
+        eval_kwargs["sampling_dtype"],
     ]
 
     if eval_path:
@@ -376,6 +378,13 @@ def main():
         action="store_true",
         help="Compute ECE (Expected Calibration Error) using answer token confidence",
     )
+    parser.add_argument(
+        "--sampling-dtype",
+        type=str,
+        default="float16",
+        help="vLLM dtype for generation/sampling (default: float16). "
+             "Use 'auto' to infer from model weights, 'bfloat16' for native Qwen precision.",
+    )
 
     args = parser.parse_args()
 
@@ -425,6 +434,7 @@ def main():
         "kl_dataset": args.kl_dataset,
         "kl_temperature": args.kl_temperature,
         "calibration": args.calibration,
+        "sampling_dtype": args.sampling_dtype,
     }
 
     print(f"\nStarting parallel evaluation with {len(gpu_ids)} GPU(s)...")
