@@ -59,7 +59,7 @@ def generate_base_rollouts(
     eval_dataset: datasets.Dataset,
     cache_path: Path,
     max_new_tokens: int = 256,
-    temperature: float = 0.7,
+    temperature: float = 0.0,
 ) -> tuple[list[list[int]], list[int], AutoTokenizer]:
     """Generate sequences from base model, with caching."""
 
@@ -345,7 +345,7 @@ def main():
     parser.add_argument("--batch-size", type=int, default=4)
     parser.add_argument("--max-new-tokens", type=int, default=256)
     parser.add_argument("--max-samples", type=int, default=None)
-    parser.add_argument("--temperature", type=float, default=0.7)
+    parser.add_argument("--temperature", type=float, default=0.0)
     parser.add_argument("--eval-path", type=str, default=None,
                         help="Path to evaluation data (jsonl). If not provided, loads GSM8K test split")
 

@@ -576,6 +576,7 @@ def compute_kl_divergence(
     max_new_tokens: int = 256,
     max_prompt_length: int = 256,
     reverse: bool = False,
+    temperature: float = 0.0,
 ) -> dict:
     """
     Compute KL divergence on generated rollouts.
@@ -635,7 +636,7 @@ def compute_kl_divergence(
 
     sampling_params = SamplingParams(
         max_tokens=max_new_tokens,
-        temperature=0.7,
+        temperature=temperature,
         top_p=1.0,
     )
 
@@ -879,6 +880,12 @@ def main():
         help="Max prompt length for KL computation (default: 256)",
     )
     parser.add_argument(
+        "--kl-temperature",
+        type=float,
+        default=0.0,
+        help="Sampling temperature for KL rollout generation (default: 0.0 for greedy)",
+    )
+    parser.add_argument(
         "--kl-only",
         action="store_true",
         help="Only compute KL divergence, skip accuracy evaluation",
@@ -1003,6 +1010,7 @@ def main():
                 max_new_tokens=args.kl_max_new_tokens,
                 max_prompt_length=args.kl_max_prompt_length,
                 reverse=args.reverse_kl,
+                temperature=args.kl_temperature,
             )
             metrics.update(kl_metrics)
             print(f"\nKL Divergence Results for {label}:")

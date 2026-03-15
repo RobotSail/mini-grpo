@@ -72,7 +72,7 @@ def generate_from_base(
     base_model_path: str,
     eval_dataset: datasets.Dataset,
     max_new_tokens: int = 256,
-    temperature: float = 0.7,
+    temperature: float = 0.0,
 ) -> tuple[list[list[int]], list[int], AutoTokenizer]:
     """Generate sequences from base model using vLLM."""
     tokenizer = AutoTokenizer.from_pretrained(base_model_path)

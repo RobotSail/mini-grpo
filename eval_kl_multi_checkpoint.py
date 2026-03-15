@@ -62,7 +62,7 @@ def generate_from_base(
     base_model_path: str,
     eval_dataset: datasets.Dataset,
     max_new_tokens: int = 256,
-    temperature: float = 0.7,
+    temperature: float = 0.0,
     gpu_memory_util: float = 0.4,
 ) -> tuple[list[list[int]], list[int], AutoTokenizer]:
     """Generate sequences from base model using vLLM."""
@@ -262,8 +262,8 @@ def main():
     parser.add_argument(
         "--temperature",
         type=float,
-        default=0.7,
-        help="Sampling temperature",
+        default=0.0,
+        help="Sampling temperature (default: 0.0 for greedy decoding)",
     )
     parser.add_argument(
         "--batch-size",
