@@ -1,0 +1,11 @@
+{
+  "selected_checkpoint": "checkpoint-48152636",
+  "validation_accuracy": 0.9171,
+  "forward_kl": 0.0268,
+  "frobenius_norm": 0.277665188587731,
+  "avg_k90": 667.0253807106599,
+  "l0_sparsity": 0.006218879345177073,
+  "num_2d_layers": 197,
+  "total_parameters": 1543714304,
+  "nonzero_elements": 9600173
+}

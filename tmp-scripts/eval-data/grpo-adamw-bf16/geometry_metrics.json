@@ -1,0 +1,10 @@
+{
+  "best_checkpoint": "grpo-adamw-bf16_checkpoint-12906436",
+  "best_checkpoint_path": "/mnt/nvme2n1/checkpoints/precision-comparison/grpo-adamw-bf16/checkpoint-12906436",
+  "best_validation_accuracy": 0.9204013377926421,
+  "frobenius_norm": 0.27547096473093596,
+  "avg_k90": 717.6262626262626,
+  "l0_sparsity_1e5": 0.007186346990132171,
+  "num_layers_svd": 198,
+  "total_parameters": 1777088000
+}

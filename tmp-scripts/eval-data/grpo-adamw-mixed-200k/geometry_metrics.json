@@ -1,0 +1,11 @@
+{
+  "checkpoint": "checkpoint-42868",
+  "tokens": 42868,
+  "frobenius_norm": 0.10984945749056468,
+  "k90_average": 356.25888324873097,
+  "k90_std": 201.64490824236714,
+  "k90_per_layer_count": 197,
+  "l0_sparsity": 0.0,
+  "l0_nonzero_count": 0,
+  "l0_total_elements": 1543714304
+}

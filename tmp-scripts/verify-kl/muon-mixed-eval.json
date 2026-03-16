@@ -1,0 +1,11 @@
+{
+  "muon-mixed-ckpt-2100020": {
+    "step": 0,
+    "path": "/mnt/4TB/workspace/oleg/mini-grpo/tmp-scripts/verify-kl/muon-mixed-ckpt-2100020",
+    "total_samples": 1319,
+    "correct": 805,
+    "parsable": 1281,
+    "accuracy": 0.6103108415466262,
+    "parsable_rate": 0.9711902956785443
+  }
+}

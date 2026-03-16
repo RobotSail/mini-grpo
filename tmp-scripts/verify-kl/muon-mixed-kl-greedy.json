@@ -1,0 +1,15 @@
+{
+  "muon-mixed-ckpt-2100020": {
+    "step": 0,
+    "path": "/mnt/4TB/workspace/oleg/mini-grpo/tmp-scripts/verify-kl/muon-mixed-ckpt-2100020",
+    "forward_kl": 0.09708264372370083,
+    "forward_kl_std": 0.0976153314113617,
+    "reverse_kl": 0.09708264372370083,
+    "reverse_kl_std": 0.0976153314113617,
+    "total_tokens": 236210,
+    "num_sequences": 1319,
+    "avg_generated_tokens": 179.08263836239576,
+    "kl_direction": "KL(base || checkpoint)",
+    "generator": "base"
+  }
+}

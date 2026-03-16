@@ -1,0 +1,10 @@
+{
+  "checkpoint-108252": {
+    "path": "/mnt/nvme0n1/checkpoints/mixed-30m/grpo-adamw-mixed/checkpoint-108252",
+    "tokens": 108252,
+    "kl_divergence": 0.014522411829282269,
+    "kl_std": 0.026627568528056145,
+    "total_tokens": 230898,
+    "num_sequences": 1319
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "adamw-mixed-ckpt-108252": {
+    "step": 0,
+    "path": "/mnt/4TB/workspace/oleg/mini-grpo/tmp-scripts/verify-kl/adamw-mixed-ckpt-108252",
+    "forward_kl": 0.09630002374581739,
+    "forward_kl_std": 0.11146415770053864,
+    "reverse_kl": 0.09630002374581739,
+    "reverse_kl_std": 0.11146415770053864,
+    "total_tokens": 236228,
+    "num_sequences": 1319,
+    "avg_generated_tokens": 179.09628506444275,
+    "kl_direction": "KL(base || checkpoint)",
+    "generator": "base"
+  }
+}
