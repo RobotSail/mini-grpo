@@ -333,4 +333,60 @@ fig.savefig(OUT_DIR / "figure3_sparsity_spectral.pdf", bbox_inches="tight")
 plt.close(fig)
 print(f"Saved: {OUT_DIR / 'figure3_sparsity_spectral.png'}")
 
+# ═════════════════════════════════════════════════════════════════════════════
+# FIGURE 4: Validation accuracy vs KL + Validation accuracy vs tokens
+# ═════════════════════════════════════════════════════════════════════════════
+fig, (ax_left, ax_right) = plt.subplots(1, 2, figsize=(16, 6.5))
+
+# Left: Validation accuracy vs KL trajectory
+ax_left.scatter(0.0, 0.0742, c="#7f7f7f", marker="*", s=280,
+                label="Baseline", edgecolors="black", linewidths=1, zorder=3)
+ax_left.annotate("Baseline", (0.0, 0.0742), textcoords="offset points",
+                 xytext=(10, 6), fontsize=10, fontweight="bold", color="#7f7f7f")
+
+for label, cfg in RUNS.items():
+    rows = truncate_after_divergence(val_data[label])
+    plot_trajectory(ax_left, rows, cfg, label, best_tokens=best_test[label]["tokens"])
+
+ax_left.set_xlabel(r"Forward KL: $D_{\mathrm{KL}}(\pi_0 \| \pi)$")
+ax_left.set_ylabel("GSM8K Validation Accuracy")
+ax_left.set_title("(a) Validation Accuracy vs Forward KL", fontsize=14, fontweight="bold")
+ax_left.yaxis.set_major_formatter(mticker.FuncFormatter(lambda y, _: f"{y:.0%}"))
+ax_left.legend(loc="lower right", fontsize=10, framealpha=0.9)
+ax_left.grid(True, alpha=0.25, zorder=1)
+
+# Right: Validation accuracy vs tokens
+ax_right.axhline(0.0742, color="#7f7f7f", linestyle=":", linewidth=1, alpha=0.7, label="Baseline")
+
+for label, cfg in RUNS.items():
+    rows = val_data[label]
+    tokens_m = [r["tokens"] / 1e6 for r in rows]
+    accs = [r["accuracy"] for r in rows]
+    ax_right.plot(tokens_m, accs, color=cfg["color"], linestyle=cfg["linestyle"],
+                  linewidth=1.8, alpha=0.85, label=label)
+    ax_right.scatter(tokens_m, accs, color=cfg["color"], marker=cfg["marker"],
+                     s=18, alpha=0.5, edgecolors="none", zorder=3)
+    best_tok = best_test[label]["tokens"]
+    best_row = min(rows, key=lambda r: abs(r["tokens"] - best_tok))
+    ax_right.scatter(best_tok / 1e6, best_row["accuracy"], color=cfg["color"],
+                     marker="*", s=350, edgecolors="black", linewidths=1, zorder=5)
+
+ax_right.set_xlabel("Tokens Backpropagated (M)")
+ax_right.set_ylabel("GSM8K Validation Accuracy")
+ax_right.set_title("(b) Validation Accuracy vs Training Compute", fontsize=14, fontweight="bold")
+ax_right.yaxis.set_major_formatter(mticker.FuncFormatter(lambda y, _: f"{y:.0%}"))
+ax_right.legend(loc="lower right", fontsize=10, framealpha=0.9)
+ax_right.grid(True, alpha=0.25, zorder=1)
+
+fig.suptitle(
+    "BF16 training appears to diverge far less in the forward KL space\n"
+    "while achieving comparable accuracy on GSM8K format learning (Qwen2-1.5B-Instruct)",
+    fontsize=18, fontweight="bold", y=1.05,
+)
+plt.tight_layout()
+fig.savefig(OUT_DIR / "figure4_val_kl_vs_tokens.png", dpi=200, bbox_inches="tight")
+fig.savefig(OUT_DIR / "figure4_val_kl_vs_tokens.pdf", bbox_inches="tight")
+plt.close(fig)
+print(f"Saved: {OUT_DIR / 'figure4_val_kl_vs_tokens.png'}")
+
 print("\nAll paper figures saved to:", OUT_DIR)

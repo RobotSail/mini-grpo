@@ -1,0 +1,6 @@
+{
+  "best_checkpoint": "/mnt/nvme2n1/lr-sweep-eval/grpo-adamw-1e-6/checkpoint-542364",
+  "frobenius_norm_total": 0.39356524020737643,
+  "rank_k90_avg": 311.29441624365484,
+  "l0_sparsity": 0.32173997192875176
+}

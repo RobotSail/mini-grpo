@@ -1,0 +1,6 @@
+{
+  "best_checkpoint": "/mnt/nvme2n1/lr-sweep-eval/grpo-muon-1e-6/checkpoint-1333974",
+  "frobenius_norm_total": 0.4131307305746817,
+  "rank_k90_avg": 751.8375634517766,
+  "l0_sparsity": 0.27954741961302204
+}
