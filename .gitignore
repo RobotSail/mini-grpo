@@ -6,6 +6,8 @@ dist/
 wheels/
 *.egg-info
 
+experiments
+
 results
 
 countdown_svd_cache

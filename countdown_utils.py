@@ -4,36 +4,81 @@ Countdown Numbers Game: dataset loading, expression validation, and reward funct
 The countdown task: given N numbers and a target, find an arithmetic expression
 using +, -, *, / where each number is used exactly once that equals the target.
 
-Expected answer format: <answer>EXPRESSION</answer>
-  e.g. <answer>(25 + 3) * 7</answer>
+Expected response format (R1-style):
+  <think>...step-by-step reasoning...</think>
+  <answer>EXPRESSION</answer>
+  e.g. <think>I can try 25 + 3 = 28, then 28 * 7 = 196...</think>
+       <answer>(25 + 3) * 7</answer>
 
-Reward structure: {0.0, 0.1, 1.1}
-  0.0 — no <answer> tag, empty content, or content fails lexical filter
-  0.1 — format reward: <answer> tags present, non-empty, passes lexical filter
-  1.1 — format + correctness: expression uses all numbers exactly once and evaluates to target
+Reward structure: {0.0, format_reward, 1.0 + format_reward}
+  0.0            — missing format OR missing/invalid answer
+  format_reward  — </think> appears before <answer>, and <answer> tags present
+  1.0 + format   — correct format AND expression evaluates to target
 
 Data source: Jiayi-Pan/Countdown-Tasks-3to4 from HuggingFace
 """
 
+import ast
 import re
 import random
 from itertools import permutations, product
 
 import datasets
+from tqdm import tqdm
 
 # ── Constants ───────────────────────────────────────────────────────────────
 
 DEFAULT_COUNTDOWN_SYSTEM_MSG = (
-    "You are a countdown numbers game solver. Given a set of numbers and a target, "
-    "find an arithmetic expression using +, -, *, / that equals the target. Each "
-    "number must be used exactly once. Show your reasoning, then put your final "
-    "expression inside <answer>...</answer> tags.\n\n"
-    "Example: numbers [1, 3, 4, 6], target 24\n"
-    "<answer>6 / (1 - 3 / 4)</answer>"
+    "You are a helpful assistant that solves arithmetic problems. "
+    "You always think step by step before answering."
 )
+
+# Assistant prefix that forces the model to begin chain-of-thought
+R1_ASSISTANT_PREFIX = "<think>\n"
 
 ANSWER_PATTERN = re.compile(r"<answer>(.*?)</answer>", re.DOTALL | re.IGNORECASE)
 ALLOWED_EXPR_CHARS = re.compile(r"^[\d\s()+\-*/\.]+$")
+
+
+# ── AST validation ────────────────────────────────────────────────────────
+
+# Allowed AST node types for a valid countdown expression.
+_ALLOWED_AST_NODES = (
+    ast.Expression, ast.BinOp, ast.UnaryOp, ast.Constant,
+    ast.Add, ast.Sub, ast.Mult, ast.Div, ast.USub,
+)
+
+
+def validate_ast(expr: str, numbers: list[int]) -> bool:
+    """Validate that expr is a well-formed arithmetic expression using exactly
+    the given numbers.
+
+    Parses into a Python AST and checks:
+      1. Only allowed node types (binary +,-,*,/, unary -, numeric literals, parens)
+      2. Numeric literals extracted from the AST form the same multiset as `numbers`
+
+    Numbers are extracted from AST nodes, not regex — this prevents the model
+    from smuggling digits inside operator sequences or string tricks.
+    """
+    try:
+        tree = ast.parse(expr, mode='eval')
+    except SyntaxError:
+        return False
+
+    extracted = []
+    for node in ast.walk(tree):
+        if not isinstance(node, _ALLOWED_AST_NODES):
+            return False
+        if isinstance(node, ast.UnaryOp) and not isinstance(node.op, ast.USub):
+            return False
+        if isinstance(node, ast.BinOp) and not isinstance(node.op, (ast.Add, ast.Sub, ast.Mult, ast.Div)):
+            return False
+        if isinstance(node, ast.Constant):
+            if not isinstance(node.value, (int, float)):
+                return False
+            extracted.append(int(node.value))
+
+    return sorted(extracted) == sorted(numbers)
 
 
 # ── Expression validation ──────────────────────────────────────────────────
@@ -73,42 +118,60 @@ def validate_expression(expr: str, numbers: list[int], target: int, tol: float =
 
 # ── Reward function ─────────────────────────────────────────────────────────
 
-def countdown_reward_fn(response: str, answer: float, prompt_data: dict) -> float:
-    """Reward function for countdown problems.
+def countdown_reward_fn(
+    response: str, answer: float, prompt_data: dict,
+) -> dict:
+    """Grade a countdown response, returning structured results.
 
-    Matches the RewardFn protocol: (response, answer, prompt_data) -> float
+    The model must produce the full format including opening tags:
 
-    Format reward (0.1): <answer> tags present, non-empty content, passes lexical filter.
-    Correctness reward (+1.0): expression uses all numbers exactly once, evaluates to target.
+        <think>...reasoning...</think>
+        <answer>(3 + 4) * 2</answer>
 
-    Total reward set: {0.0, 0.1, 1.1}
+    Returns dict with:
+      has_format:  bool — ``<think>...</think>`` before ``<answer>...</answer>``
+      is_parsable: bool — valid AST using exactly the given numbers
+      is_correct:  bool — is_parsable AND expression evaluates to target
     """
     numbers = prompt_data.get("numbers")
     target = int(answer)
+    result = {"has_format": False, "is_parsable": False, "is_correct": False}
 
-    # Step 1: Extract answer tag
+    # ── Format check: <think>...</think> before <answer>...</answer> ──
+    resp_lower = response.lower()
+    think_start = resp_lower.find("<think>")
+    think_end = resp_lower.find("</think>")
+    answer_start = resp_lower.find("<answer>")
+    has_think = think_start != -1 and think_end != -1 and think_start < think_end
+    has_answer_tag = answer_start != -1
+    if has_think and has_answer_tag and think_end < answer_start:
+        result["has_format"] = True
+
+    # ── Answer validation ──
     matches = ANSWER_PATTERN.findall(response)
     if not matches:
-        return 0.0
+        return result
 
     content = matches[-1].strip()
 
-    # Step 2: Non-empty check
     if not content:
-        return 0.0
+        return result
 
-    # Step 3: Lexical filter (cheap structural check)
+    # Lexical filter (cheap, rejects obvious junk before parsing)
     if not ALLOWED_EXPR_CHARS.match(content) or "**" in content:
-        return 0.0
+        return result
 
-    # Format reward: valid structure
-    reward = 0.1
+    # AST validation — valid expression structure using exactly the given numbers
+    if numbers is not None and not validate_ast(content, numbers):
+        return result
 
-    # Step 4: Correctness check
+    result["is_parsable"] = True
+
+    # Correctness check (evaluates to target)
     if numbers is not None and validate_expression(content, numbers, target):
-        reward += 1.0
+        result["is_correct"] = True
 
-    return reward
+    return result
 
 
 # ── Countdown solver (brute-force for 3-4 numbers) ─────────────────────────
@@ -121,11 +184,15 @@ def _eval_safe(expr: str) -> float | None:
         return None
 
 
-def _generate_trees(exprs: list[str]) -> list[str]:
+ALL_OPS = ("+", "-", "*", "/")
+ADDITIVE_OPS = ("+", "-")
+
+
+def _generate_trees(exprs: list[str], ops: tuple[str, ...] = ALL_OPS) -> list[str]:
     """Generate all possible parenthesized expressions from a list of expression strings.
 
-    For N expressions, tries all ways to pick 2, combine with an operator,
-    and recurse. Returns all valid expression strings that evaluate without error.
+    For N expressions, tries all ways to pick 2, combine with an operator
+    from `ops`, and recurse. Returns all valid expression strings.
     """
     if len(exprs) == 1:
         return exprs
@@ -136,24 +203,29 @@ def _generate_trees(exprs: list[str]) -> list[str]:
             if i == j:
                 continue
             remaining = [exprs[k] for k in range(len(exprs)) if k != i and k != j]
-            for op in ["+", "-", "*", "/"]:
+            for op in ops:
                 combined = f"({exprs[i]} {op} {exprs[j]})"
-                for tree in _generate_trees(remaining + [combined]):
+                for tree in _generate_trees(remaining + [combined], ops=ops):
                     results.append(tree)
     return results
 
 
-def solve_countdown(numbers: list[int], target: int, tol: float = 1e-6) -> str | None:
+def solve_countdown(
+    numbers: list[int], target: int, ops: tuple[str, ...] = ALL_OPS, tol: float = 1e-6,
+) -> str | None:
     """Find an arithmetic expression using all numbers exactly once that equals target.
 
     Brute-force: enumerate all binary tree structures × operator combinations.
     For 3-4 numbers this is fast (< 10K combinations).
 
+    Args:
+        ops: Tuple of allowed operators. Default is all four (+, -, *, /).
+
     Returns a parenthesized expression string, or None if unsolvable.
     """
     str_nums = [str(n) for n in numbers]
 
-    for tree_expr in _generate_trees(str_nums):
+    for tree_expr in _generate_trees(str_nums, ops=ops):
         result = _eval_safe(tree_expr)
         if result is not None and abs(result - target) < tol:
             return tree_expr
@@ -161,13 +233,31 @@ def solve_countdown(numbers: list[int], target: int, tol: float = 1e-6) -> str |
     return None
 
 
+def requires_mult_or_div(numbers: list[int], target: int) -> bool:
+    """Return True if the problem cannot be solved with only + and -.
+
+    These are the 'hard' problems that require multiplication or division.
+    """
+    return solve_countdown(numbers, target, ops=ADDITIVE_OPS) is None
+
+
 # ── Dataset generation ──────────────────────────────────────────────────────
 
 def _format_user_prompt(numbers: list[int], target: int) -> str:
     nums_str = ", ".join(str(n) for n in numbers)
     return (
-        f"Using the numbers [{nums_str}], reach the target {target}. "
-        f"Each number must be used exactly once. Available operations: +, -, *, /."
+        f"Find a mathematical expression that equals {target} "
+        f"using the numbers [{nums_str}].\n\n"
+        f"Rules:\n"
+        f"- Use each number exactly once\n"
+        f"- You may use the following operations:\n"
+        f"  - Addition (+)\n"
+        f"  - Subtraction (-)\n"
+        f"  - Multiplication (*)\n"
+        f"  - Division (/)\n"
+        f"  - Parentheses ( )\n"
+        f"- Give your final expression in <answer>...</answer> tags\n\n"
+        f"Example: <answer>(8 - 3) * (12 / 4)</answer>"
     )
 
 
@@ -177,6 +267,8 @@ def generate_countdown_dataset(
     seed: int = 42,
     val_split: float = 0.05,
     test_split: float = 0.05,
+    verify: bool = True,
+    grpo_only: bool = False,
 ) -> dict[str, list[dict]]:
     """Load countdown problems from HuggingFace and generate paired GRPO/SFT datasets.
 
@@ -184,21 +276,14 @@ def generate_countdown_dataset(
     For SFT, solves each problem to produce a valid expression.
     Skips unsolvable problems. Verifies all solutions through the reward function.
 
-    Flow:
-    1. Load full dataset from HuggingFace
-    2. Shuffle with seed
-    3. Take first total_samples (0 = all)
-    4. Solve each problem, skip unsolvable
-    5. Split into train/val/test
-    6. Verify all solutions pass reward function
-    7. Convert to GRPO and SFT formats
-
     Args:
         total_samples: Max samples to include (0 = all available).
         system_msg: System message for the chat template.
         seed: Random seed for shuffling.
         val_split: Fraction of data for validation set.
         test_split: Fraction of data for test set.
+        verify: Whether to verify all SFT solutions pass the reward function.
+        grpo_only: If True, skip solving (much faster, only GRPO data).
 
     Returns:
         Dict with keys: grpo_train, grpo_val, grpo_test, sft_train, sft_val, sft_test
@@ -209,24 +294,31 @@ def generate_countdown_dataset(
     # Shuffle deterministically
     raw_dataset = raw_dataset.shuffle(seed=seed)
 
-    # Solve all problems, collect solvable ones
+    # Collect problems (solve for SFT ground truth unless grpo_only)
     solved = []  # list of (numbers, target, expression)
     skipped = 0
     limit = total_samples if total_samples > 0 else len(raw_dataset)
 
-    for sample in raw_dataset:
+    desc = "Loading problems" if grpo_only else "Solving problems"
+    pbar = tqdm(raw_dataset, total=limit, desc=desc)
+    for sample in pbar:
         if len(solved) >= limit:
             break
 
         target = sample["target"]
         numbers = list(sample["nums"])
 
-        expression = solve_countdown(numbers, target)
-        if expression is None:
-            skipped += 1
-            continue
-
-        solved.append((numbers, target, expression))
+        if grpo_only:
+            solved.append((numbers, target, None))
+        else:
+            expression = solve_countdown(numbers, target)
+            if expression is None:
+                skipped += 1
+                pbar.total = min(pbar.total + 1, len(raw_dataset))
+                continue
+            solved.append((numbers, target, expression))
+        pbar.update(0)  # refresh display
+    pbar.close()
 
     if skipped > 0:
         print(f"Skipped {skipped} unsolvable problems")
@@ -245,7 +337,6 @@ def generate_countdown_dataset(
         grpo, sft = [], []
         for numbers, target, expression in items:
             user_prompt = _format_user_prompt(numbers, target)
-            sft_response = f"<answer>{expression}</answer>"
 
             grpo.append({
                 "messages": [
@@ -258,15 +349,16 @@ def generate_countdown_dataset(
                 "operation": "countdown",
             })
 
-            sft.append({
-                "messages": [
-                    {"role": "system", "content": system_msg},
-                    {"role": "user", "content": user_prompt},
-                    {"role": "assistant", "content": sft_response},
-                ],
-                "answer": target,
-                "numbers": numbers,
-            })
+            if expression is not None:
+                sft.append({
+                    "messages": [
+                        {"role": "system", "content": system_msg},
+                        {"role": "user", "content": user_prompt},
+                        {"role": "assistant", "content": f"<answer>{expression}</answer>"},
+                    ],
+                    "answer": target,
+                    "numbers": numbers,
+                })
         return grpo, sft
 
     grpo_train, sft_train = _to_formats(train_solved)
@@ -274,20 +366,21 @@ def generate_countdown_dataset(
     grpo_test, sft_test = _to_formats(test_solved)
 
     # ── Verify all solutions pass the reward function ──
-    for label, grpo_list, sft_list in [
-        ("train", grpo_train, sft_train),
-        ("val", grpo_val, sft_val),
-        ("test", grpo_test, sft_test),
-    ]:
-        for i in range(len(grpo_list)):
-            numbers = grpo_list[i]["numbers"]
-            target = grpo_list[i]["answer"]
-            sft_response = sft_list[i]["messages"][2]["content"]
-            r = countdown_reward_fn(sft_response, target, {"numbers": numbers})
-            assert r == 1.1, (
-                f"{label} sample {i} failed verification: reward={r}, "
-                f"target={target}, numbers={numbers}, response={sft_response!r}"
-            )
+    if verify and not grpo_only:
+        for label, grpo_list, sft_list in [
+            ("train", grpo_train, sft_train),
+            ("val", grpo_val, sft_val),
+            ("test", grpo_test, sft_test),
+        ]:
+            for i in range(len(grpo_list)):
+                numbers = grpo_list[i]["numbers"]
+                target = grpo_list[i]["answer"]
+                sft_response = sft_list[i]["messages"][2]["content"]
+                r = countdown_reward_fn(sft_response, target, {"numbers": numbers})
+                assert r["is_parsable"] and r["is_correct"], (
+                    f"{label} sample {i} failed verification: {r}, "
+                    f"target={target}, numbers={numbers}, response={sft_response!r}"
+                )
 
     return {
         "grpo_train": grpo_train,
@@ -296,4 +389,244 @@ def generate_countdown_dataset(
         "sft_train": sft_train,
         "sft_val": sft_val,
         "sft_test": sft_test,
+    }
+
+
+# ── Synthetic countdown problem generator (backward decomposition) ────────
+
+COUNTDOWN_SYSTEM_MSG = """A conversation between User and Assistant. The User asks a question and the Assistant solves it. The Assistant first thinks about the reasoning process in the mind and then provides the User with the answer. The reasoning process and answer are enclosed within <think>...</think> and <answer>...</answer> tags, respectively, that is, <think> reasoning process here </think><answer> answer here </answer>"""
+
+
+def _get_factors(n: int) -> list[int]:
+    """Return all factors of n in [2, n//2]."""
+    if n <= 1:
+        return []
+    factors = []
+    for f in range(2, int(n ** 0.5) + 1):
+        if n % f == 0:
+            factors.append(f)
+            if f != n // f and n // f != n:
+                factors.append(n // f)
+    return factors
+
+
+def _operand_pairs(v: int, op: str, rng: random.Random,
+                   lo: int, hi: int, left_leaf: bool, right_leaf: bool,
+                   max_val: int = 9999, n: int = 6) -> list[tuple[int, int]]:
+    """Generate (a, b) pairs where a op b = v. All values are positive integers."""
+    pairs = []
+
+    if op == '+':
+        # a + b = v
+        for _ in range(n):
+            if left_leaf and right_leaf:
+                a_lo, a_hi = max(lo, v - hi), min(hi, v - lo)
+                if a_lo > a_hi:
+                    break
+                a = rng.randint(a_lo, a_hi)
+            elif left_leaf:
+                a = rng.randint(lo, min(hi, v - 1))
+            elif right_leaf:
+                b = rng.randint(lo, min(hi, v - 1))
+                pairs.append((v - b, b))
+                continue
+            else:
+                a = rng.randint(max(2, v // 4), max(3, 3 * v // 4))
+            b = v - a
+            if b > 0 and a > 0 and a <= max_val and b <= max_val:
+                pairs.append((a, b))
+
+    elif op == '-':
+        # a - b = v → a = v + b
+        for _ in range(n):
+            if right_leaf:
+                b = rng.randint(lo, hi)
+                a = v + b
+                if left_leaf and a > hi:
+                    continue
+            elif left_leaf:
+                if v >= hi:
+                    break
+                a = rng.randint(max(lo, v + 1), hi)
+                b = a - v
+            else:
+                b = rng.randint(1, min(99, max_val - v))
+                a = v + b
+            if a > 0 and b > 0 and a <= max_val and b <= max_val:
+                pairs.append((a, b))
+
+    elif op == '*':
+        # a * b = v, use factors
+        factors = _get_factors(v)
+        if not factors:
+            return []
+        rng.shuffle(factors)
+        for f in factors[:n]:
+            a, b = f, v // f
+            if rng.random() < 0.5:
+                a, b = b, a
+            if left_leaf and not (lo <= a <= hi):
+                continue
+            if right_leaf and not (lo <= b <= hi):
+                continue
+            if a <= max_val and b <= max_val and a > 1 and b > 1:
+                pairs.append((a, b))
+
+    elif op == '/':
+        # a / b = v → a = v * b
+        for _ in range(n):
+            if right_leaf:
+                b = rng.randint(max(2, lo), hi)
+            else:
+                b = rng.randint(2, 20)
+            a = v * b
+            if left_leaf and not (lo <= a <= hi):
+                continue
+            if a <= max_val:
+                pairs.append((a, b))
+
+    return pairs
+
+
+def _decompose(v: int, n_leaves: int, rng: random.Random,
+               num_range: tuple[int, int] = (1, 99),
+               need_mult_div: bool = True) -> tuple[list[int], bool] | None:
+    """Decompose value v into n_leaves numbers by building an expression tree backward.
+
+    Returns (numbers, used_mult_div) or None if decomposition fails.
+    """
+    lo, hi = num_range
+
+    if n_leaves == 1:
+        if lo <= v <= hi:
+            return [v], False
+        return None
+
+    splits = list(range(1, n_leaves))
+    rng.shuffle(splits)
+
+    for n_left in splits:
+        n_right = n_leaves - n_left
+
+        ops = ['+', '-', '*', '/']
+        # If we still need * or /, try those first
+        if need_mult_div:
+            md = [op for op in ops if op in ('*', '/')]
+            ad = [op for op in ops if op in ('+', '-')]
+            rng.shuffle(md)
+            rng.shuffle(ad)
+            ops = md + ad
+        else:
+            rng.shuffle(ops)
+
+        for op in ops:
+            is_md = op in ('*', '/')
+            pairs = _operand_pairs(
+                v, op, rng, lo, hi,
+                left_leaf=(n_left == 1), right_leaf=(n_right == 1),
+            )
+            for a, b in pairs:
+                left = _decompose(a, n_left, rng, num_range,
+                                  need_mult_div and not is_md)
+                if left is None:
+                    continue
+                left_nums, left_md = left
+
+                still_need = need_mult_div and not is_md and not left_md
+                right = _decompose(b, n_right, rng, num_range, still_need)
+                if right is None:
+                    continue
+                right_nums, right_md = right
+
+                got_md = is_md or left_md or right_md
+                if need_mult_div and not got_md:
+                    continue
+
+                return left_nums + right_nums, got_md
+
+    return None
+
+
+def generate_synthetic_countdown(
+    n_train: int,
+    n_val: int = 1000,
+    num_range: tuple[int, int] = (1, 99),
+    target_range: tuple[int, int] = (10, 100),
+    n_numbers: tuple[int, ...] = (3, 4),
+    system_msg: str = COUNTDOWN_SYSTEM_MSG,
+    seed: int = 42,
+) -> dict[str, list[dict]]:
+    """Generate synthetic countdown problems via backward decomposition.
+
+    Picks a target in target_range, then decomposes it into n numbers by
+    building an expression tree in reverse. At least one operation is * or /,
+    and division always produces integer results.
+
+    Args:
+        n_train: Number of training samples to generate.
+        n_val: Number of validation samples to generate.
+        num_range: (min, max) for leaf numbers.
+        target_range: (min, max) for targets.
+        n_numbers: Tuple of allowed operand counts (e.g. (3, 4)).
+        system_msg: System message for the chat template.
+        seed: Random seed.
+
+    Returns:
+        Dict with keys: train, val (each a list of GRPO-format dicts).
+    """
+    rng = random.Random(seed)
+    total_needed = n_train + n_val
+    seen = set()
+    results = []
+    attempts = 0
+
+    pbar = tqdm(total=total_needed, desc="Generating problems")
+    while len(results) < total_needed:
+        attempts += 1
+        target = rng.randint(*target_range)
+        k = rng.choice(n_numbers)
+
+        result = _decompose(target, k, rng, num_range, need_mult_div=True)
+        if result is None:
+            continue
+
+        numbers, _ = result
+
+        # Deduplicate
+        key = (tuple(sorted(numbers)), target)
+        if key in seen:
+            continue
+
+        # Verify the problem genuinely requires * or /
+        if not requires_mult_or_div(numbers, target):
+            continue
+
+        seen.add(key)
+        results.append((numbers, target))
+        pbar.update(1)
+    pbar.close()
+
+    print(f"Generated {len(results)} problems in {attempts} attempts "
+          f"({100 * len(results) / attempts:.1f}% acceptance rate)")
+
+    def _to_grpo(items):
+        out = []
+        for numbers, target in items:
+            user_prompt = _format_user_prompt(numbers, target)
+            messages = []
+            if system_msg:
+                messages.append({"role": "system", "content": system_msg})
+            messages.append({"role": "user", "content": user_prompt})
+            out.append({
+                "messages": messages,
+                "answer": target,
+                "numbers": numbers,
+                "problem": user_prompt,
+                "operation": "countdown",
+            })
+        return out
+
+    return {
+        "train": _to_grpo(results[n_val:]),
+        "val": _to_grpo(results[:n_val]),
     }

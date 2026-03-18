@@ -2009,21 +2009,25 @@ def rs_train(
 
 @app.command()
 def grpo_train(
-    data_path: str = typer.Option(..., "--data-path", help="Path to training data (GSM8K jsonl)"),
+    data_path: str = typer.Option(..., "--data-path", help="Path to training data (jsonl)"),
     output_dir: str = typer.Option(..., "--output-dir", help="Path to the output directory"),
     model_name: str = typer.Option(
         "Qwen/Qwen2-1.5B-Instruct", "--model", "-m", help="Model name or path",
     ),
 
-    max_tokens: int = typer.Option(..., "--max-tokens", help="Total token budget (loss-counted tokens backpropped on)"),
+    max_tokens: int = typer.Option(0, "--max-tokens", help="Total token budget (0 = use --max-steps)"),
+    max_steps: int = typer.Option(0, "--max-steps", help="Max optimizer steps (0 = use --max-tokens)"),
     inner_epochs: int = typer.Option(2, "--inner-epochs", help="Inner epochs per rollout batch"),
     inner_batch_size: int = typer.Option(32, "--inner-batch-size", help="Training batch size for GRPO inner loop"),
 
     save_every_n_tokens: int = typer.Option(
         0, "--save-every-n-tokens", help="Save checkpoint every N tokens (0 = disabled)"
     ),
+    save_every_n_steps: int = typer.Option(
+        0, "--save-every-n-steps", help="Save checkpoint every N optimizer steps (0 = disabled)"
+    ),
 
-    # GRPO settings (defaults match cli.py train command)
+    # GRPO settings
     group_size: int = typer.Option(16, "-G", "--group-size", help="Rollouts per prompt"),
     batch_size: int = typer.Option(64, "-B", "--batch-size", help="Prompts per rollout iteration"),
     clip_eps: float = typer.Option(0.2, "--clip-eps", help="GRPO clip epsilon"),
@@ -2063,31 +2067,34 @@ def grpo_train(
 
     # Wandb
     use_wandb: bool = typer.Option(False, "--wandb", help="Enable wandb logging"),
-    wandb_project: str = typer.Option("mini-grpo-gsm8k", "--wandb-project", help="Wandb project name"),
+    wandb_project: str = typer.Option("mini-grpo", "--wandb-project", help="Wandb project name"),
     wandb_run_name: str = typer.Option(None, "--wandb-run", help="Wandb run name"),
     wandb_entity: str = typer.Option(None, "--wandb-entity", help="Wandb entity"),
 
     seed: int = typer.Option(67, "--seed", help="Random seed"),
 
     validation_path: str = typer.Option(None, "--validation-path", help="Path to validation data"),
+
+    # Task
+    task: str = typer.Option("gsm8k", "--task", help="Task name: 'gsm8k' or 'countdown'"),
 ):
     """
-    GRPO training with vLLM inference and configurable precision.
+    Single-GPU GRPO training with vLLM inference and configurable precision.
 
-    Same GRPO loop, reward (0/0.1/1.1), and loss as the `train` command,
-    but uses vLLM on separate GPU(s) for fast rollout generation.
+    Uses vLLM on separate GPU(s) for fast rollout generation. Supports
+    multiple tasks via --task flag (gsm8k, countdown).
 
     Use --precision to toggle between FP32 and BF16 for paired sparsity
-    experiments.  An initial checkpoint is saved automatically so you
-    can diff pre/post weights for L0 sparsity and spectral analysis.
+    experiments. An initial checkpoint is saved automatically.
     """
     from grpo_trainer import GRPOTrainer
+    from tasks import get_reward_fn
 
     trainer = GRPOTrainer(
         data_path=data_path,
         model_name=model_name,
         output_dir=output_dir,
-        token_budget=max_tokens,
+        token_budget=max_tokens if max_tokens > 0 else 0,
         inner_epochs=inner_epochs,
         inner_batch_size=inner_batch_size,
         save_every_n_tokens=save_every_n_tokens,
@@ -2117,6 +2124,7 @@ def grpo_train(
         wandb_entity=wandb_entity,
         seed=seed,
         validation_path=validation_path,
+        reward_fn=get_reward_fn(task),
     )
     trainer.train()
 
@@ -2304,6 +2312,55 @@ def sft_train(
 
 
 @app.command()
+def generate_hard_countdown(
+    n_train: int = typer.Option(50000, "--n-train", help="Number of training samples to generate"),
+    n_val: int = typer.Option(1000, "--n-val", help="Number of validation samples to generate"),
+    seed: int = typer.Option(42, "--seed", help="Random seed"),
+    output_dir: str = typer.Option("generated_data", "--output-dir", help="Directory to save datasets"),
+):
+    """
+    Generate synthetic countdown problems requiring multiplication or division.
+
+    Constructs random expression trees from numbers in [1, 99] with targets
+    in [1, 999]. Division is constrained to produce integer results.
+    Problems solvable with only + and - are excluded.
+
+    Outputs:
+      - countdown_hard_train.jsonl
+      - countdown_hard_val.jsonl
+    """
+    from countdown_utils import generate_synthetic_countdown
+
+    result = generate_synthetic_countdown(
+        n_train=n_train,
+        n_val=n_val,
+        seed=seed,
+    )
+
+    os.makedirs(output_dir, exist_ok=True)
+
+    for split_name in ["train", "val"]:
+        samples = result[split_name]
+        ds = datasets.Dataset.from_list(samples)
+        path = os.path.join(output_dir, f"countdown_hard_{split_name}.jsonl")
+        ds.to_json(path)
+        typer.secho(f"  Saved {len(samples)} {split_name} samples to '{path}'", fg=typer.colors.BLUE)
+
+    n_train_actual = len(result["train"])
+    n_val_actual = len(result["val"])
+    typer.secho(
+        f"\nGenerated {n_train_actual} train + {n_val_actual} val countdown samples (seed={seed})",
+        fg=typer.colors.GREEN,
+    )
+
+    # Show examples
+    if result["train"]:
+        for i, ex in enumerate(result["train"][:3]):
+            typer.secho(f"\nExample {i+1}:", fg=typer.colors.CYAN)
+            typer.secho(f"  Numbers: {ex['numbers']}, Target: {ex['answer']}", fg=typer.colors.WHITE)
+
+
+@app.command()
 def generate_countdown_datasets(
     system_msg: str = typer.Option(
         None,
@@ -2315,6 +2372,8 @@ def generate_countdown_datasets(
     output_dir: str = typer.Option("generated_data", "--output-dir", help="Directory to save datasets"),
     val_split: float = typer.Option(0.05, "--val-split", help="Fraction of data for validation set"),
     test_split: float = typer.Option(0.05, "--test-split", help="Fraction of data for test set"),
+    grpo_only: bool = typer.Option(False, "--grpo-only", help="Skip solving (much faster, GRPO data only)"),
+    skip_verify: bool = typer.Option(False, "--skip-verify", help="Skip verification of SFT solutions"),
 ):
     """
     Generate paired GRPO and SFT countdown datasets from Jiayi-Pan/Countdown-Tasks-3to4.
@@ -2322,6 +2381,8 @@ def generate_countdown_datasets(
     Loads the full dataset from HuggingFace, shuffles with seed, takes the first
     --total-samples, solves each for SFT, splits into train/val/test, verifies all
     solutions through the reward function, and saves to disk.
+
+    Use --grpo-only to skip solving (much faster, useful when you only need GRPO data).
 
     Outputs:
       - countdown_{grpo,sft}_{train,val,test}.jsonl
@@ -2331,13 +2392,16 @@ def generate_countdown_datasets(
     if system_msg is None:
         system_msg = DEFAULT_COUNTDOWN_SYSTEM_MSG
 
-    typer.secho("Loading and solving countdown problems from HuggingFace...", fg=typer.colors.CYAN)
+    desc = "Loading" if grpo_only else "Loading and solving"
+    typer.secho(f"{desc} countdown problems from HuggingFace...", fg=typer.colors.CYAN)
     result = generate_countdown_dataset(
         total_samples=total_samples,
         system_msg=system_msg,
         seed=seed,
         val_split=val_split,
         test_split=test_split,
+        verify=not skip_verify,
+        grpo_only=grpo_only,
     )
 
     os.makedirs(output_dir, exist_ok=True)
@@ -2519,19 +2583,23 @@ def _setup_vllm_checkpoint(model_name: str, checkpoint_dir: str):
 
 
 @app.command()
-def countdown_grpo_train(
-    data_path: str = typer.Option(..., "--data-path", help="Path to countdown GRPO training data (jsonl)"),
+def distributed_grpo_train(
+    data_path: str = typer.Option(..., "--data-path", help="Path to GRPO training data (jsonl)"),
     output_dir: str = typer.Option(..., "--output-dir", help="Path to the output directory"),
     model_name: str = typer.Option(
         "Qwen/Qwen2-1.5B-Instruct", "--model", "-m", help="Model name or path",
     ),
 
-    max_tokens: int = typer.Option(..., "--max-tokens", help="Total token budget (loss-counted tokens backpropped on)"),
+    max_tokens: int = typer.Option(0, "--max-tokens", help="Total token budget (0 = use --max-steps)"),
+    max_steps: int = typer.Option(0, "--max-steps", help="Max optimizer steps (0 = use --max-tokens)"),
     inner_epochs: int = typer.Option(2, "--inner-epochs", help="Inner epochs per rollout batch"),
     inner_batch_size: int = typer.Option(32, "--inner-batch-size", help="Training batch size for GRPO inner loop"),
 
     save_every_n_tokens: int = typer.Option(
         0, "--save-every-n-tokens", help="Save checkpoint every N tokens (0 = disabled)"
+    ),
+    save_every_n_steps: int = typer.Option(
+        0, "--save-every-n-steps", help="Save checkpoint every N optimizer steps (0 = disabled)"
     ),
 
     # GRPO settings
@@ -2539,7 +2607,10 @@ def countdown_grpo_train(
     batch_size: int = typer.Option(64, "-B", "--batch-size", help="Prompts per rollout iteration"),
     clip_eps: float = typer.Option(0.2, "--clip-eps", help="GRPO clip epsilon"),
     kl_strength: float = typer.Option(0.01, "--kl", help="KL penalty strength"),
+    format_reward: float = typer.Option(0.1, "--format-reward", help="Reward for correct format only"),
     gradient_clip: float = typer.Option(1.0, "--gradient-clip", help="Gradient clipping max norm"),
+    update_ref_every: int = typer.Option(0, "--update-ref-every", help="Update ref policy every N steps (0 = never)"),
+    token_level_averaging: bool = typer.Option(False, "--token-level-avg/--seq-level-avg", help="Token-level loss averaging (default: sequence-level)"),
 
     # Sampling
     temperature: float = typer.Option(0.7, "-t", "--temp", help="Sampling temperature"),
@@ -2569,25 +2640,30 @@ def countdown_grpo_train(
 
     # Wandb
     use_wandb: bool = typer.Option(False, "--wandb", help="Enable wandb logging"),
-    wandb_project: str = typer.Option("countdown-grpo", "--wandb-project", help="Wandb project name"),
+    wandb_project: str = typer.Option("grpo-distributed", "--wandb-project", help="Wandb project name"),
     wandb_run_name: str = typer.Option(None, "--wandb-run", help="Wandb run name"),
     wandb_entity: str = typer.Option(None, "--wandb-entity", help="Wandb entity"),
 
     seed: int = typer.Option(67, "--seed", help="Random seed"),
 
     validation_path: str = typer.Option(None, "--validation-path", help="Path to validation data"),
+
+    # Task
+    task: str = typer.Option("gsm8k", "--task", help="Task name: 'gsm8k' or 'countdown'"),
 ):
     """
-    Multi-GPU GRPO training on countdown problems with FSDP2.
+    Multi-GPU GRPO training with FSDP2.
 
     Orchestrator: starts vLLM on --vllm-gpus, then launches distributed
     training via torchrun on --train-gpus. Single command, no manual torchrun.
 
+    Supports multiple tasks via --task flag (gsm8k, countdown).
+
     Example:
-        python cli.py countdown-grpo-train \\
-            --data-path generated_data/countdown_grpo_train.jsonl \\
+        python cli.py distributed-grpo-train \\
+            --data-path data/grpo_train.jsonl \\
             --output-dir /out --max-tokens 1000000 \\
-            --train-gpus 0,1 --vllm-gpus 2
+            --train-gpus 0,1 --vllm-gpus 2 --task countdown
     """
     import socket as sock
     import threading
@@ -2595,11 +2671,14 @@ def countdown_grpo_train(
     n_train_gpus = len(train_gpus.split(","))
     n_vllm_gpus = len(vllm_gpus.split(","))
 
-    typer.secho(f"Countdown GRPO Orchestrator", fg=typer.colors.BRIGHT_CYAN, bold=True)
+    typer.secho(f"Distributed GRPO Orchestrator (task={task})", fg=typer.colors.BRIGHT_CYAN, bold=True)
     typer.secho(f"  Training GPUs: {train_gpus} ({n_train_gpus} workers)", fg=typer.colors.WHITE)
     typer.secho(f"  vLLM GPUs:     {vllm_gpus} ({n_vllm_gpus} data-parallel)", fg=typer.colors.WHITE)
     typer.secho(f"  Model:         {model_name}", fg=typer.colors.WHITE)
-    typer.secho(f"  Token budget:  {max_tokens:,}", fg=typer.colors.WHITE)
+    if max_tokens > 0:
+        typer.secho(f"  Token budget:  {max_tokens:,}", fg=typer.colors.WHITE)
+    if max_steps > 0:
+        typer.secho(f"  Step budget:   {max_steps:,}", fg=typer.colors.WHITE)
 
     # 1. Allocate port and set up checkpoint dir
     with sock.socket(sock.AF_INET, sock.SOCK_STREAM) as s:
@@ -2668,19 +2747,23 @@ def countdown_grpo_train(
             sys.executable, "-m", "torch.distributed.run",
             "--nproc_per_node", str(n_train_gpus),
             "--master_port", str(master_port),
-            "cli.py", "countdown-grpo-worker",
+            "cli.py", "distributed-grpo-worker",
             "--data-path", data_path,
             "--output-dir", output_dir,
             "--model", model_name,
             "--max-tokens", str(max_tokens),
+            "--max-steps", str(max_steps),
             "--inner-epochs", str(inner_epochs),
             "--inner-batch-size", str(inner_batch_size),
             "--save-every-n-tokens", str(save_every_n_tokens),
+            "--save-every-n-steps", str(save_every_n_steps),
             "--group-size", str(group_size),
             "--batch-size", str(batch_size),
             "--clip-eps", str(clip_eps),
             "--kl", str(kl_strength),
+            "--format-reward", str(format_reward),
             "--gradient-clip", str(gradient_clip),
+            "--update-ref-every", str(update_ref_every),
             "--temp", str(temperature),
             "--max-new-tokens", str(max_new_tokens),
             "--top-p", str(top_p),
@@ -2695,6 +2778,7 @@ def countdown_grpo_train(
             "--vllm-url", vllm_url,
             "--vllm-checkpoint-dir", checkpoint_dir,
             "--seed", str(seed),
+            "--task", task,
         ]
         if use_wandb:
             train_cmd.append("--wandb")
@@ -2708,6 +2792,8 @@ def countdown_grpo_train(
             train_cmd += ["--validation-path", validation_path]
         if ref_cpu_offload:
             train_cmd.append("--ref-cpu-offload")
+        if token_level_averaging:
+            train_cmd.append("--token-level-avg")
 
         train_env = os.environ.copy()
         train_env["CUDA_VISIBLE_DEVICES"] = train_gpus
@@ -2755,19 +2841,24 @@ def countdown_grpo_train(
 
 
 @app.command()
-def countdown_grpo_worker(
+def distributed_grpo_worker(
     data_path: str = typer.Option(..., "--data-path"),
     output_dir: str = typer.Option(..., "--output-dir"),
     model_name: str = typer.Option("Qwen/Qwen2-1.5B-Instruct", "--model", "-m"),
-    max_tokens: int = typer.Option(..., "--max-tokens"),
+    max_tokens: int = typer.Option(0, "--max-tokens"),
+    max_steps: int = typer.Option(0, "--max-steps"),
     inner_epochs: int = typer.Option(2, "--inner-epochs"),
     inner_batch_size: int = typer.Option(32, "--inner-batch-size"),
     save_every_n_tokens: int = typer.Option(0, "--save-every-n-tokens"),
+    save_every_n_steps: int = typer.Option(0, "--save-every-n-steps"),
     group_size: int = typer.Option(16, "-G", "--group-size"),
     batch_size: int = typer.Option(64, "-B", "--batch-size"),
     clip_eps: float = typer.Option(0.2, "--clip-eps"),
     kl_strength: float = typer.Option(0.01, "--kl"),
+    format_reward: float = typer.Option(0.1, "--format-reward"),
     gradient_clip: float = typer.Option(1.0, "--gradient-clip"),
+    update_ref_every: int = typer.Option(0, "--update-ref-every"),
+    token_level_averaging: bool = typer.Option(False, "--token-level-avg/--seq-level-avg"),
     temperature: float = typer.Option(0.7, "-t", "--temp"),
     max_new_tokens: int = typer.Option(512, "--max-new-tokens"),
     top_p: float = typer.Option(1.0, "--top-p"),
@@ -2783,31 +2874,37 @@ def countdown_grpo_worker(
     vllm_checkpoint_dir: str = typer.Option(..., "--vllm-checkpoint-dir"),
     ref_cpu_offload: bool = typer.Option(False, "--ref-cpu-offload"),
     use_wandb: bool = typer.Option(False, "--wandb"),
-    wandb_project: str = typer.Option("countdown-grpo", "--wandb-project"),
+    wandb_project: str = typer.Option("grpo-distributed", "--wandb-project"),
     wandb_run_name: str = typer.Option(None, "--wandb-run"),
     wandb_entity: str = typer.Option(None, "--wandb-entity"),
     seed: int = typer.Option(67, "--seed"),
     validation_path: str = typer.Option(None, "--validation-path"),
+    task: str = typer.Option("gsm8k", "--task"),
 ):
     """
-    Internal: GRPO training worker launched by countdown-grpo-train via torchrun.
+    Internal: GRPO training worker launched by distributed-grpo-train via torchrun.
     Do not call directly.
     """
     from distributed_grpo_trainer import DistributedGRPOTrainer
-    from countdown_utils import countdown_reward_fn
+    from tasks import get_reward_fn
 
     trainer = DistributedGRPOTrainer(
         data_path=data_path,
         model_name=model_name,
         output_dir=output_dir,
         token_budget=max_tokens,
+        max_steps=max_steps,
         inner_epochs=inner_epochs,
         inner_batch_size=inner_batch_size,
         save_every_n_tokens=save_every_n_tokens,
+        save_every_n_steps=save_every_n_steps,
         group_size=group_size,
         batch_size=batch_size,
         clip_eps=clip_eps,
         kl_strength=kl_strength,
+        format_reward=format_reward,
+        update_ref_every=update_ref_every,
+        token_level_averaging=token_level_averaging,
         temperature=temperature,
         top_k=top_k,
         top_p=top_p,
@@ -2829,7 +2926,7 @@ def countdown_grpo_worker(
         wandb_entity=wandb_entity,
         seed=seed,
         validation_path=validation_path,
-        reward_fn=countdown_reward_fn,
+        task=task,
     )
     trainer.train()
 
@@ -2884,7 +2981,7 @@ def countdown_rs_train(
     Same RS loop as rs_train but uses the countdown reward function which
     validates arithmetic expressions in addition to checking the final answer.
     """
-    from countdown_utils import countdown_reward_fn
+    from tasks import get_reward_fn
 
     trainer = RSTrainer(
         data_path=data_path,
@@ -2917,7 +3014,7 @@ def countdown_rs_train(
         vllm_gpus=vllm_gpus,
         vllm_gpu_memory_utilization=0.9,
         validation_path=validation_path,
-        reward_fn=countdown_reward_fn,
+        reward_fn=get_reward_fn("countdown"),
     )
     trainer.train()
     dist.barrier()

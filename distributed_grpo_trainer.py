@@ -46,6 +46,7 @@ from safetensors.torch import save_file
 
 import utils
 from optimizers import create_fsdp2_muon_optimizer
+from tasks import RewardResult, get_reward_fn
 
 try:
     import wandb
@@ -57,40 +58,6 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 logging.getLogger("httpx").setLevel(logging.WARNING)
-
-
-# ── Shared utilities (same as grpo_trainer.py) ──────────────────────────────
-
-answer_pattern = re.compile(r"<answer>(.*?)</answer>", re.DOTALL | re.IGNORECASE)
-
-
-def parse_number(text: str) -> float:
-    if not text or not isinstance(text, str):
-        raise ValueError(f"Empty or invalid input: {text}")
-    text = text.strip()
-    text = re.sub(r"[$\u20AC\u00A3\u00A5\u20B9]", "", text)
-    text = text.replace("%", "").replace(",", "").strip()
-    if not any(c.isdigit() for c in text):
-        raise ValueError(f"No digits found: {text}")
-    match = re.search(r"-?\d+\.?\d*", text)
-    if not match:
-        raise ValueError(f"Could not extract number: {text}")
-    return float(match.group())
-
-
-def reward_response(response: str, answer: float) -> float:
-    matches = answer_pattern.findall(response)
-    if not matches:
-        return 0.0
-    last_match = matches[-1]
-    try:
-        parsed = parse_number(last_match)
-    except ValueError:
-        return 0.0
-    reward = 0.1
-    if abs(parsed - float(answer)) < 1e-6:
-        reward += 1.0
-    return reward
 
 
 def log_rank_0(msg, *args, level=logging.INFO):
@@ -105,16 +72,26 @@ class GRPOSample(pd.BaseModel):
     old_logprobs: list[float]
     reward: float = 0.0
     advantage: float = 0.0
+    has_format: bool = False
     is_parsable: bool = False
     is_correct: bool = False
 
 
 class StatsTracker:
-    def __init__(self, token_budget: int, checkpoint_frequency: int):
+    def __init__(
+        self,
+        token_budget: int = 0,
+        save_every_n_tokens: int = 0,
+        step_budget: int = 0,
+        save_every_n_steps: int = 0,
+    ):
         self.token_budget = token_budget
-        self.checkpoint_frequency = checkpoint_frequency
+        self.step_budget = step_budget
+        self.save_every_n_tokens = save_every_n_tokens
+        self.save_every_n_steps = save_every_n_steps
         self._tokens_seen = 0
-        self._last_checkpoint = 0
+        self._last_checkpoint_tokens = 0
+        self._last_checkpoint_steps = 0
         self._optim_steps = 0
         self._iteration = 0
 
@@ -125,15 +102,26 @@ class StatsTracker:
         self._optim_steps += 1
 
     def should_save(self) -> bool:
-        return self.checkpoint_frequency > 0 and (
-            self._tokens_seen - self._last_checkpoint
-        ) >= self.checkpoint_frequency
+        if self.save_every_n_tokens > 0 and (
+            self._tokens_seen - self._last_checkpoint_tokens
+        ) >= self.save_every_n_tokens:
+            return True
+        if self.save_every_n_steps > 0 and (
+            self._optim_steps - self._last_checkpoint_steps
+        ) >= self.save_every_n_steps:
+            return True
+        return False
 
     def mark_checkpointed(self):
-        self._last_checkpoint = self._tokens_seen
+        self._last_checkpoint_tokens = self._tokens_seen
+        self._last_checkpoint_steps = self._optim_steps
 
     def completed(self) -> bool:
-        return self._tokens_seen >= self.token_budget
+        if self.token_budget > 0 and self._tokens_seen >= self.token_budget:
+            return True
+        if self.step_budget > 0 and self._optim_steps >= self.step_budget:
+            return True
+        return False
 
     def advance_iteration(self):
         self._iteration += 1
@@ -180,15 +168,21 @@ class DistributedGRPOTrainer:
         data_path: str,
         model_name: str,
         output_dir: str | None,
-        token_budget: int,
+        token_budget: int = 0,
         inner_epochs: int = 2,
         inner_batch_size: int = 32,
         save_every_n_tokens: int = 0,
+        # Step-based budget (alternative to token budget)
+        max_steps: int = 0,
+        save_every_n_steps: int = 0,
         # GRPO
         group_size: int = 16,
         batch_size: int = 64,
         clip_eps: float = 0.2,
         kl_strength: float = 0.01,
+        format_reward: float = 0.1,
+        # Reference policy update
+        update_ref_every: int = 0,
         # Sampling
         temperature: float = 0.7,
         top_k: int = 0,
@@ -211,13 +205,17 @@ class DistributedGRPOTrainer:
         ref_cpu_offload: bool = False,
         # Logging
         use_wandb: bool = False,
-        wandb_project: str = "countdown-grpo",
+        wandb_project: str = "grpo-distributed",
         wandb_run_name: str = None,
         wandb_entity: str = None,
         # Misc
         seed: int = 67,
         validation_path: str = None,
+        # Loss averaging
+        token_level_averaging: bool = False,
+        # Task
         reward_fn=None,
+        task: str = "gsm8k",
     ):
         utils.set_determinism(seed)
 
@@ -259,10 +257,18 @@ class DistributedGRPOTrainer:
         self.inner_batch_size = inner_batch_size
         self.max_tokens_per_gpu = max_tokens_per_gpu
         self.gradient_clip = gradient_clip
+        self.format_reward = format_reward
+        self.token_level_averaging = token_level_averaging
+        self.update_ref_every = update_ref_every
         self.use_wandb = use_wandb
-        self.reward_fn = reward_fn or (lambda resp, ans, pd: reward_response(resp, ans))
+        self.reward_fn = reward_fn or get_reward_fn(task)
 
-        self.stats = StatsTracker(token_budget, save_every_n_tokens)
+        self.stats = StatsTracker(
+            token_budget=token_budget,
+            save_every_n_tokens=save_every_n_tokens,
+            step_budget=max_steps,
+            save_every_n_steps=save_every_n_steps,
+        )
 
         if output_dir and self.rank == 0:
             os.makedirs(output_dir, exist_ok=True)
@@ -328,7 +334,9 @@ class DistributedGRPOTrainer:
                     wandb_project, wandb_run_name,
                     {
                         "model_name": model_name,
+                        "task": task,
                         "token_budget": token_budget,
+                        "max_steps": max_steps,
                         "group_size": group_size,
                         "batch_size": batch_size,
                         "inner_batch_size": inner_batch_size,
@@ -336,6 +344,9 @@ class DistributedGRPOTrainer:
                         "lr": lr,
                         "clip_eps": clip_eps,
                         "kl_strength": kl_strength,
+                        "format_reward": format_reward,
+                        "update_ref_every": update_ref_every,
+                        "token_level_averaging": token_level_averaging,
                         "temperature": temperature,
                         "max_new_tokens": max_new_tokens,
                         "gradient_clip": gradient_clip,
@@ -520,15 +531,29 @@ class DistributedGRPOTrainer:
         prompts = []
         for _ in range(self.batch_size):
             sample = next(self.train_iterator)
-            prompt_ids = (
-                self.tokenizer.apply_chat_template(
-                    sample["messages"],
-                    add_generation_prompt=True,
-                    return_tensors="pt",
+            messages = sample["messages"]
+
+            # Detect assistant prefix (e.g. R1-style "<think>\n")
+            if messages and messages[-1].get("role") == "assistant":
+                prompt_ids = (
+                    self.tokenizer.apply_chat_template(
+                        messages,
+                        continue_final_message=True,
+                        return_tensors="pt",
+                    )
+                    .squeeze(0)
+                    .tolist()
                 )
-                .squeeze(0)
-                .tolist()
-            )
+            else:
+                prompt_ids = (
+                    self.tokenizer.apply_chat_template(
+                        messages,
+                        add_generation_prompt=True,
+                        return_tensors="pt",
+                    )
+                    .squeeze(0)
+                    .tolist()
+                )
             prompts.append({
                 "prompt_ids": prompt_ids,
                 "prompt_text": self.tokenizer.decode(prompt_ids),
@@ -555,8 +580,25 @@ class DistributedGRPOTrainer:
             len(groups), sum(len(g) for g in groups),
         )
 
-        # Display rollout summary table + example responses (rank 0 only)
+        # Detailed per-operation metrics (rank 0 only, countdown problems only)
         if self.rank == 0 and groups:
+            detail_metrics = self._compute_rollout_details(prompts, groups)
+            if detail_metrics:
+                parts = []
+                for key in ("correct_rate_mul", "correct_rate_div", "correct_rate_add",
+                            "correct_rate_sub", "correct_rate_parens"):
+                    full_key = f"rollout/{key}"
+                    if full_key in detail_metrics:
+                        label = key.replace("correct_rate_", "")
+                        parts.append(f"{label}={100 * detail_metrics[full_key]:.1f}%")
+                if "rollout/think_length_var" in detail_metrics:
+                    parts.append(f"think_len_var={detail_metrics['rollout/think_length_var']:.0f}")
+                if parts:
+                    log_rank_0("per-op correct: %s", " | ".join(parts))
+
+                if self.use_wandb and WANDB_AVAILABLE:
+                    wandb.log(detail_metrics, step=self.stats.optim_steps)
+
             self._display_rollout_summary(prompts, groups)
 
         return groups
@@ -624,6 +666,7 @@ class DistributedGRPOTrainer:
         groups = []
         total_correct = 0
         total_parsable = 0
+        total_format = 0
         total_completions = 0
         total_reward = 0.0
 
@@ -664,13 +707,40 @@ class DistributedGRPOTrainer:
             # Grade and build samples
             group = []
             answer = prompt_data["answer"]
+            pd_with_format = {**prompt_data, "format_reward": self.format_reward}
             for (response_text, response_ids), old_lps in zip(group_responses, old_logprobs_list):
-                r = self.reward_fn(response_text, answer, prompt_data)
+                result = self.reward_fn(response_text, answer, pd_with_format)
+
+                # Handle both RewardResult and legacy float returns
+                if isinstance(result, RewardResult):
+                    reward = result.reward
+                    has_format = result.has_format
+                    is_parsable = result.is_parsable
+                    is_correct = result.is_correct
+                elif isinstance(result, dict):
+                    # Raw dict from countdown_reward_fn
+                    has_format = result.get("has_format", False)
+                    is_parsable = result.get("is_parsable", False)
+                    is_correct = result.get("is_correct", False)
+                    if is_correct:
+                        reward = 1.0 + self.format_reward
+                    elif has_format:
+                        reward = self.format_reward
+                    else:
+                        reward = 0.0
+                else:
+                    reward = float(result)
+                    has_format = reward >= 0.1
+                    is_parsable = reward >= 0.1
+                    is_correct = reward >= 1.0
+
                 total_completions += 1
-                total_reward += r
-                if r >= 0.1:
+                total_reward += reward
+                if has_format:
+                    total_format += 1
+                if is_parsable:
                     total_parsable += 1
-                if r >= 1.0:
+                if is_correct:
                     total_correct += 1
 
                 group.append(GRPOSample(
@@ -678,34 +748,127 @@ class DistributedGRPOTrainer:
                     response_ids=response_ids,
                     response=response_text,
                     old_logprobs=old_lps,
-                    reward=r,
-                    is_parsable=r >= 0.1,
-                    is_correct=r >= 1.0,
+                    reward=reward,
+                    has_format=has_format,
+                    is_parsable=is_parsable,
+                    is_correct=is_correct,
                 ))
 
             self._compute_advantages(group)
             groups.append(group)
 
-        avg_reward = total_reward / max(total_completions, 1)
+        n = max(total_completions, 1)
+        format_rate = total_format / n
+        correct_rate = total_correct / n
+        avg_reward = total_reward / n
+        # Average format reward = format_reward * format_rate
+        avg_format_reward = self.format_reward * format_rate
+        # Average accuracy reward = correct_reward * correct_rate
+        correct_reward = 1.0  # from reward space [0.0, format, correct]
+        avg_accuracy_reward = correct_reward * correct_rate
+
         log_rank_0(
-            "rollout stats: %d groups, %d completions, "
-            "correct=%.1f%%, parsable=%.1f%%, avg_reward=%.4f",
+            "rollout stats: %d groups, %d completions | "
+            "format=%.1f%%, correct=%.1f%% | "
+            "avg_reward=%.4f (format=%.4f, accuracy=%.4f)",
             len(groups), total_completions,
-            100 * total_correct / max(total_completions, 1),
-            100 * total_parsable / max(total_completions, 1),
-            avg_reward,
+            100 * format_rate, 100 * correct_rate,
+            avg_reward, avg_format_reward, avg_accuracy_reward,
         )
 
         if self.use_wandb and WANDB_AVAILABLE and self.rank == 0:
             wandb.log({
-                "rollout/correct_rate": total_correct / max(total_completions, 1),
-                "rollout/parsable_rate": total_parsable / max(total_completions, 1),
+                "rollout/format_rate": format_rate,
+                "rollout/correct_rate": correct_rate,
+                "rollout/parsable_rate": total_parsable / n,
                 "rollout/avg_reward": avg_reward,
+                "rollout/avg_format_reward": avg_format_reward,
+                "rollout/avg_accuracy_reward": avg_accuracy_reward,
                 "rollout/total_completions": total_completions,
                 "rollout/num_groups": len(groups),
             }, step=self.stats.optim_steps)
 
         return groups
+
+    def _compute_rollout_details(self, prompts, groups) -> dict:
+        """Compute per-operation correct rates and thinking trace stats.
+
+        Only meaningful for countdown problems (where 'numbers' is in prompt_data).
+        Solves each problem to determine which operations are required, then
+        tracks correct rates per operation category.
+        """
+        import re as _re
+        from countdown_utils import solve_countdown
+
+        think_pattern = _re.compile(r"<think>(.*?)</think>", _re.DOTALL | _re.IGNORECASE)
+
+        # Check if this is a countdown task (first prompt has 'numbers')
+        if not prompts or prompts[0].get("numbers") is None:
+            return {}
+
+        op_labels = {"+": "add", "-": "sub", "*": "mul", "/": "div", "parens": "parens"}
+        op_total = {op: 0 for op in op_labels}
+        op_correct = {op: 0 for op in op_labels}
+        think_lengths = []
+
+        for prompt_data, group in zip(prompts, groups):
+            if not group:
+                continue
+
+            numbers = prompt_data.get("numbers")
+            target = int(prompt_data["answer"])
+
+            # Solve to find which operations the solution requires
+            required_ops = set()
+            if numbers:
+                solution = solve_countdown(numbers, target)
+                if solution:
+                    if " + " in solution:
+                        required_ops.add("+")
+                    if " - " in solution:
+                        required_ops.add("-")
+                    if " * " in solution:
+                        required_ops.add("*")
+                    if " / " in solution:
+                        required_ops.add("/")
+
+                    # Check if parentheses are required (change the result when removed)
+                    try:
+                        val_with = eval(solution, {"__builtins__": {}})
+                        val_without = eval(
+                            solution.replace("(", "").replace(")", ""),
+                            {"__builtins__": {}},
+                        )
+                        if abs(val_with - val_without) > 1e-6:
+                            required_ops.add("parens")
+                    except Exception:
+                        required_ops.add("parens")
+
+            # Track per-operation correct rates
+            n_in_group = len(group)
+            n_correct = sum(1 for s in group if s.is_correct)
+            for op in required_ops:
+                op_total[op] += n_in_group
+                op_correct[op] += n_correct
+
+            # Thinking trace lengths (characters)
+            for s in group:
+                match = think_pattern.search(s.response)
+                think_lengths.append(len(match.group(1)) if match else 0)
+
+        # Build metrics dict
+        metrics = {}
+        for op, label in op_labels.items():
+            if op_total[op] > 0:
+                metrics[f"rollout/correct_rate_{label}"] = op_correct[op] / op_total[op]
+
+        if think_lengths:
+            mean_len = sum(think_lengths) / len(think_lengths)
+            var_len = sum((x - mean_len) ** 2 for x in think_lengths) / len(think_lengths)
+            metrics["rollout/think_length_mean"] = mean_len
+            metrics["rollout/think_length_var"] = var_len
+
+        return metrics
 
     def _display_rollout_summary(self, prompts, groups):
         """Print rollout summary table and example responses (rank 0 only)."""
@@ -833,6 +996,22 @@ class DistributedGRPOTrainer:
                 adv = (s.reward - avg) / (std + eps)
                 s.advantage = max(-10.0, min(10.0, adv))
 
+    # ── Reference Policy Update ─────────────────────────────────────────
+
+    def _update_ref_policy(self):
+        """Copy FSDP shard-local state dict from policy to reference model."""
+        log_rank_0("updating reference policy from current policy...")
+        policy_sd = self.policy.state_dict()
+        self.ref_policy.load_state_dict(policy_sd)
+        del policy_sd
+        torch.cuda.empty_cache()
+        log_rank_0("reference policy updated")
+
+    def _maybe_update_ref_policy(self):
+        """Update reference policy if update_ref_every is set and interval is reached."""
+        if self.update_ref_every > 0 and self.stats.optim_steps % self.update_ref_every == 0:
+            self._update_ref_policy()
+
     # ── Training ───────────────────────────────────────────────────────
 
     def _train_policy(self, groups):
@@ -850,9 +1029,12 @@ class DistributedGRPOTrainer:
             # Split samples across ranks: rank k gets samples[k::world_size]
             local_samples = all_samples[self.rank::self.world_size]
 
+            # inner_batch_size is global; each rank processes its share
+            local_inner_batch = max(1, self.inner_batch_size // self.world_size)
+
             # Create local batches
-            for batch_start in range(0, max(len(local_samples), 1), self.inner_batch_size):
-                local_batch = local_samples[batch_start:batch_start + self.inner_batch_size]
+            for batch_start in range(0, max(len(local_samples), 1), local_inner_batch):
+                local_batch = local_samples[batch_start:batch_start + local_inner_batch]
 
                 if local_batch:
                     batch = self._collate_grpo_batch(local_batch)
@@ -883,9 +1065,23 @@ class DistributedGRPOTrainer:
                 if global_batch_size == 0:
                     continue
 
+                # For token-level averaging: sync total response tokens across ranks
+                if self.token_level_averaging:
+                    local_response_tokens = sum(
+                        len(s.response_ids) for s in local_batch
+                    )
+                    global_total_tokens_t = torch.tensor(
+                        [local_response_tokens], dtype=torch.long, device=self.device
+                    )
+                    dist.all_reduce(global_total_tokens_t, op=dist.ReduceOp.SUM)
+                    global_total_tokens = global_total_tokens_t.item()
+                else:
+                    global_total_tokens = 0
+
                 total_loss = 0.0
                 total_kl = 0.0
                 total_ir = 0.0
+                total_entropy = 0.0
                 valid_mbs = 0
                 batch_tokens = 0
 
@@ -898,7 +1094,7 @@ class DistributedGRPOTrainer:
                         # Create a minimal dummy forward pass to keep FSDP in sync
                         loss, metrics = self._grpo_padding_step()
                     else:
-                        loss, metrics = self._grpo_train_step(mb, global_batch_size)
+                        loss, metrics = self._grpo_train_step(mb, global_batch_size, global_total_tokens)
 
                     if not is_padding and (torch.isnan(loss) or torch.isinf(loss)):
                         log_rank_0("NaN/Inf loss in microbatch %d/%d, zeroing", mb_idx + 1, global_k)
@@ -910,6 +1106,7 @@ class DistributedGRPOTrainer:
                         total_loss += loss.item()
                         total_kl += metrics["kl_div"]
                         total_ir += metrics["importance_ratio"]
+                        total_entropy += metrics["entropy"]
                         valid_mbs += 1
                         batch_tokens += mb["rollout_lens"].sum().item()
 
@@ -924,6 +1121,7 @@ class DistributedGRPOTrainer:
                 self.optimizer.zero_grad()
 
                 self.stats.increment_optim_step()
+                self._maybe_update_ref_policy()
 
                 # All-reduce token count for accurate budget tracking
                 tokens_tensor = torch.tensor([batch_tokens], dtype=torch.long, device=self.device)
@@ -934,16 +1132,24 @@ class DistributedGRPOTrainer:
                     avg_loss = total_loss / valid_mbs
                     avg_kl = total_kl / valid_mbs
                     avg_ir = total_ir / valid_mbs
+                    avg_entropy = total_entropy / valid_mbs
                 else:
-                    avg_loss = avg_kl = avg_ir = 0.0
+                    avg_loss = avg_kl = avg_ir = avg_entropy = 0.0
+
+                budget_str = f"tokens: {self.stats.tokens_seen}"
+                if self.stats.token_budget > 0:
+                    budget_str += f"/{self.stats.token_budget}"
+                if self.stats.step_budget > 0:
+                    budget_str += f" | steps: {self.stats.optim_steps}/{self.stats.step_budget}"
 
                 log_rank_0(
                     "epoch %d/%d | step %d | loss: %.4f | kl: %.4f | "
-                    "ir: %.4f | gradnorm: %.4f | tokens: %d/%d",
+                    "ir: %.4f | entropy: %.4f | gradnorm: %.4f | %s",
                     epoch + 1, self.inner_epochs,
                     self.stats.optim_steps, avg_loss, avg_kl, avg_ir,
+                    avg_entropy,
                     gradnorm.item() if hasattr(gradnorm, "item") else gradnorm,
-                    self.stats.tokens_seen, self.stats.token_budget,
+                    budget_str,
                 )
 
                 if self.use_wandb and WANDB_AVAILABLE and self.rank == 0:
@@ -951,6 +1157,7 @@ class DistributedGRPOTrainer:
                         "train/loss": avg_loss,
                         "train/kl_divergence": avg_kl,
                         "train/importance_ratio": avg_ir,
+                        "train/entropy": avg_entropy,
                         "train/grad_norm": gradnorm.item() if hasattr(gradnorm, "item") else gradnorm,
                         "train/optim_step": self.stats.optim_steps,
                         "train/tokens_trained": self.stats.tokens_seen,
@@ -1049,7 +1256,7 @@ class DistributedGRPOTrainer:
 
         return result
 
-    def _grpo_train_step(self, batch, global_batch_size):
+    def _grpo_train_step(self, batch, global_batch_size, global_total_tokens=0):
         """GRPO training step with FSDP2 world-size correction."""
         input_ids = batch["input_ids"].to(self.device)
         advantages = batch["advantages"].to(self.device)
@@ -1100,17 +1307,22 @@ class DistributedGRPOTrainer:
         per_token_loss = clipped_surrogate - self.kl_strength * dkl_approx
         grpo_token_loss = per_token_loss * grpo_mask.float()
 
-        # Length averaging
-        safe_lens = rollout_lens.float().clamp(min=1.0)
-        grpo_token_loss = grpo_token_loss / safe_lens.unsqueeze(-1)
-
-        # CRITICAL: Scale by world_size for FSDP2 correction, normalize by global batch size
-        grpo_seq_loss = (grpo_token_loss.sum(dim=-1) * self.world_size) / global_batch_size
-        grpo_loss = -grpo_seq_loss.sum()
+        if self.token_level_averaging and global_total_tokens > 0:
+            # Token-level: every token gets equal weight 1/global_total_tokens
+            # No per-sequence length normalization
+            # world_size corrects for FSDP2 reduce_mean on gradients
+            grpo_loss = -(grpo_token_loss.sum() * self.world_size) / global_total_tokens
+        else:
+            # Sequence-level: each sequence averaged by its own length, then averaged across batch
+            safe_lens = rollout_lens.float().clamp(min=1.0)
+            grpo_token_loss = grpo_token_loss / safe_lens.unsqueeze(-1)
+            grpo_seq_loss = (grpo_token_loss.sum(dim=-1) * self.world_size) / global_batch_size
+            grpo_loss = -grpo_seq_loss.sum()
 
         metrics = {
             "kl_div": dkl_approx[grpo_mask].mean().item() if grpo_mask.any() else 0.0,
             "importance_ratio": importance_ratio[grpo_mask].mean().item() if grpo_mask.any() else 1.0,
+            "entropy": -new_logprobs[grpo_mask].mean().item() if grpo_mask.any() else 0.0,
         }
         return grpo_loss, metrics
 
@@ -1139,6 +1351,7 @@ class DistributedGRPOTrainer:
 
         correct = 0
         parsable = 0
+        formatted = 0
         total = 0
         total_reward = 0.0
 
@@ -1186,16 +1399,32 @@ class DistributedGRPOTrainer:
             answer = req["answer"]
             r = self.reward_fn(text, answer, req)
             total += 1
-            total_reward += r
-            if r >= 0.1:
-                parsable += 1
-            if r >= 1.0:
-                correct += 1
+            if isinstance(r, RewardResult):
+                total_reward += r.reward
+                if r.has_format:
+                    formatted += 1
+                if r.is_parsable:
+                    parsable += 1
+                if r.is_correct:
+                    correct += 1
+            else:
+                total_reward += float(r)
+                if float(r) >= 0.1:
+                    formatted += 1
+                    parsable += 1
+                if float(r) >= 1.0:
+                    correct += 1
 
+        n = max(total, 1)
+        format_rate = formatted / n
+        correct_rate = correct / n
         return {
-            "correct_rate": correct / max(total, 1),
-            "parsable_rate": parsable / max(total, 1),
-            "avg_reward": total_reward / max(total, 1),
+            "format_rate": format_rate,
+            "correct_rate": correct_rate,
+            "parsable_rate": parsable / n,
+            "avg_reward": total_reward / n,
+            "avg_format_reward": self.format_reward * format_rate,
+            "avg_accuracy_reward": correct_rate,
             "total": total,
         }
 
@@ -1222,7 +1451,10 @@ class DistributedGRPOTrainer:
         if not self.output_dir:
             return
 
-        name = f"checkpoint-{self.stats.tokens_seen}"
+        if self.stats.step_budget > 0:
+            name = f"checkpoint-step{self.stats.optim_steps}-{self.stats.tokens_seen}tok"
+        else:
+            name = f"checkpoint-{self.stats.tokens_seen}"
         path = os.path.join(self.output_dir, name)
 
         log_rank_0("saving checkpoint to %s...", path)
@@ -1265,11 +1497,16 @@ class DistributedGRPOTrainer:
     # ── Main Training Loop ─────────────────────────────────────────────
 
     def train(self):
+        budget_desc = []
+        if self.stats.token_budget > 0:
+            budget_desc.append(f"token budget: {self.stats.token_budget}")
+        if self.stats.step_budget > 0:
+            budget_desc.append(f"step budget: {self.stats.step_budget}")
         log_rank_0(
             "starting distributed GRPO training: %d GPUs, "
-            "token budget: %d, group_size: %d, batch_size: %d, "
+            "%s, group_size: %d, batch_size: %d, "
             "max_tokens_per_gpu: %d",
-            self.world_size, self.stats.token_budget,
+            self.world_size, ", ".join(budget_desc) if budget_desc else "no budget set",
             self.group_size, self.batch_size, self.max_tokens_per_gpu,
         )
         self.policy.eval()
@@ -1312,15 +1549,23 @@ class DistributedGRPOTrainer:
                 val = self._run_validation()
                 if val and self.rank == 0:
                     log_rank_0(
-                        "validation: correct=%.1f%%, parsable=%.1f%% (%d samples)",
-                        val.get("correct_rate", 0) * 100,
-                        val.get("parsable_rate", 0) * 100,
+                        "validation (%d samples): format=%.1f%%, correct=%.1f%% | "
+                        "avg_reward=%.4f (format=%.4f, accuracy=%.4f)",
                         val.get("total", 0),
+                        val.get("format_rate", 0) * 100,
+                        val.get("correct_rate", 0) * 100,
+                        val.get("avg_reward", 0),
+                        val.get("avg_format_reward", 0),
+                        val.get("avg_accuracy_reward", 0),
                     )
                     if self.use_wandb and WANDB_AVAILABLE:
                         wandb.log({
+                            "val/format_rate": val.get("format_rate", 0),
                             "val/correct_rate": val.get("correct_rate", 0),
                             "val/parsable_rate": val.get("parsable_rate", 0),
+                            "val/avg_reward": val.get("avg_reward", 0),
+                            "val/avg_format_reward": val.get("avg_format_reward", 0),
+                            "val/avg_accuracy_reward": val.get("avg_accuracy_reward", 0),
                         }, step=self.stats.optim_steps)
 
                 self._save_checkpoint()
