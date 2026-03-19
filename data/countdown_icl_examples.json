@@ -1,0 +1,37 @@
+[
+  {
+    "numbers": [12, 35, 7],
+    "target": 54,
+    "user": "Find a mathematical expression that equals 54 using the numbers [12, 35, 7].\n\nRules:\n- Use each number exactly once\n- You may use the following operations:\n  - Addition (+)\n  - Subtraction (-)\n  - Multiplication (*)\n  - Division (/)\n  - Parentheses ( )\n- Give your final expression in <answer>...</answer> tags\n\nExample: <answer>(8 - 3) * (12 / 4)</answer>",
+    "assistant": "<think>\nI need to make 54 from 12, 35, and 7. Let me start by checking simple operations. 12 + 35 = 47, and 47 + 7 = 54. That works!\n</think>\n<answer>12 + 35 + 7</answer>",
+    "category": "addition"
+  },
+  {
+    "numbers": [50, 18, 9],
+    "target": 23,
+    "user": "Find a mathematical expression that equals 23 using the numbers [50, 18, 9].\n\nRules:\n- Use each number exactly once\n- You may use the following operations:\n  - Addition (+)\n  - Subtraction (-)\n  - Multiplication (*)\n  - Division (/)\n  - Parentheses ( )\n- Give your final expression in <answer>...</answer> tags\n\nExample: <answer>(8 - 3) * (12 / 4)</answer>",
+    "assistant": "<think>\nI need to make 23 from 50, 18, and 9. The target is smaller than 50 but not tiny, so subtraction from 50 seems promising. 50 - 18 = 32, and 32 - 9 = 23. That's it.\n</think>\n<answer>50 - 18 - 9</answer>",
+    "category": "subtraction"
+  },
+  {
+    "numbers": [7, 8],
+    "target": 56,
+    "user": "Find a mathematical expression that equals 56 using the numbers [7, 8].\n\nRules:\n- Use each number exactly once\n- You may use the following operations:\n  - Addition (+)\n  - Subtraction (-)\n  - Multiplication (*)\n  - Division (/)\n  - Parentheses ( )\n- Give your final expression in <answer>...</answer> tags\n\nExample: <answer>(8 - 3) * (12 / 4)</answer>",
+    "assistant": "<think>\nI need to make 56 from 7 and 8. Addition gives 15, subtraction gives 1 or -1, division gives less than 2. Multiplication: 7 * 8 = 56. Perfect.\n</think>\n<answer>7 * 8</answer>",
+    "category": "multiplication"
+  },
+  {
+    "numbers": [90, 15, 6],
+    "target": 10,
+    "user": "Find a mathematical expression that equals 10 using the numbers [90, 15, 6].\n\nRules:\n- Use each number exactly once\n- You may use the following operations:\n  - Addition (+)\n  - Subtraction (-)\n  - Multiplication (*)\n  - Division (/)\n  - Parentheses ( )\n- Give your final expression in <answer>...</answer> tags\n\nExample: <answer>(8 - 3) * (12 / 4)</answer>",
+    "assistant": "<think>\nI need to make 10 from 90, 15, and 6. The target is much smaller than 90, so I probably need to divide 90 by something. 90 / 9 = 10, and I can make 9 from 15 - 6. So 90 / (15 - 6) = 90 / 9 = 10. That works.\n</think>\n<answer>90 / (15 - 6)</answer>",
+    "category": "division_parentheses"
+  },
+  {
+    "numbers": [6, 2, 8, 3],
+    "target": 61,
+    "user": "Find a mathematical expression that equals 61 using the numbers [6, 2, 8, 3].\n\nRules:\n- Use each number exactly once\n- You may use the following operations:\n  - Addition (+)\n  - Subtraction (-)\n  - Multiplication (*)\n  - Division (/)\n  - Parentheses ( )\n- Give your final expression in <answer>...</answer> tags\n\nExample: <answer>(8 - 3) * (12 / 4)</answer>",
+    "assistant": "<think>\nI need to make 61 from 6, 2, 8, and 3. 61 is close to 64 which is 8 * 8, but I only have one 8. Let me think about what multiplies to be near 61. 8 * 8 = 64, and 6 + 2 = 8, so (6 + 2) * 8 = 64. Then 64 - 3 = 61. That uses all four numbers exactly once.\n</think>\n<answer>(6 + 2) * 8 - 3</answer>",
+    "category": "all_operators"
+  }
+]

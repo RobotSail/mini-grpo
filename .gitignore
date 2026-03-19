@@ -18,6 +18,7 @@ eval_results
 .venv
 
 generated_data
+generated_data_original
 .vscode
 
 wandb
