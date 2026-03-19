@@ -19,6 +19,8 @@ Data source: Jiayi-Pan/Countdown-Tasks-3to4 from HuggingFace
 """
 
 import ast
+import json
+import os
 import re
 import random
 from itertools import permutations, product
@@ -417,7 +419,9 @@ def _operand_pairs(v: int, op: str, rng: random.Random,
     pairs = []
 
     if op == '+':
-        # a + b = v
+        # a + b = v, need v >= lo + 1 so both operands can be positive
+        if v < 2:
+            return []
         for _ in range(n):
             if left_leaf and right_leaf:
                 a_lo, a_hi = max(lo, v - hi), min(hi, v - lo)
@@ -425,12 +429,20 @@ def _operand_pairs(v: int, op: str, rng: random.Random,
                     break
                 a = rng.randint(a_lo, a_hi)
             elif left_leaf:
-                a = rng.randint(lo, min(hi, v - 1))
+                upper = min(hi, v - 1)
+                if lo > upper:
+                    break
+                a = rng.randint(lo, upper)
             elif right_leaf:
-                b = rng.randint(lo, min(hi, v - 1))
+                upper = min(hi, v - 1)
+                if lo > upper:
+                    break
+                b = rng.randint(lo, upper)
                 pairs.append((v - b, b))
                 continue
             else:
+                if v <= 3:
+                    break
                 a = rng.randint(max(2, v // 4), max(3, 3 * v // 4))
             b = v - a
             if b > 0 and a > 0 and a <= max_val and b <= max_val:
@@ -490,8 +502,13 @@ def _operand_pairs(v: int, op: str, rng: random.Random,
 
 def _decompose(v: int, n_leaves: int, rng: random.Random,
                num_range: tuple[int, int] = (1, 99),
-               need_mult_div: bool = True) -> tuple[list[int], bool] | None:
+               need_mult_div: bool = True,
+               op_weights: dict[str, float] | None = None) -> tuple[list[int], bool] | None:
     """Decompose value v into n_leaves numbers by building an expression tree backward.
+
+    Args:
+        op_weights: Optional dict mapping operator -> weight (higher = preferred).
+            Used to bias toward underrepresented operators.
 
     Returns (numbers, used_mult_div) or None if decomposition fails.
     """
@@ -509,13 +526,15 @@ def _decompose(v: int, n_leaves: int, rng: random.Random,
         n_right = n_leaves - n_left
 
         ops = ['+', '-', '*', '/']
-        # If we still need * or /, try those first
         if need_mult_div:
             md = [op for op in ops if op in ('*', '/')]
             ad = [op for op in ops if op in ('+', '-')]
             rng.shuffle(md)
             rng.shuffle(ad)
             ops = md + ad
+        elif op_weights:
+            # Sort by weight (descending) with noise for randomness
+            ops.sort(key=lambda op: op_weights.get(op, 1.0) + rng.random() * 0.3, reverse=True)
         else:
             rng.shuffle(ops)
 
@@ -527,13 +546,13 @@ def _decompose(v: int, n_leaves: int, rng: random.Random,
             )
             for a, b in pairs:
                 left = _decompose(a, n_left, rng, num_range,
-                                  need_mult_div and not is_md)
+                                  need_mult_div and not is_md, op_weights)
                 if left is None:
                     continue
                 left_nums, left_md = left
 
                 still_need = need_mult_div and not is_md and not left_md
-                right = _decompose(b, n_right, rng, num_range, still_need)
+                right = _decompose(b, n_right, rng, num_range, still_need, op_weights)
                 if right is None:
                     continue
                 right_nums, right_md = right
@@ -547,6 +566,46 @@ def _decompose(v: int, n_leaves: int, rng: random.Random,
     return None
 
 
+def _generate_few_shot_examples(
+    n: int, rng: random.Random,
+    num_range: tuple[int, int] = (1, 99),
+    target_range: tuple[int, int] = (10, 100),
+    n_numbers: tuple[int, ...] = (3, 4),
+) -> tuple[list[tuple[str, str]], set]:
+    """Generate solved few-shot examples as (user_prompt, answer_expr) pairs.
+
+    Returns (examples, seen_keys) so the caller can exclude these from training.
+    """
+    examples = []
+    seen = set()
+
+    while len(examples) < n:
+        target = rng.randint(*target_range)
+        k = rng.choice(n_numbers)
+
+        result = _decompose(target, k, rng, num_range, need_mult_div=True)
+        if result is None:
+            continue
+
+        numbers, _ = result
+        key = (tuple(sorted(numbers)), target)
+        if key in seen:
+            continue
+        if not requires_mult_or_div(numbers, target):
+            continue
+
+        # Solve to get the expression string
+        expr = solve_countdown(numbers, target)
+        if expr is None:
+            continue
+
+        seen.add(key)
+        user_prompt = _format_user_prompt(numbers, target)
+        examples.append((user_prompt, f"<answer>{expr}</answer>"))
+
+    return examples, seen
+
+
 def generate_synthetic_countdown(
     n_train: int,
     n_val: int = 1000,
@@ -555,6 +614,10 @@ def generate_synthetic_countdown(
     n_numbers: tuple[int, ...] = (3, 4),
     system_msg: str = COUNTDOWN_SYSTEM_MSG,
     seed: int = 42,
+    few_shot: int = 0,
+    think: bool = False,
+    hard: bool = True,
+    r1_prompt: bool = False,
 ) -> dict[str, list[dict]]:
     """Generate synthetic countdown problems via backward decomposition.
 
@@ -568,17 +631,57 @@ def generate_synthetic_countdown(
         num_range: (min, max) for leaf numbers.
         target_range: (min, max) for targets.
         n_numbers: Tuple of allowed operand counts (e.g. (3, 4)).
-        system_msg: System message for the chat template.
+        system_msg: System message for the chat template (None = no system msg).
         seed: Random seed.
+        few_shot: Number of solved ICL examples to prepend to each prompt.
+            These are held out from training/val and formatted as multi-turn
+            user/assistant exchanges (answer only, no thinking trace).
 
     Returns:
         Dict with keys: train, val (each a list of GRPO-format dicts).
     """
     rng = random.Random(seed)
-    total_needed = n_train + n_val
+
+    # System message: R1 prompt if --r1-prompt or --think, otherwise none
+    if not think and not r1_prompt:
+        system_msg = None
+
+    # Load few-shot ICL examples from annotated dataset
+    icl_messages = []
     seen = set()
+    if few_shot > 0:
+        icl_path = os.path.join(os.path.dirname(__file__), "data", "countdown_icl_examples.json")
+        with open(icl_path) as f:
+            all_icl = json.load(f)
+        if few_shot > len(all_icl):
+            raise ValueError(
+                f"Requested {few_shot} few-shot examples but only "
+                f"{len(all_icl)} available in {icl_path}"
+            )
+        selected_icl = all_icl[:few_shot]
+        for ex in selected_icl:
+            icl_messages.append({"role": "user", "content": ex["user"]})
+            if think:
+                # Include full <think>...<answer> response
+                icl_messages.append({"role": "assistant", "content": ex["assistant"]})
+            else:
+                # Strip <think>/<think> tags but keep the reasoning text before <answer>
+                response = ex["assistant"]
+                response = re.sub(r"</?think>", "", response).strip()
+                icl_messages.append({"role": "assistant", "content": response})
+            # Exclude ICL problems from train/val
+            key = (tuple(sorted(ex["numbers"])), ex["target"])
+            seen.add(key)
+        mode = "with <think> traces" if think else "answer-only"
+        print(f"Loaded {few_shot} ICL examples ({mode}) from {icl_path}")
+
+    total_needed = n_train + n_val
     results = []
     attempts = 0
+
+    # Track operator counts for reweighing
+    op_keys = ["+", "-", "*", "/"]
+    op_counts = {op: 0 for op in op_keys}
 
     pbar = tqdm(total=total_needed, desc="Generating problems")
     while len(results) < total_needed:
@@ -586,7 +689,11 @@ def generate_synthetic_countdown(
         target = rng.randint(*target_range)
         k = rng.choice(n_numbers)
 
-        result = _decompose(target, k, rng, num_range, need_mult_div=True)
+        # Compute weights: inverse of current counts so underrepresented ops are preferred
+        total_ops = sum(op_counts.values()) + len(op_keys)  # +len to avoid div by 0
+        op_weights = {op: total_ops / (op_counts[op] + 1) for op in op_keys}
+
+        result = _decompose(target, k, rng, num_range, need_mult_div=hard, op_weights=op_weights)
         if result is None:
             continue
 
@@ -598,16 +705,26 @@ def generate_synthetic_countdown(
             continue
 
         # Verify the problem genuinely requires * or /
-        if not requires_mult_or_div(numbers, target):
+        if hard and not requires_mult_or_div(numbers, target):
             continue
+
+        # Solve to track which operators the solution actually uses
+        sol = solve_countdown(numbers, target)
+        if sol is not None:
+            for op in op_keys:
+                if f" {op} " in sol:
+                    op_counts[op] += 1
 
         seen.add(key)
         results.append((numbers, target))
         pbar.update(1)
     pbar.close()
 
+    total = max(len(results), 1)
+    dist_str = ", ".join(f"{op}={op_counts[op]} ({100*op_counts[op]/total:.0f}%)" for op in op_keys)
     print(f"Generated {len(results)} problems in {attempts} attempts "
           f"({100 * len(results) / attempts:.1f}% acceptance rate)")
+    print(f"Operator distribution: {dist_str}")
 
     def _to_grpo(items):
         out = []
@@ -616,6 +733,7 @@ def generate_synthetic_countdown(
             messages = []
             if system_msg:
                 messages.append({"role": "system", "content": system_msg})
+            messages.extend(icl_messages)
             messages.append({"role": "user", "content": user_prompt})
             out.append({
                 "messages": messages,
@@ -630,3 +748,109 @@ def generate_synthetic_countdown(
         "train": _to_grpo(results[n_val:]),
         "val": _to_grpo(results[:n_val]),
     }
+
+
+def generate_countdown_from_hf(
+    n_train: int = 50000,
+    n_val: int = 1000,
+    n_test: int = 0,
+    seed: int = 42,
+    few_shot: int = 0,
+    think: bool = False,
+    hard: bool = True,
+    r1_prompt: bool = False,
+) -> dict[str, list[dict]]:
+    """Load countdown problems from Jiayi-Pan/Countdown-Tasks-3to4 and format for GRPO.
+
+    Applies the same ICL/think/hard options as the synthetic generator.
+
+    Args:
+        n_train: Number of training samples.
+        n_val: Number of validation samples.
+        seed: Random seed for shuffling.
+        few_shot: Number of annotated ICL examples to prepend.
+        think: If True, use <think> traces in ICL and require them for reward.
+        hard: If True, keep only problems requiring * or /.
+        r1_prompt: If True, prepend R1 system prompt (independent of --think).
+    """
+    rng = random.Random(seed)
+    system_msg = COUNTDOWN_SYSTEM_MSG if (think or r1_prompt) else None
+
+    # Load ICL examples
+    icl_messages = []
+    icl_keys = set()
+    if few_shot > 0:
+        icl_path = os.path.join(os.path.dirname(__file__), "data", "countdown_icl_examples.json")
+        with open(icl_path) as f:
+            all_icl = json.load(f)
+        if few_shot > len(all_icl):
+            raise ValueError(f"Requested {few_shot} few-shot but only {len(all_icl)} available")
+        for ex in all_icl[:few_shot]:
+            icl_messages.append({"role": "user", "content": ex["user"]})
+            if think:
+                icl_messages.append({"role": "assistant", "content": ex["assistant"]})
+            else:
+                response = re.sub(r"</?think>", "", ex["assistant"]).strip()
+                icl_messages.append({"role": "assistant", "content": response})
+            icl_keys.add((tuple(sorted(ex["numbers"])), ex["target"]))
+        mode = "with <think> traces" if think else "answer-only"
+        print(f"Loaded {few_shot} ICL examples ({mode}) from {icl_path}")
+
+    # Load from HuggingFace
+    raw = datasets.load_dataset("Jiayi-Pan/Countdown-Tasks-3to4", split="train")
+    raw = raw.shuffle(seed=seed)
+
+    total_needed = n_train + n_val + n_test
+    seen = set(icl_keys)
+    results = []
+
+    pbar = tqdm(raw, desc="Loading from HuggingFace", total=total_needed)
+    for sample in pbar:
+        if len(results) >= total_needed:
+            break
+
+        target = sample["target"]
+        numbers = list(sample["nums"])
+
+        key = (tuple(sorted(numbers)), target)
+        if key in seen:
+            continue
+
+        if hard and not requires_mult_or_div(numbers, target):
+            continue
+
+        seen.add(key)
+        results.append((numbers, target))
+        pbar.update(0)
+    pbar.close()
+
+    print(f"Loaded {len(results)} problems from HuggingFace "
+          f"({'hard only' if hard else 'all'})")
+
+    rng.shuffle(results)
+
+    def _to_grpo(items):
+        out = []
+        for numbers, target in items:
+            user_prompt = _format_user_prompt(numbers, target)
+            messages = []
+            if system_msg:
+                messages.append({"role": "system", "content": system_msg})
+            messages.extend(icl_messages)
+            messages.append({"role": "user", "content": user_prompt})
+            out.append({
+                "messages": messages,
+                "answer": target,
+                "numbers": numbers,
+                "problem": user_prompt,
+                "operation": "countdown",
+            })
+        return out
+
+    out = {
+        "train": _to_grpo(results[n_val + n_test:]),
+        "val": _to_grpo(results[:n_val]),
+    }
+    if n_test > 0:
+        out["test"] = _to_grpo(results[n_val:n_val + n_test])
+    return out

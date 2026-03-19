@@ -2315,41 +2315,70 @@ def sft_train(
 def generate_hard_countdown(
     n_train: int = typer.Option(50000, "--n-train", help="Number of training samples to generate"),
     n_val: int = typer.Option(1000, "--n-val", help="Number of validation samples to generate"),
+    n_test: int = typer.Option(0, "--n-test", help="Number of held-out test samples (0 = none)"),
+    few_shot: int = typer.Option(0, "--few-shot", help="Number of solved ICL examples to prepend (0 = none)"),
+    think: bool = typer.Option(False, "--think/--no-think", help="Require <think> traces (ICL + reward)"),
+    r1_prompt: bool = typer.Option(False, "--r1-prompt/--no-r1-prompt", help="Prepend R1 system prompt (independent of --think)"),
+    hard: bool = typer.Option(True, "--hard/--all", help="Only problems requiring * or / (default: --hard)"),
+    synthetic: bool = typer.Option(False, "--synthetic/--hf", help="Generate synthetic data (default: use HuggingFace dataset)"),
     seed: int = typer.Option(42, "--seed", help="Random seed"),
     output_dir: str = typer.Option("generated_data", "--output-dir", help="Directory to save datasets"),
 ):
     """
-    Generate synthetic countdown problems requiring multiplication or division.
+    Generate countdown training data.
 
-    Constructs random expression trees from numbers in [1, 99] with targets
-    in [1, 999]. Division is constrained to produce integer results.
-    Problems solvable with only + and - are excluded.
+    By default, loads from Jiayi-Pan/Countdown-Tasks-3to4 on HuggingFace
+    and formats with ICL examples. Use --synthetic to generate problems
+    via backward decomposition instead.
+
+    Use --hard to keep only problems requiring * or / (default).
+    Use --few-shot N to prepend N solved examples as multi-turn ICL context.
+    Use --think to enable R1-style thinking.
 
     Outputs:
       - countdown_hard_train.jsonl
       - countdown_hard_val.jsonl
     """
-    from countdown_utils import generate_synthetic_countdown
+    from countdown_utils import generate_synthetic_countdown, generate_countdown_from_hf
 
-    result = generate_synthetic_countdown(
-        n_train=n_train,
-        n_val=n_val,
-        seed=seed,
-    )
+    if synthetic:
+        result = generate_synthetic_countdown(
+            n_train=n_train,
+            n_val=n_val,
+            seed=seed,
+            few_shot=few_shot,
+            think=think,
+            hard=hard,
+            r1_prompt=r1_prompt,
+        )
+    else:
+        result = generate_countdown_from_hf(
+            n_train=n_train,
+            n_val=n_val,
+            n_test=n_test,
+            seed=seed,
+            few_shot=few_shot,
+            think=think,
+            hard=hard,
+            r1_prompt=r1_prompt,
+        )
 
     os.makedirs(output_dir, exist_ok=True)
 
-    for split_name in ["train", "val"]:
+    for split_name in ["train", "val", "test"]:
+        if split_name not in result:
+            continue
         samples = result[split_name]
         ds = datasets.Dataset.from_list(samples)
         path = os.path.join(output_dir, f"countdown_hard_{split_name}.jsonl")
         ds.to_json(path)
         typer.secho(f"  Saved {len(samples)} {split_name} samples to '{path}'", fg=typer.colors.BLUE)
 
-    n_train_actual = len(result["train"])
-    n_val_actual = len(result["val"])
+    parts = [f"{len(result['train'])} train", f"{len(result['val'])} val"]
+    if "test" in result:
+        parts.append(f"{len(result['test'])} test")
     typer.secho(
-        f"\nGenerated {n_train_actual} train + {n_val_actual} val countdown samples (seed={seed})",
+        f"\nGenerated {' + '.join(parts)} countdown samples (seed={seed})",
         fg=typer.colors.GREEN,
     )
 
@@ -2611,6 +2640,7 @@ def distributed_grpo_train(
     gradient_clip: float = typer.Option(1.0, "--gradient-clip", help="Gradient clipping max norm"),
     update_ref_every: int = typer.Option(0, "--update-ref-every", help="Update ref policy every N steps (0 = never)"),
     token_level_averaging: bool = typer.Option(False, "--token-level-avg/--seq-level-avg", help="Token-level loss averaging (default: sequence-level)"),
+    think: bool = typer.Option(False, "--think/--no-think", help="Require <think> traces for correct reward"),
 
     # Sampling
     temperature: float = typer.Option(0.7, "-t", "--temp", help="Sampling temperature"),
@@ -2794,6 +2824,8 @@ def distributed_grpo_train(
             train_cmd.append("--ref-cpu-offload")
         if token_level_averaging:
             train_cmd.append("--token-level-avg")
+        if think:
+            train_cmd.append("--think")
 
         train_env = os.environ.copy()
         train_env["CUDA_VISIBLE_DEVICES"] = train_gpus
@@ -2859,6 +2891,7 @@ def distributed_grpo_worker(
     gradient_clip: float = typer.Option(1.0, "--gradient-clip"),
     update_ref_every: int = typer.Option(0, "--update-ref-every"),
     token_level_averaging: bool = typer.Option(False, "--token-level-avg/--seq-level-avg"),
+    think: bool = typer.Option(False, "--think/--no-think"),
     temperature: float = typer.Option(0.7, "-t", "--temp"),
     max_new_tokens: int = typer.Option(512, "--max-new-tokens"),
     top_p: float = typer.Option(1.0, "--top-p"),
@@ -2905,6 +2938,7 @@ def distributed_grpo_worker(
         format_reward=format_reward,
         update_ref_every=update_ref_every,
         token_level_averaging=token_level_averaging,
+        require_think=think,
         temperature=temperature,
         top_k=top_k,
         top_p=top_p,

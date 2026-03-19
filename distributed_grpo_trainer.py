@@ -213,6 +213,8 @@ class DistributedGRPOTrainer:
         validation_path: str = None,
         # Loss averaging
         token_level_averaging: bool = False,
+        # Think mode
+        require_think: bool = False,
         # Task
         reward_fn=None,
         task: str = "gsm8k",
@@ -259,6 +261,7 @@ class DistributedGRPOTrainer:
         self.gradient_clip = gradient_clip
         self.format_reward = format_reward
         self.token_level_averaging = token_level_averaging
+        self.require_think = require_think
         self.update_ref_every = update_ref_every
         self.use_wandb = use_wandb
         self.reward_fn = reward_fn or get_reward_fn(task)
@@ -707,7 +710,7 @@ class DistributedGRPOTrainer:
             # Grade and build samples
             group = []
             answer = prompt_data["answer"]
-            pd_with_format = {**prompt_data, "format_reward": self.format_reward}
+            pd_with_format = {**prompt_data, "format_reward": self.format_reward, "require_think": self.require_think}
             for (response_text, response_ids), old_lps in zip(group_responses, old_logprobs_list):
                 result = self.reward_fn(response_text, answer, pd_with_format)
 

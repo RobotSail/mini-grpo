@@ -98,14 +98,20 @@ def countdown_reward_fn_wrapper(response: str, answer: float, prompt_data: dict)
 
     result = _raw_fn(response, answer, prompt_data)
 
-    has_format = result.get("has_format", False)
+    has_think_format = result.get("has_format", False)  # <think> before <answer>
+    has_answer_tag = bool(re.search(r"<answer>.*?</answer>", response, re.DOTALL | re.IGNORECASE))
     is_parsable = result.get("is_parsable", False)
     is_correct = result.get("is_correct", False)
 
     format_reward = prompt_data.get("format_reward", 0.1)
     correct_reward = prompt_data.get("correct_reward", 1.0)
+    require_think = prompt_data.get("require_think", False)
 
-    if is_correct:
+    # Format check: require <think> tags only when think mode is on,
+    # otherwise just require parsable <answer> tags
+    has_format = has_think_format if require_think else has_answer_tag
+
+    if is_correct and (has_format or not require_think):
         reward = correct_reward
     elif has_format:
         reward = format_reward
