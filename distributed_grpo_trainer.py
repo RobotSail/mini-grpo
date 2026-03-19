@@ -672,6 +672,7 @@ class DistributedGRPOTrainer:
         total_format = 0
         total_completions = 0
         total_reward = 0.0
+        self._logprob_time_ms = 0.0
 
         iterator = (
             tqdm(zip(prompts, vllm_results), total=len(prompts), desc="processing rollouts")
@@ -702,10 +703,12 @@ class DistributedGRPOTrainer:
 
             # Compute old logprobs — ALL ranks must participate (FSDP forward)
             response_ids_list = [r[1] for r in group_responses]
+            t_lp = time.perf_counter()
             old_logprobs_list = self._compute_old_logprobs_batched(
                 prompt_data["prompt_ids"], response_ids_list
             )
             dist.barrier()
+            self._logprob_time_ms += (time.perf_counter() - t_lp) * 1000
 
             # Grade and build samples
             group = []
@@ -789,6 +792,7 @@ class DistributedGRPOTrainer:
                 "rollout/avg_accuracy_reward": avg_accuracy_reward,
                 "rollout/total_completions": total_completions,
                 "rollout/num_groups": len(groups),
+                "timing/offline_logprobs_ms": self._logprob_time_ms,
             }, step=self.stats.optim_steps)
 
         return groups
@@ -1087,11 +1091,16 @@ class DistributedGRPOTrainer:
                 total_entropy = 0.0
                 valid_mbs = 0
                 batch_tokens = 0
+                total_fwdbwd_ms = 0.0
+
+                t_step_start = time.perf_counter()
 
                 for mb_idx in range(global_k):
                     mb = microbatches[mb_idx]
                     microbatches[mb_idx] = None  # allow GC
                     is_padding = mb is None
+
+                    t_fb = time.perf_counter()
 
                     if is_padding:
                         # Create a minimal dummy forward pass to keep FSDP in sync
@@ -1104,6 +1113,8 @@ class DistributedGRPOTrainer:
                         loss = loss * 0.0
 
                     loss.backward()
+
+                    total_fwdbwd_ms += (time.perf_counter() - t_fb) * 1000
 
                     if not is_padding:
                         total_loss += loss.item()
@@ -1122,6 +1133,9 @@ class DistributedGRPOTrainer:
                 gradnorm = clip_grad_norm_(self.policy.parameters(), self.gradient_clip)
                 self.optimizer.step()
                 self.optimizer.zero_grad()
+
+                t_optim_step_ms = (time.perf_counter() - t_step_start) * 1000
+                avg_fwdbwd_ms = total_fwdbwd_ms / max(global_k, 1)
 
                 self.stats.increment_optim_step()
                 self._maybe_update_ref_policy()
@@ -1164,6 +1178,8 @@ class DistributedGRPOTrainer:
                         "train/grad_norm": gradnorm.item() if hasattr(gradnorm, "item") else gradnorm,
                         "train/optim_step": self.stats.optim_steps,
                         "train/tokens_trained": self.stats.tokens_seen,
+                        "timing/optim_step_ms": t_optim_step_ms,
+                        "timing/avg_fwdbwd_ms": avg_fwdbwd_ms,
                     }, step=self.stats.optim_steps)
 
                 torch.cuda.empty_cache()
@@ -1539,14 +1555,28 @@ class DistributedGRPOTrainer:
             self.stats.advance_iteration()
 
             log_rank_0("iteration %d: generating rollouts...", self.stats.iteration)
+            t0 = time.perf_counter()
             groups = self._generate_rollouts()
+            t_rollout_ms = (time.perf_counter() - t0) * 1000
 
             if not groups:
                 log_rank_0("no groups generated, retrying...")
                 continue
 
             log_rank_0("training policy...")
+            t0 = time.perf_counter()
             self._train_policy(groups)
+            t_policy_ms = (time.perf_counter() - t0) * 1000
+
+            log_rank_0(
+                "timing: rollout=%.0fms, policy_update=%.0fms",
+                t_rollout_ms, t_policy_ms,
+            )
+            if self.use_wandb and WANDB_AVAILABLE and self.rank == 0:
+                wandb.log({
+                    "timing/rollout_ms": t_rollout_ms,
+                    "timing/policy_update_ms": t_policy_ms,
+                }, step=self.stats.optim_steps)
 
             if self.stats.should_save():
                 val = self._run_validation()
@@ -1571,8 +1601,14 @@ class DistributedGRPOTrainer:
                             "val/avg_accuracy_reward": val.get("avg_accuracy_reward", 0),
                         }, step=self.stats.optim_steps)
 
+                t0 = time.perf_counter()
                 self._save_checkpoint()
+                t_ckpt_ms = (time.perf_counter() - t0) * 1000
                 self.stats.mark_checkpointed()
+
+                log_rank_0("timing: checkpoint_save=%.0fms", t_ckpt_ms)
+                if self.use_wandb and WANDB_AVAILABLE and self.rank == 0:
+                    wandb.log({"timing/checkpoint_save_ms": t_ckpt_ms}, step=self.stats.optim_steps)
 
             log_rank_0("syncing weights to vLLM...")
             self._sync_weights_to_vllm()
