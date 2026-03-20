@@ -864,9 +864,18 @@ class GRPOTrainer:
             ):
                 r = self.reward_fn(response_text, answer, prompt_data)
                 total_completions += 1
-                if r >= 0.1:
+                # Support both legacy float rewards and structured RewardResult
+                if isinstance(r, (int, float)):
+                    reward_val = float(r)
+                    parsable = reward_val >= 0.1
+                    correct = reward_val >= 1.0
+                else:
+                    reward_val = r.reward
+                    parsable = r.is_parsable
+                    correct = r.is_correct
+                if parsable:
                     total_parsable += 1
-                if r >= 1.0:
+                if correct:
                     total_correct += 1
 
                 group.append(
@@ -875,9 +884,9 @@ class GRPOTrainer:
                         response_ids=response_ids,
                         response=response_text,
                         old_logprobs=old_lps,
-                        reward=r,
-                        is_parsable=r >= 0.1,
-                        is_correct=r >= 1.0,
+                        reward=reward_val,
+                        is_parsable=parsable,
+                        is_correct=correct,
                     )
                 )
 
@@ -1442,10 +1451,17 @@ class GRPOTrainer:
                     answer = req["answer"]
                     r = self.reward_fn(text, answer, req)
                     total += 1
-                    if r >= 0.1:
-                        parsable += 1
-                    if r >= 1.0:
-                        correct += 1
+                    if isinstance(r, (int, float)):
+                        reward_val = float(r)
+                        if reward_val >= 0.1:
+                            parsable += 1
+                        if reward_val >= 1.0:
+                            correct += 1
+                    else:
+                        if r.is_parsable:
+                            parsable += 1
+                        if r.is_correct:
+                            correct += 1
 
         return {
             "correct_rate": correct / max(total, 1),
