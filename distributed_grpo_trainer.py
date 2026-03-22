@@ -18,6 +18,8 @@ import json
 import random
 import time
 import asyncio
+
+from grpo_trainer import prepend_icl
 import logging
 
 import datasets
@@ -84,14 +86,17 @@ class StatsTracker:
         save_every_n_tokens: int = 0,
         step_budget: int = 0,
         save_every_n_steps: int = 0,
+        eval_every_n_steps: int = 0,
     ):
         self.token_budget = token_budget
         self.step_budget = step_budget
         self.save_every_n_tokens = save_every_n_tokens
         self.save_every_n_steps = save_every_n_steps
+        self.eval_every_n_steps = eval_every_n_steps
         self._tokens_seen = 0
         self._last_checkpoint_tokens = 0
         self._last_checkpoint_steps = 0
+        self._last_eval_step = 0
         self._optim_steps = 0
         self._iteration = 0
 
@@ -112,9 +117,17 @@ class StatsTracker:
             return True
         return False
 
+    def should_eval(self) -> bool:
+        if self.eval_every_n_steps > 0:
+            return (self._optim_steps - self._last_eval_step) >= self.eval_every_n_steps
+        return self.should_save()
+
     def mark_checkpointed(self):
         self._last_checkpoint_tokens = self._tokens_seen
         self._last_checkpoint_steps = self._optim_steps
+
+    def mark_evaluated(self):
+        self._last_eval_step = self._optim_steps
 
     def completed(self) -> bool:
         if self.token_budget > 0 and self._tokens_seen >= self.token_budget:
@@ -216,6 +229,12 @@ class DistributedGRPOTrainer:
         # Think mode
         require_think: bool = False,
         best_val_ckpt_only: bool = False,
+        # Precision
+        precision: str = "mixed",
+        # Eval frequency
+        eval_every_n_steps: int = 0,
+        # ICL
+        num_icl: int = 0,
         # Task
         reward_fn=None,
         task: str = "gsm8k",
@@ -267,6 +286,8 @@ class DistributedGRPOTrainer:
         self._best_val_accuracy = -1.0
         self.update_ref_every = update_ref_every
         self.use_wandb = use_wandb
+        self.precision = precision
+        self.num_icl = num_icl
         self.reward_fn = reward_fn or get_reward_fn(task)
 
         self.stats = StatsTracker(
@@ -274,6 +295,7 @@ class DistributedGRPOTrainer:
             save_every_n_tokens=save_every_n_tokens,
             step_budget=max_steps,
             save_every_n_steps=save_every_n_steps,
+            eval_every_n_steps=eval_every_n_steps,
         )
 
         if output_dir and self.rank == 0:
@@ -381,16 +403,29 @@ class DistributedGRPOTrainer:
 
     def _load_fsdp2_models(self, model_name: str, ref_cpu_offload: bool = False):
         """Load policy and ref models with FSDP2 wrapping + activation checkpointing."""
-        mp_policy = MixedPrecisionPolicy(
-            param_dtype=torch.bfloat16,
-            reduce_dtype=torch.float32,
-        )
+        use_mp = self.precision != "bf16"
+
+        if self.precision == "mixed":
+            load_dtype = torch.float32
+            mp_policy = MixedPrecisionPolicy(
+                param_dtype=torch.bfloat16,
+                reduce_dtype=torch.float32,
+            )
+        elif self.precision == "fp32":
+            load_dtype = torch.float32
+            mp_policy = MixedPrecisionPolicy(
+                param_dtype=torch.float32,
+                reduce_dtype=torch.float32,
+            )
+        else:  # bf16: no MixedPrecisionPolicy, everything native bf16
+            load_dtype = torch.bfloat16
+            mp_policy = None
 
         # ── Policy model ──
-        log_rank_0("loading policy model (FP32, flash_attention_2)...")
+        log_rank_0("loading policy model (%s, flash_attention_2, precision=%s)...", load_dtype, self.precision)
         policy = AutoModelForCausalLM.from_pretrained(
             model_name,
-            dtype=torch.float32,
+            dtype=load_dtype,
             attn_implementation="flash_attention_2",
         )
         if hasattr(policy, "config"):
@@ -403,28 +438,22 @@ class DistributedGRPOTrainer:
             layers[i] = ptd_checkpoint_wrapper(layer, preserve_rng=True)
 
         # Per-layer FSDP wrapping
+        fsdp_kwargs = {"mesh": self.device_mesh}
+        if mp_policy is not None:
+            fsdp_kwargs["mp_policy"] = mp_policy
+
         for idx, block in enumerate(layers):
             reshard = idx < len(layers) - 1
-            fully_shard(
-                block,
-                mesh=self.device_mesh,
-                mp_policy=mp_policy,
-                reshard_after_forward=reshard,
-            )
-        fully_shard(
-            policy,
-            mesh=self.device_mesh,
-            mp_policy=mp_policy,
-            reshard_after_forward=False,
-        )
+            fully_shard(block, **fsdp_kwargs, reshard_after_forward=reshard)
+        fully_shard(policy, **fsdp_kwargs, reshard_after_forward=False)
         log_rank_0("policy model loaded and FSDP2 wrapped")
 
         # ── Reference model (frozen) ──
         offload_str = ", CPU offload" if ref_cpu_offload else ""
-        log_rank_0("loading reference model (FP32, frozen%s)...", offload_str)
+        log_rank_0("loading reference model (%s, frozen%s)...", load_dtype, offload_str)
         ref = AutoModelForCausalLM.from_pretrained(
             model_name,
-            dtype=torch.float32,
+            dtype=load_dtype,
             attn_implementation="flash_attention_2",
         )
         ref.eval()
@@ -432,28 +461,18 @@ class DistributedGRPOTrainer:
         if hasattr(ref, "config"):
             ref.config.use_cache = False
 
-        ref_mp_policy = MixedPrecisionPolicy(
-            param_dtype=torch.bfloat16,
-            reduce_dtype=torch.float32,
-        )
         ref_offload_policy = CPUOffloadPolicy(pin_memory=True) if ref_cpu_offload else None
+
+        ref_fsdp_kwargs = {"mesh": self.device_mesh}
+        if mp_policy is not None:
+            ref_fsdp_kwargs["mp_policy"] = mp_policy
+        if ref_offload_policy is not None:
+            ref_fsdp_kwargs["offload_policy"] = ref_offload_policy
 
         ref_layers = ref.model.layers
         for idx, block in enumerate(ref_layers):
-            fully_shard(
-                block,
-                mesh=self.device_mesh,
-                mp_policy=ref_mp_policy,
-                offload_policy=ref_offload_policy,
-                reshard_after_forward=True,
-            )
-        fully_shard(
-            ref,
-            mesh=self.device_mesh,
-            mp_policy=ref_mp_policy,
-            offload_policy=ref_offload_policy,
-            reshard_after_forward=True,
-        )
+            fully_shard(block, **ref_fsdp_kwargs, reshard_after_forward=True)
+        fully_shard(ref, **ref_fsdp_kwargs, reshard_after_forward=True)
         log_rank_0("reference model loaded (FSDP2%s)", offload_str)
 
         return policy, ref
@@ -537,7 +556,7 @@ class DistributedGRPOTrainer:
         prompts = []
         for _ in range(self.batch_size):
             sample = next(self.train_iterator)
-            messages = sample["messages"]
+            messages = prepend_icl(sample["messages"], self.num_icl)
 
             # Detect assistant prefix (e.g. R1-style "<think>\n")
             if messages and messages[-1].get("role") == "assistant":
@@ -979,6 +998,8 @@ class DistributedGRPOTrainer:
 
         outputs = self.policy(input_ids=input_ids, attention_mask=attention_mask)
         logits = outputs.logits
+        if self.temperature > 0:
+            logits = logits / self.temperature
 
         results = []
         for i, response_ids in enumerate(response_ids_list):
@@ -1383,9 +1404,10 @@ class DistributedGRPOTrainer:
         all_requests = []
         for j in range(len(self.validation_dataset)):
             sample = self.validation_dataset[j]
+            messages = prepend_icl(sample["messages"], self.num_icl)
             prompt_ids = (
                 self.tokenizer.apply_chat_template(
-                    sample["messages"],
+                    messages,
                     add_generation_prompt=True,
                     return_tensors="pt",
                 )
@@ -1585,7 +1607,7 @@ class DistributedGRPOTrainer:
                     "timing/policy_update_ms": t_policy_ms,
                 }, step=self.stats.optim_steps)
 
-            if self.stats.should_save():
+            if self.stats.should_eval():
                 val = self._run_validation()
                 if val and self.rank == 0:
                     log_rank_0(
@@ -1607,11 +1629,20 @@ class DistributedGRPOTrainer:
                             "val/avg_format_reward": val.get("avg_format_reward", 0),
                             "val/avg_accuracy_reward": val.get("avg_accuracy_reward", 0),
                         }, step=self.stats.optim_steps)
+                self.stats.mark_evaluated()
 
+            if self.stats.should_save():
                 # Save checkpoint: either always, or only when val accuracy improves
                 should_save_ckpt = True
                 if self.best_val_ckpt_only:
-                    val_acc = val.get("correct_rate", 0) if val else 0
+                    # Broadcast val accuracy from rank 0 so all ranks make the same save decision
+                    val_acc_tensor = torch.tensor(
+                        [val.get("correct_rate", 0) if val else 0],
+                        dtype=torch.float32, device=self.device,
+                    )
+                    dist.broadcast(val_acc_tensor, src=0)
+                    val_acc = val_acc_tensor.item()
+
                     if val_acc > self._best_val_accuracy:
                         self._best_val_accuracy = val_acc
                         log_rank_0("new best val accuracy: %.4f", val_acc)
@@ -1621,7 +1652,7 @@ class DistributedGRPOTrainer:
 
                 if should_save_ckpt:
                     t0 = time.perf_counter()
-                    self._save_checkpoint(best_only=self.best_val_ckpt_only)
+                    self._save_checkpoint()
                     t_ckpt_ms = (time.perf_counter() - t0) * 1000
                     log_rank_0("timing: checkpoint_save=%.0fms", t_ckpt_ms)
                     if self.use_wandb and WANDB_AVAILABLE and self.rank == 0:

@@ -110,11 +110,23 @@ class GRPOSample(pd.BaseModel):
 class StatsTracker:
     """Tracks training progress and checkpoint intervals."""
 
-    def __init__(self, token_budget: int, checkpoint_frequency: int):
+    def __init__(
+        self,
+        token_budget: int,
+        checkpoint_frequency: int,
+        max_steps: int = 0,
+        save_every_n_steps: int = 0,
+        eval_every_n_steps: int = 0,
+    ):
         self.token_budget = token_budget
         self.checkpoint_frequency = checkpoint_frequency
+        self.max_steps = max_steps
+        self.save_every_n_steps = save_every_n_steps
+        self.eval_every_n_steps = eval_every_n_steps
         self._tokens_seen = 0
         self._last_checkpoint = 0
+        self._last_save_step = 0
+        self._last_eval_step = 0
         self._optim_steps = 0
         self._iteration = 0
 
@@ -125,15 +137,31 @@ class StatsTracker:
         self._optim_steps += 1
 
     def should_save(self) -> bool:
+        # Step-based checkpointing takes priority
+        if self.save_every_n_steps > 0:
+            return (self._optim_steps - self._last_save_step) >= self.save_every_n_steps
+        # Fall back to token-based
         return self.checkpoint_frequency > 0 and (
             self._tokens_seen - self._last_checkpoint
         ) >= self.checkpoint_frequency
 
+    def should_eval(self) -> bool:
+        if self.eval_every_n_steps > 0:
+            return (self._optim_steps - self._last_eval_step) >= self.eval_every_n_steps
+        # If no eval interval set, eval at checkpoint time
+        return self.should_save()
+
     def mark_checkpointed(self):
         self._last_checkpoint = self._tokens_seen
+        self._last_save_step = self._optim_steps
+
+    def mark_evaluated(self):
+        self._last_eval_step = self._optim_steps
 
     def completed(self) -> bool:
-        return self._tokens_seen >= self.token_budget
+        if self.max_steps > 0:
+            return self._optim_steps >= self.max_steps
+        return self.token_budget > 0 and self._tokens_seen >= self.token_budget
 
     def advance_iteration(self):
         self._iteration += 1
@@ -149,6 +177,41 @@ class StatsTracker:
     @property
     def iteration(self):
         return self._iteration
+
+
+_ICL_EXAMPLES = [
+    ("There are 15 trees in the grove. Grove workers will plant trees in the grove today. "
+     "After they are done, there will be 21 trees. How many trees did the grove workers plant today?",
+     "There are 15 trees originally. Then there were 21 trees after some more were planted. "
+     "So there must have been 21 - 15 = 6. <answer>6</answer>"),
+    ("If there are 3 cars in the parking lot and 2 more cars arrive, how many cars are in the parking lot?",
+     "There are originally 3 cars. 2 more cars arrive. 3 + 2 = 5. <answer>5</answer>"),
+    ("Leah had 32 chocolates and her sister had 42. If they ate 35, how many pieces do they have left in total?",
+     "Originally, Leah had 32 chocolates. Her sister had 42. So in total they had 32 + 42 = 74. "
+     "After eating 35, they had 74 - 35 = 39. <answer>39</answer>"),
+    ("Jason had 20 lollipops. He gave Denny some lollipops. Now Jason has 12 lollipops. "
+     "How many lollipops did Jason give to Denny?",
+     "Jason started with 20 lollipops. Then he had 12 after giving some to Denny. "
+     "So he gave Denny 20 - 12 = 8. <answer>8</answer>"),
+    ("Shawn has five toys. For Christmas, he got two toys each from his mom and dad. "
+     "How many toys does he have now?",
+     "Shawn started with 5 toys. If he got 2 toys each from his mom and dad, "
+     "then that is 4 more toys. 5 + 4 = 9. <answer>9</answer>"),
+]
+
+
+def prepend_icl(messages: list[dict], num_icl: int) -> list[dict]:
+    """Prepend num_icl in-context learning examples as multi-turn conversation turns."""
+    if num_icl <= 0:
+        return messages
+    icl_turns = []
+    for q, a in _ICL_EXAMPLES[:num_icl]:
+        icl_turns.append({"role": "user", "content": q})
+        icl_turns.append({"role": "assistant", "content": a})
+    # Insert ICL turns after the system message (if present), before the user question
+    if messages and messages[0]["role"] == "system":
+        return [messages[0]] + icl_turns + messages[1:]
+    return icl_turns + messages
 
 
 class InfiniteDatasetIterator:
@@ -188,6 +251,9 @@ class GRPOTrainer:
         inner_epochs: int = 2,
         inner_batch_size: int = 32,
         save_every_n_tokens: int = 0,
+        max_steps: int = 0,
+        save_every_n_steps: int = 0,
+        eval_every_n_steps: int = 0,
         # GRPO-specific (defaults match cli.py train command)
         group_size: int = 16,
         batch_size: int = 64,
@@ -225,6 +291,8 @@ class GRPOTrainer:
         seed: int = 67,
         # Validation
         validation_path: str = None,
+        # ICL (in-context learning) examples prepended to prompts
+        num_icl: int = 0,
         # Reward function: (response, answer, prompt_data) -> float
         reward_fn=None,
     ):
@@ -250,12 +318,18 @@ class GRPOTrainer:
         self.use_wandb = use_wandb
         self.precision = precision
         self.reward_fn = reward_fn or (lambda resp, ans, pd: reward_response(resp, ans))
+        self.num_icl = num_icl
 
         assert precision in ("fp32", "bf16", "mixed"), (
             f"precision must be 'fp32', 'bf16', or 'mixed', got '{precision}'"
         )
 
-        self.stats = StatsTracker(token_budget, save_every_n_tokens)
+        self.stats = StatsTracker(
+            token_budget, save_every_n_tokens,
+            max_steps=max_steps,
+            save_every_n_steps=save_every_n_steps,
+            eval_every_n_steps=eval_every_n_steps,
+        )
 
         # Validate output dir
         if output_dir:
@@ -745,9 +819,10 @@ class GRPOTrainer:
         prompts = []
         for _ in range(self.batch_size):
             sample = next(self.train_iterator)
+            messages = prepend_icl(sample["messages"], self.num_icl)
             prompt_ids = (
                 self.tokenizer.apply_chat_template(
-                    sample["messages"],
+                    messages,
                     add_generation_prompt=True,
                     return_tensors="pt",
                 )
@@ -762,7 +837,7 @@ class GRPOTrainer:
                     "problem": sample.get(
                         "problem", sample["messages"][-1]["content"]
                     ),
-                    "messages": sample["messages"],
+                    "messages": messages,
                     "numbers": sample.get("numbers", None),
                 }
             )
@@ -957,6 +1032,8 @@ class GRPOTrainer:
             input_ids=input_ids, attention_mask=attention_mask
         )
         logits = outputs.logits  # (n, max_len, vocab_size)
+        if self.temperature > 0:
+            logits = logits / self.temperature
 
         # Extract per-response logprobs (cast to float32 for precision)
         results = []
@@ -1414,9 +1491,10 @@ class GRPOTrainer:
 
                 requests = []
                 for j in range(len(batch["messages"])):
+                    messages = prepend_icl(batch["messages"][j], self.num_icl)
                     prompt_ids = (
                         self.tokenizer.apply_chat_template(
-                            batch["messages"][j],
+                            messages,
                             add_generation_prompt=True,
                             return_tensors="pt",
                         )
@@ -1514,13 +1592,18 @@ class GRPOTrainer:
            e. Sync weights to vLLM
         3. Save final checkpoint
         """
+        budget_str = (
+            f"max_steps: {self.stats.max_steps}"
+            if self.stats.max_steps > 0
+            else f"token budget: {self.stats.token_budget}"
+        )
         logger.info(
             "starting GRPO training: cuda:%d (vLLM on GPU(s) %s), "
-            "precision: %s, token budget: %d, group_size: %d, batch_size: %d",
+            "precision: %s, %s, group_size: %d, batch_size: %d",
             self.device.index,
             self.vllm_gpus,
             self.precision,
-            self.stats.token_budget,
+            budget_str,
             self.group_size,
             self.batch_size,
         )
@@ -1555,25 +1638,27 @@ class GRPOTrainer:
             logger.info("training policy...")
             self._train_policy(groups)
 
+            # Validation if eval interval reached
+            if self.validation_dataset and self.stats.should_eval():
+                val = self._run_validation()
+                logger.info(
+                    "validation: correct=%.1f%%, parsable=%.1f%% (%d samples)",
+                    val.get("correct_rate", 0) * 100,
+                    val.get("parsable_rate", 0) * 100,
+                    val.get("total", 0),
+                )
+                if self.use_wandb and WANDB_AVAILABLE:
+                    wandb.log(
+                        {
+                            "val/correct_rate": val.get("correct_rate", 0),
+                            "val/parsable_rate": val.get("parsable_rate", 0),
+                        },
+                        step=self.stats.optim_steps,
+                    )
+                self.stats.mark_evaluated()
+
             # Checkpoint if interval reached
             if self.stats.should_save():
-                if self.validation_dataset:
-                    val = self._run_validation()
-                    logger.info(
-                        "validation: correct=%.1f%%, parsable=%.1f%% (%d samples)",
-                        val.get("correct_rate", 0) * 100,
-                        val.get("parsable_rate", 0) * 100,
-                        val.get("total", 0),
-                    )
-                    if self.use_wandb and WANDB_AVAILABLE:
-                        wandb.log(
-                            {
-                                "val/correct_rate": val.get("correct_rate", 0),
-                                "val/parsable_rate": val.get("parsable_rate", 0),
-                            },
-                            step=self.stats.optim_steps,
-                        )
-
                 self._save_checkpoint()
                 self.stats.mark_checkpointed()
 

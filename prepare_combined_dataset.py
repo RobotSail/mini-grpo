@@ -24,6 +24,13 @@ SYSTEM_MSG = (
 )
 
 
+def build_messages(problem: str) -> list[dict]:
+    return [
+        {"role": "system", "content": SYSTEM_MSG},
+        {"role": "user", "content": problem},
+    ]
+
+
 def load_gsm_plus() -> list[dict]:
     """Load qintongli/GSM-Plus and convert to our format."""
     rows = []
@@ -41,10 +48,7 @@ def load_gsm_plus() -> list[dict]:
                 "problem": sample["question"],
                 "answer": answer,
                 "operation": "gsm8k",
-                "messages": [
-                    {"role": "system", "content": SYSTEM_MSG},
-                    {"role": "user", "content": sample["question"]},
-                ],
+                "messages": build_messages(sample["question"]),
             })
     print(f"GSM-Plus: loaded {len(rows)} samples (after filtering None answers)")
     return rows
@@ -67,10 +71,7 @@ def load_svamp() -> list[dict]:
                 "problem": problem,
                 "answer": answer,
                 "operation": "gsm8k",
-                "messages": [
-                    {"role": "system", "content": SYSTEM_MSG},
-                    {"role": "user", "content": problem},
-                ],
+                "messages": build_messages(problem),
             })
     print(f"SVAMP: loaded {len(rows)} samples")
     return rows

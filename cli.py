@@ -2026,6 +2026,9 @@ def grpo_train(
     save_every_n_steps: int = typer.Option(
         0, "--save-every-n-steps", help="Save checkpoint every N optimizer steps (0 = disabled)"
     ),
+    eval_every_n_steps: int = typer.Option(
+        0, "--eval-every-n-steps", help="Run validation every N optimizer steps (0 = at checkpoint time)"
+    ),
 
     # GRPO settings
     group_size: int = typer.Option(16, "-G", "--group-size", help="Rollouts per prompt"),
@@ -2074,6 +2077,7 @@ def grpo_train(
     seed: int = typer.Option(67, "--seed", help="Random seed"),
 
     validation_path: str = typer.Option(None, "--validation-path", help="Path to validation data"),
+    num_icl: int = typer.Option(0, "--num-icl", help="Number of ICL examples to prepend to prompts (0 = disabled, max 5)"),
 
     # Task
     task: str = typer.Option("gsm8k", "--task", help="Task name: 'gsm8k' or 'countdown'"),
@@ -2098,6 +2102,9 @@ def grpo_train(
         inner_epochs=inner_epochs,
         inner_batch_size=inner_batch_size,
         save_every_n_tokens=save_every_n_tokens,
+        max_steps=max_steps,
+        save_every_n_steps=save_every_n_steps,
+        eval_every_n_steps=eval_every_n_steps,
         group_size=group_size,
         batch_size=batch_size,
         clip_eps=clip_eps,
@@ -2124,6 +2131,7 @@ def grpo_train(
         wandb_entity=wandb_entity,
         seed=seed,
         validation_path=validation_path,
+        num_icl=num_icl,
         reward_fn=get_reward_fn(task),
     )
     trainer.train()
@@ -2630,6 +2638,9 @@ def distributed_grpo_train(
     save_every_n_steps: int = typer.Option(
         0, "--save-every-n-steps", help="Save checkpoint every N optimizer steps (0 = disabled)"
     ),
+    eval_every_n_steps: int = typer.Option(
+        0, "--eval-every-n-steps", help="Run validation every N optimizer steps (0 = at checkpoint time)"
+    ),
 
     # GRPO settings
     group_size: int = typer.Option(16, "-G", "--group-size", help="Rollouts per prompt"),
@@ -2663,6 +2674,12 @@ def distributed_grpo_train(
     beta2: float = typer.Option(0.95, "--beta2", help="Adam beta2"),
     wd: float = typer.Option(0.0, "--wd", help="Weight decay"),
 
+    # Precision
+    precision: str = typer.Option(
+        "mixed", "--precision", "-P",
+        help="'fp32' | 'bf16' | 'mixed' (FP32 master weights + BF16 fwd via FSDP2)",
+    ),
+
     # GPU allocation
     train_gpus: str = typer.Option("0,1", "--train-gpus", help="Comma-separated GPU indices for training"),
     vllm_gpus: str = typer.Option("2", "--vllm-gpus", help="Comma-separated GPU indices for vLLM inference"),
@@ -2678,6 +2695,7 @@ def distributed_grpo_train(
     seed: int = typer.Option(67, "--seed", help="Random seed"),
 
     validation_path: str = typer.Option(None, "--validation-path", help="Path to validation data"),
+    num_icl: int = typer.Option(0, "--num-icl", help="Number of ICL examples to prepend to prompts (0 = disabled, max 5)"),
 
     # Task
     task: str = typer.Option("gsm8k", "--task", help="Task name: 'gsm8k' or 'countdown'"),
@@ -2810,6 +2828,9 @@ def distributed_grpo_train(
             "--vllm-checkpoint-dir", checkpoint_dir,
             "--seed", str(seed),
             "--task", task,
+            "--precision", precision,
+            "--eval-every-n-steps", str(eval_every_n_steps),
+            "--num-icl", str(num_icl),
         ]
         if use_wandb:
             train_cmd.append("--wandb")
@@ -2916,6 +2937,9 @@ def distributed_grpo_worker(
     wandb_entity: str = typer.Option(None, "--wandb-entity"),
     seed: int = typer.Option(67, "--seed"),
     validation_path: str = typer.Option(None, "--validation-path"),
+    precision: str = typer.Option("mixed", "--precision", "-P"),
+    eval_every_n_steps: int = typer.Option(0, "--eval-every-n-steps"),
+    num_icl: int = typer.Option(0, "--num-icl"),
     task: str = typer.Option("gsm8k", "--task"),
 ):
     """
@@ -2965,6 +2989,9 @@ def distributed_grpo_worker(
         wandb_entity=wandb_entity,
         seed=seed,
         validation_path=validation_path,
+        precision=precision,
+        eval_every_n_steps=eval_every_n_steps,
+        num_icl=num_icl,
         task=task,
     )
     trainer.train()
