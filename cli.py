@@ -2641,6 +2641,7 @@ def distributed_grpo_train(
     update_ref_every: int = typer.Option(0, "--update-ref-every", help="Update ref policy every N steps (0 = never)"),
     token_level_averaging: bool = typer.Option(False, "--token-level-avg/--seq-level-avg", help="Token-level loss averaging (default: sequence-level)"),
     think: bool = typer.Option(False, "--think/--no-think", help="Require <think> traces for correct reward"),
+    best_val_ckpt_only: bool = typer.Option(False, "--best-val-ckpt-only", help="Only save checkpoint when validation accuracy improves"),
 
     # Sampling
     temperature: float = typer.Option(0.7, "-t", "--temp", help="Sampling temperature"),
@@ -2826,6 +2827,8 @@ def distributed_grpo_train(
             train_cmd.append("--token-level-avg")
         if think:
             train_cmd.append("--think")
+        if best_val_ckpt_only:
+            train_cmd.append("--best-val-ckpt-only")
 
         train_env = os.environ.copy()
         train_env["CUDA_VISIBLE_DEVICES"] = train_gpus
@@ -2892,6 +2895,7 @@ def distributed_grpo_worker(
     update_ref_every: int = typer.Option(0, "--update-ref-every"),
     token_level_averaging: bool = typer.Option(False, "--token-level-avg/--seq-level-avg"),
     think: bool = typer.Option(False, "--think/--no-think"),
+    best_val_ckpt_only: bool = typer.Option(False, "--best-val-ckpt-only"),
     temperature: float = typer.Option(0.7, "-t", "--temp"),
     max_new_tokens: int = typer.Option(512, "--max-new-tokens"),
     top_p: float = typer.Option(1.0, "--top-p"),
@@ -2939,6 +2943,7 @@ def distributed_grpo_worker(
         update_ref_every=update_ref_every,
         token_level_averaging=token_level_averaging,
         require_think=think,
+        best_val_ckpt_only=best_val_ckpt_only,
         temperature=temperature,
         top_k=top_k,
         top_p=top_p,

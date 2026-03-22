@@ -27,7 +27,6 @@ adamw-vs-muon-grpo-v1-artifacts/checkpoints
 adamw-vs-muon-grpo-v1-artifacts/checkpoints-lr-5e-6
 
 gsm8k-data
-plots
 svd_compare/model_embed_tokens_weight.png
 svd_compare/model_layers_0_mlp_down_proj_weight.png
 svd_compare/model_layers_0_mlp_gate_proj_weight.png

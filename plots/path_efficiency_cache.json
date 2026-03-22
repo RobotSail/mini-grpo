@@ -1,0 +1,38 @@
+{
+  "adamw_mixed": {
+    "path_length": 0.481947,
+    "displacement": 0.3218,
+    "l0_sparsity": 0.7517,
+    "steps": 30,
+    "tokens": 316072,
+    "accuracy": 0.9204,
+    "checkpoint": "checkpoint-316072"
+  },
+  "muon_mixed": {
+    "path_length": 1.311659,
+    "displacement": 0.5641,
+    "l0_sparsity": 0.6048,
+    "steps": 202,
+    "tokens": 2097982,
+    "accuracy": 0.9204,
+    "checkpoint": "checkpoint-2100020"
+  },
+  "adamw_bf16": {
+    "path_length": 13.759019,
+    "displacement": 0.2755,
+    "l0_sparsity": 0.9928,
+    "steps": 1244,
+    "tokens": 12906436,
+    "accuracy": 0.9204,
+    "checkpoint": "checkpoint-12906436"
+  },
+  "muon_bf16": {
+    "path_length": 30.363697,
+    "displacement": 0.2777,
+    "l0_sparsity": 0.9938,
+    "steps": 4592,
+    "tokens": 48152636,
+    "accuracy": 0.9171,
+    "checkpoint": "checkpoint-48152636"
+  }
+}

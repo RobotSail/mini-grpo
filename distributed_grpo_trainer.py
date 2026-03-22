@@ -215,6 +215,7 @@ class DistributedGRPOTrainer:
         token_level_averaging: bool = False,
         # Think mode
         require_think: bool = False,
+        best_val_ckpt_only: bool = False,
         # Task
         reward_fn=None,
         task: str = "gsm8k",
@@ -262,6 +263,8 @@ class DistributedGRPOTrainer:
         self.format_reward = format_reward
         self.token_level_averaging = token_level_averaging
         self.require_think = require_think
+        self.best_val_ckpt_only = best_val_ckpt_only
+        self._best_val_accuracy = -1.0
         self.update_ref_every = update_ref_every
         self.use_wandb = use_wandb
         self.reward_fn = reward_fn or get_reward_fn(task)
@@ -642,6 +645,8 @@ class DistributedGRPOTrainer:
     def _broadcast_vllm_results(self, results):
         """Broadcast vLLM results from rank 0 to all ranks via pickling."""
         import pickle
+
+        torch.cuda.empty_cache()
 
         if self.rank == 0:
             data = pickle.dumps(results)
@@ -1466,11 +1471,13 @@ class DistributedGRPOTrainer:
 
     # ── Checkpointing ──────────────────────────────────────────────────
 
-    def _save_checkpoint(self):
+    def _save_checkpoint(self, best_only: bool = False):
         if not self.output_dir:
             return
 
-        if self.stats.step_budget > 0:
+        if best_only:
+            name = "checkpoint-best"
+        elif self.stats.step_budget > 0:
             name = f"checkpoint-step{self.stats.optim_steps}-{self.stats.tokens_seen}tok"
         else:
             name = f"checkpoint-{self.stats.tokens_seen}"
@@ -1601,18 +1608,36 @@ class DistributedGRPOTrainer:
                             "val/avg_accuracy_reward": val.get("avg_accuracy_reward", 0),
                         }, step=self.stats.optim_steps)
 
-                t0 = time.perf_counter()
-                self._save_checkpoint()
-                t_ckpt_ms = (time.perf_counter() - t0) * 1000
+                # Save checkpoint: either always, or only when val accuracy improves
+                should_save_ckpt = True
+                if self.best_val_ckpt_only:
+                    val_acc = val.get("correct_rate", 0) if val else 0
+                    if val_acc > self._best_val_accuracy:
+                        self._best_val_accuracy = val_acc
+                        log_rank_0("new best val accuracy: %.4f", val_acc)
+                        should_save_ckpt = True
+                    else:
+                        should_save_ckpt = False
+
+                if should_save_ckpt:
+                    t0 = time.perf_counter()
+                    self._save_checkpoint(best_only=self.best_val_ckpt_only)
+                    t_ckpt_ms = (time.perf_counter() - t0) * 1000
+                    log_rank_0("timing: checkpoint_save=%.0fms", t_ckpt_ms)
+                    if self.use_wandb and WANDB_AVAILABLE and self.rank == 0:
+                        wandb.log({"timing/checkpoint_save_ms": t_ckpt_ms}, step=self.stats.optim_steps)
+
                 self.stats.mark_checkpointed()
 
-                log_rank_0("timing: checkpoint_save=%.0fms", t_ckpt_ms)
-                if self.use_wandb and WANDB_AVAILABLE and self.rank == 0:
-                    wandb.log({"timing/checkpoint_save_ms": t_ckpt_ms}, step=self.stats.optim_steps)
+            # Clear memory after validation/checkpointing before weight sync
+            torch.cuda.empty_cache()
 
             log_rank_0("syncing weights to vLLM...")
             self._sync_weights_to_vllm()
 
+            # Free memory before next rollout generation (broadcast needs contiguous GPU memory)
+            import gc
+            gc.collect()
             torch.cuda.empty_cache()
 
         log_rank_0(

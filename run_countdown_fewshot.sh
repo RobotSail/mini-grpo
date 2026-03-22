@@ -8,7 +8,7 @@ set -euo pipefail
 
 MODEL="Qwen/Qwen2-1.5B-Instruct"
 DATA_DIR="generated_data/countdown_fewshot5_full_synthetic"
-OUTPUT_DIR="/mnt/nvme0/experiments/grpo-countdown/countdown-fewshot5-grpo-adamw-full-synthetic"
+OUTPUT_DIR="/mnt/nvme0/experiments/grpo-countdown/countdown-fewshot5-grpo-adamw-full-synthetic-v2"
 
 # ── Hyperparameters ──
 LR=3e-7
@@ -33,6 +33,7 @@ HARD=0
 THINK=0
 SYNTHETIC=1
 R1_PROMPT=0
+MAX_TOKENS_PER_GPU=20000
 
 # ── GPU layout ──
 TRAIN_GPUS="0,1"
@@ -93,10 +94,11 @@ python cli.py distributed-grpo-train \
     --max-new-tokens ${MAX_NEW_TOKENS} \
     --kl ${KL} \
     --format-reward ${FORMAT_REWARD} \
-    --max-tokens-per-gpu 25000 \
+    --max-tokens-per-gpu "${MAX_TOKENS_PER_GPU}" \
     --train-gpus "${TRAIN_GPUS}" \
     --vllm-gpus "${VLLM_GPUS}" \
     --seed ${SEED} \
     --wandb \
     --wandb-project "countdown-grpo" \
+    --best-val-ckpt-only \
     ${TRAIN_FLAGS}
