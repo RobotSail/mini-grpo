@@ -229,6 +229,7 @@ class DistributedGRPOTrainer:
         # Think mode
         require_think: bool = False,
         best_val_ckpt_only: bool = False,
+        overwrite_best_ckpt: bool = False,
         # Precision
         precision: str = "mixed",
         # Eval frequency
@@ -283,6 +284,7 @@ class DistributedGRPOTrainer:
         self.token_level_averaging = token_level_averaging
         self.require_think = require_think
         self.best_val_ckpt_only = best_val_ckpt_only
+        self.overwrite_best_ckpt = overwrite_best_ckpt
         self._best_val_accuracy = -1.0
         self.update_ref_every = update_ref_every
         self.use_wandb = use_wandb
@@ -621,6 +623,21 @@ class DistributedGRPOTrainer:
                 if parts:
                     log_rank_0("per-op correct: %s", " | ".join(parts))
 
+                # Log operator usage/recall/precision
+                op_parts = []
+                for label in ("add", "sub", "mul", "div"):
+                    u = detail_metrics.get(f"rollout/op_usage_{label}")
+                    r = detail_metrics.get(f"rollout/op_recall_{label}")
+                    p = detail_metrics.get(f"rollout/op_precision_{label}")
+                    if u is not None:
+                        op_parts.append(
+                            f"{label}: usage={100*u:.1f}%"
+                            + (f" recall={100*r:.1f}%" if r is not None else "")
+                            + (f" prec={100*p:.1f}%" if p is not None else "")
+                        )
+                if op_parts:
+                    log_rank_0("op analysis: %s", " | ".join(op_parts))
+
                 if self.use_wandb and WANDB_AVAILABLE:
                     wandb.log(detail_metrics, step=self.stats.optim_steps)
 
@@ -821,15 +838,30 @@ class DistributedGRPOTrainer:
 
         return groups
 
+    @staticmethod
+    def _extract_ops_from_expr(expr: str) -> set[str]:
+        """Extract which operators appear in an expression string."""
+        ops = set()
+        for op in ("+", "-", "*", "/"):
+            if f" {op} " in expr:
+                ops.add(op)
+        return ops
+
     def _compute_rollout_details(self, prompts, groups) -> dict:
-        """Compute per-operation correct rates and thinking trace stats.
+        """Compute per-operation metrics and thinking trace stats.
 
         Only meaningful for countdown problems (where 'numbers' is in prompt_data).
-        Solves each problem to determine which operations are required, then
-        tracks correct rates per operation category.
+        Runs on rank 0 only — no collective ops needed.
+
+        Operator metrics (per op in +, -, *, /):
+          1. usage_rate:  Of all parsed answers, what % contain this operator?
+          2. recall:      When the problem requires this op, how often did the
+                          model's parsed answer include it?
+          3. precision:   When the model's parsed answer contains this op, how
+                          often was that op actually required by the problem?
         """
         import re as _re
-        from countdown_utils import solve_countdown
+        from countdown_utils import solve_countdown, ANSWER_PATTERN
 
         think_pattern = _re.compile(r"<think>(.*?)</think>", _re.DOTALL | _re.IGNORECASE)
 
@@ -841,6 +873,15 @@ class DistributedGRPOTrainer:
         op_total = {op: 0 for op in op_labels}
         op_correct = {op: 0 for op in op_labels}
         think_lengths = []
+
+        # Operator analysis counters
+        arith_ops = ("+", "-", "*", "/")
+        total_parsed = 0                                    # total parsed answers
+        op_usage_count = {op: 0 for op in arith_ops}        # answers containing op
+        op_recall_num = {op: 0 for op in arith_ops}         # required & model produced
+        op_recall_den = {op: 0 for op in arith_ops}         # required (denominator)
+        op_precision_num = {op: 0 for op in arith_ops}      # model produced & required
+        op_precision_den = {op: 0 for op in arith_ops}      # model produced (denominator)
 
         for prompt_data, group in zip(prompts, groups):
             if not group:
@@ -854,14 +895,7 @@ class DistributedGRPOTrainer:
             if numbers:
                 solution = solve_countdown(numbers, target)
                 if solution:
-                    if " + " in solution:
-                        required_ops.add("+")
-                    if " - " in solution:
-                        required_ops.add("-")
-                    if " * " in solution:
-                        required_ops.add("*")
-                    if " / " in solution:
-                        required_ops.add("/")
+                    required_ops = self._extract_ops_from_expr(solution)
 
                     # Check if parentheses are required (change the result when removed)
                     try:
@@ -875,23 +909,66 @@ class DistributedGRPOTrainer:
                     except Exception:
                         required_ops.add("parens")
 
-            # Track per-operation correct rates
+            # Track per-operation correct rates (existing)
             n_in_group = len(group)
             n_correct = sum(1 for s in group if s.is_correct)
             for op in required_ops:
                 op_total[op] += n_in_group
                 op_correct[op] += n_correct
 
-            # Thinking trace lengths (characters)
+            # Operator analysis on parsed answers
             for s in group:
+                # Thinking trace lengths
                 match = think_pattern.search(s.response)
                 think_lengths.append(len(match.group(1)) if match else 0)
 
+                # Only analyze parsable answers for operator metrics
+                if not s.is_parsable:
+                    continue
+
+                matches = ANSWER_PATTERN.findall(s.response)
+                if not matches:
+                    continue
+
+                answer_expr = matches[-1].strip()
+                model_ops = self._extract_ops_from_expr(answer_expr)
+                total_parsed += 1
+
+                # 1. Usage: does this answer contain op?
+                for op in arith_ops:
+                    if op in model_ops:
+                        op_usage_count[op] += 1
+
+                # 2. Recall: for each required op, did the model produce it?
+                # 3. Precision: for each model op, was it required?
+                for op in arith_ops:
+                    if op in required_ops:
+                        op_recall_den[op] += 1
+                        if op in model_ops:
+                            op_recall_num[op] += 1
+                    if op in model_ops:
+                        op_precision_den[op] += 1
+                        if op in required_ops:
+                            op_precision_num[op] += 1
+
         # Build metrics dict
         metrics = {}
+
+        # Existing: per-op correct rates
         for op, label in op_labels.items():
             if op_total[op] > 0:
                 metrics[f"rollout/correct_rate_{label}"] = op_correct[op] / op_total[op]
+
+        # New operator metrics (only for arithmetic ops, not parens)
+        op_name = {"+": "add", "-": "sub", "*": "mul", "/": "div"}
+        if total_parsed > 0:
+            for op in arith_ops:
+                label = op_name[op]
+                metrics[f"rollout/op_usage_{label}"] = op_usage_count[op] / total_parsed
+                if op_recall_den[op] > 0:
+                    metrics[f"rollout/op_recall_{label}"] = op_recall_num[op] / op_recall_den[op]
+                if op_precision_den[op] > 0:
+                    metrics[f"rollout/op_precision_{label}"] = op_precision_num[op] / op_precision_den[op]
 
         if think_lengths:
             mean_len = sum(think_lengths) / len(think_lengths)
@@ -1652,7 +1729,7 @@ class DistributedGRPOTrainer:
 
                 if should_save_ckpt:
                     t0 = time.perf_counter()
-                    self._save_checkpoint()
+                    self._save_checkpoint(best_only=self.overwrite_best_ckpt)
                     t_ckpt_ms = (time.perf_counter() - t0) * 1000
                     log_rank_0("timing: checkpoint_save=%.0fms", t_ckpt_ms)
                     if self.use_wandb and WANDB_AVAILABLE and self.rank == 0:

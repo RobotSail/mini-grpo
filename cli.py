@@ -2653,6 +2653,7 @@ def distributed_grpo_train(
     token_level_averaging: bool = typer.Option(False, "--token-level-avg/--seq-level-avg", help="Token-level loss averaging (default: sequence-level)"),
     think: bool = typer.Option(False, "--think/--no-think", help="Require <think> traces for correct reward"),
     best_val_ckpt_only: bool = typer.Option(False, "--best-val-ckpt-only", help="Only save checkpoint when validation accuracy improves"),
+    overwrite_best_ckpt: bool = typer.Option(False, "--overwrite-best-ckpt", help="Overwrite single checkpoint-best dir instead of creating new ones"),
 
     # Sampling
     temperature: float = typer.Option(0.7, "-t", "--temp", help="Sampling temperature"),
@@ -2850,6 +2851,8 @@ def distributed_grpo_train(
             train_cmd.append("--think")
         if best_val_ckpt_only:
             train_cmd.append("--best-val-ckpt-only")
+        if overwrite_best_ckpt:
+            train_cmd.append("--overwrite-best-ckpt")
 
         train_env = os.environ.copy()
         train_env["CUDA_VISIBLE_DEVICES"] = train_gpus
@@ -2917,6 +2920,7 @@ def distributed_grpo_worker(
     token_level_averaging: bool = typer.Option(False, "--token-level-avg/--seq-level-avg"),
     think: bool = typer.Option(False, "--think/--no-think"),
     best_val_ckpt_only: bool = typer.Option(False, "--best-val-ckpt-only"),
+    overwrite_best_ckpt: bool = typer.Option(False, "--overwrite-best-ckpt"),
     temperature: float = typer.Option(0.7, "-t", "--temp"),
     max_new_tokens: int = typer.Option(512, "--max-new-tokens"),
     top_p: float = typer.Option(1.0, "--top-p"),
@@ -2968,6 +2972,7 @@ def distributed_grpo_worker(
         token_level_averaging=token_level_averaging,
         require_think=think,
         best_val_ckpt_only=best_val_ckpt_only,
+        overwrite_best_ckpt=overwrite_best_ckpt,
         temperature=temperature,
         top_k=top_k,
         top_p=top_p,
