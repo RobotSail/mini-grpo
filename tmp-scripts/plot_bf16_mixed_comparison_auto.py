@@ -59,7 +59,8 @@ RUNS = {
     },
 }
 
-TITLE_SUFFIX = " [dtype=auto]"
+TITLE_SUFFIX = ""
+EVAL_NOTE = "Eval: bfloat16, greedy decoding"
 
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
@@ -315,7 +316,7 @@ print(f"Saved: {OUT_DIR / '3a_val_accuracy_vs_kl_trajectory.png'}")
 # ── Plot 4a: Test trajectory ─────────────────────────────────────────────────
 fig, ax = plt.subplots(figsize=(10, 7))
 
-ax.scatter(0.0, 0.0432, c="#7f7f7f", marker="*", s=250,
+ax.scatter(0.0, 0.0432, c="#7f7f7f", marker="o", s=120,
            label="Baseline", edgecolors="black", linewidths=1, zorder=3)
 
 for label, cfg in RUNS.items():
@@ -326,9 +327,14 @@ for label, cfg in RUNS.items():
 
 ax.set_xlabel(r"Forward KL: $D_{\mathrm{KL}}(\pi_0 \| \pi)$", fontsize=12)
 ax.set_ylabel("GSM8K Test Accuracy", fontsize=12)
-ax.set_title("Training Trajectory: Test Accuracy vs Forward KL" + TITLE_SUFFIX, fontsize=13)
+ax.set_title("Training Trajectory: Test Accuracy vs Forward KL", fontsize=13)
 ax.yaxis.set_major_formatter(mticker.FuncFormatter(lambda y, _: f"{y:.0%}"))
-ax.legend(loc="best", fontsize=10)
+from matplotlib.lines import Line2D
+handles, labels = ax.get_legend_handles_labels()
+handles.append(Line2D([0], [0], marker="*", color="w", markerfacecolor="black",
+               markersize=12, markeredgecolor="black", markeredgewidth=0.8))
+labels.append("Best val. accuracy")
+ax.legend(handles=handles, labels=labels, loc="lower right", fontsize=10)
 ax.grid(True, alpha=0.3, zorder=1)
 plt.tight_layout()
 fig.savefig(OUT_DIR / "4a_test_accuracy_vs_kl_trajectory.png", dpi=150, bbox_inches="tight")
@@ -422,9 +428,13 @@ for label, cfg in RUNS.items():
 
 ax.set_xlabel("Tokens Backpropagated (M)", fontsize=12)
 ax.set_ylabel("GSM8K Test Accuracy", fontsize=12)
-ax.set_title("Test Accuracy Over Training" + TITLE_SUFFIX, fontsize=13)
+ax.set_title("Test Accuracy Over Training", fontsize=13)
 ax.yaxis.set_major_formatter(mticker.FuncFormatter(lambda y, _: f"{y:.0%}"))
-ax.legend(loc="lower right", fontsize=10)
+handles, labels = ax.get_legend_handles_labels()
+handles.append(Line2D([0], [0], marker="*", color="w", markerfacecolor="black",
+               markersize=12, markeredgecolor="black", markeredgewidth=0.8))
+labels.append("Best val. accuracy")
+ax.legend(handles=handles, labels=labels, loc="lower right", fontsize=10)
 ax.grid(True, alpha=0.3, zorder=1)
 plt.tight_layout()
 fig.savefig(OUT_DIR / "7a_test_accuracy_over_tokens.png", dpi=150, bbox_inches="tight")
