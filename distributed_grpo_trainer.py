@@ -648,7 +648,7 @@ class DistributedGRPOTrainer:
     async def _vllm_generate_async(self, prompts):
         """Rank 0: send prompts to vLLM and collect results."""
         completions_url = f"{self._vllm_base_url}/v1/completions"
-        timeout = httpx.Timeout(timeout=120.0, connect=10.0)
+        timeout = httpx.Timeout(timeout=1200.0, connect=10.0)
         semaphore = asyncio.Semaphore(32)
 
         async def generate_for_prompt(prompt_data):
@@ -1059,36 +1059,79 @@ class DistributedGRPOTrainer:
 
     @torch.no_grad()
     def _compute_old_logprobs_batched(self, prompt_ids, response_ids_list):
-        """Compute old logprobs via batched forward pass. All ranks participate (FSDP)."""
+        """Compute old logprobs via batched forward pass. All ranks participate (FSDP).
+
+        Microbatches by max_tokens_per_gpu to avoid OOM with large group sizes.
+        Synchronizes microbatch count across ranks so FSDP allgathers stay in
+        lockstep — ranks that finish early run dummy forward passes.
+
+        Note: all ranks receive identical data (broadcast from rank 0), so the
+        microbatch count should naturally agree. The sync is a safety net.
+        """
         prompt_len = len(prompt_ids)
         full_seqs = [prompt_ids + resp for resp in response_ids_list]
-        max_len = max(len(s) for s in full_seqs)
-        n = len(full_seqs)
         pad_id = self.tokenizer.pad_token_id or 0
 
-        input_ids = torch.full((n, max_len), pad_id, dtype=torch.long, device=self.device)
-        attention_mask = torch.zeros(n, max_len, dtype=torch.float, device=self.device)
-
+        # Build microbatches respecting max_tokens_per_gpu
+        mb_index_groups = []
+        current_indices = []
+        current_tokens = 0
         for i, seq in enumerate(full_seqs):
-            input_ids[i, :len(seq)] = torch.tensor(seq, dtype=torch.long, device=self.device)
-            attention_mask[i, :len(seq)] = 1.0
+            seq_tokens = len(seq)
+            if current_tokens + seq_tokens > self.max_tokens_per_gpu and current_indices:
+                mb_index_groups.append(current_indices)
+                current_indices = []
+                current_tokens = 0
+            current_indices.append(i)
+            current_tokens += seq_tokens
+        if current_indices:
+            mb_index_groups.append(current_indices)
 
-        outputs = self.policy(input_ids=input_ids, attention_mask=attention_mask)
-        logits = outputs.logits
-        if self.temperature > 0:
-            logits = logits / self.temperature
+        # Synchronize microbatch count across ranks (FSDP lockstep)
+        local_k = torch.tensor([len(mb_index_groups)], dtype=torch.long, device=self.device)
+        dist.all_reduce(local_k, op=dist.ReduceOp.MAX)
+        global_k = local_k.item()
 
-        results = []
-        for i, response_ids in enumerate(response_ids_list):
-            response_len = len(response_ids)
-            response_logits = logits[i, prompt_len - 1: prompt_len - 1 + response_len].float()
-            response_log_probs = F.log_softmax(response_logits, dim=-1)
-            token_ids = torch.tensor(response_ids, device=self.device, dtype=torch.long)
-            lps = response_log_probs.gather(-1, token_ids.unsqueeze(-1)).squeeze(-1)
-            results.append(lps.tolist())
+        results = [None] * len(full_seqs)
 
-        del outputs, logits
-        torch.cuda.empty_cache()
+        for mb_idx in range(global_k):
+            if mb_idx < len(mb_index_groups):
+                mb_indices = mb_index_groups[mb_idx]
+                mb_seqs = [full_seqs[i] for i in mb_indices]
+                mb_max_len = max(len(s) for s in mb_seqs)
+                mb_n = len(mb_seqs)
+
+                input_ids = torch.full((mb_n, mb_max_len), pad_id, dtype=torch.long, device=self.device)
+                attention_mask = torch.zeros(mb_n, mb_max_len, dtype=torch.float, device=self.device)
+
+                for j, seq in enumerate(mb_seqs):
+                    input_ids[j, :len(seq)] = torch.tensor(seq, dtype=torch.long, device=self.device)
+                    attention_mask[j, :len(seq)] = 1.0
+
+                outputs = self.policy(input_ids=input_ids, attention_mask=attention_mask)
+                logits = outputs.logits
+                if self.temperature > 0:
+                    logits = logits / self.temperature
+
+                for j, orig_i in enumerate(mb_indices):
+                    response_ids = response_ids_list[orig_i]
+                    response_len = len(response_ids)
+                    response_logits = logits[j, prompt_len - 1: prompt_len - 1 + response_len].float()
+                    response_log_probs = F.log_softmax(response_logits, dim=-1)
+                    token_ids = torch.tensor(response_ids, device=self.device, dtype=torch.long)
+                    lps = response_log_probs.gather(-1, token_ids.unsqueeze(-1)).squeeze(-1)
+                    results[orig_i] = lps.tolist()
+
+                del outputs, logits, input_ids, attention_mask
+            else:
+                # Dummy forward to keep FSDP allgathers in sync
+                dummy_ids = torch.full((1, 2), pad_id, dtype=torch.long, device=self.device)
+                dummy_mask = torch.ones(1, 2, dtype=torch.float, device=self.device)
+                dummy_out = self.policy(input_ids=dummy_ids, attention_mask=dummy_mask)
+                del dummy_out, dummy_ids, dummy_mask
+
+            torch.cuda.empty_cache()
+
         return results
 
     @staticmethod

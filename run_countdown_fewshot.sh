@@ -8,18 +8,24 @@ set -euo pipefail
 
 MODEL="Qwen/Qwen2-1.5B-Instruct"
 DATA_DIR="generated_data/countdown_fewshot5_full_synthetic"
-OUTPUT_DIR="/mnt/nvme0/experiments/grpo-countdown/countdown-fewshot5-grpo-adamw-full-synthetic-v2"
+OUTPUT_DIR="/mnt/nvme0n1/experiments/grpo-countdown/countdown-fewshot5-grpo-adamw-full-synthetic-v2"
 
 # ── Hyperparameters ──
-LR=3e-7
-OPTIMIZER=adamw
+# scale LR by sqrt(ebs_new/ebs_old) = 1024/128 = sqrt(8) = 2 sqrt(2) ~= 8.5e-7 
+LR='8.5e-7'
+OPTIMIZER=muon
+# old size: 32
 BATCH_SIZE=32       # prompts per rollout iteration
-GROUP_SIZE=16       # rollouts per prompt
-INNER_BATCH_SIZE=128
+# old size: 16 --> 128, so num samples: 512 * 8 = 4096 
+GROUP_SIZE=128       # rollouts per prompt
+# we need to keep num optimizer steps identical, so IBS=512/128=4, we need 4096/IBS=4 => IBS=4096/4=1024
+# old batchsize
+# INNER_BATCH_SIZE=128   
+INNER_BATCH_SIZE=1024 
 INNER_EPOCHS=2
 MAX_STEPS=100_000  # we can kill it earlier if we need
 SAVE_EVERY=100      # checkpoint every N steps
-EVAL_EVERY=100       # validate every N steps (via save_every_n_steps)
+EVAL_EVERY=2      # validate every N steps (via save_every_n_steps)
 TEMPERATURE=1.0
 KL=0.0
 FORMAT_REWARD=0.1
@@ -33,11 +39,11 @@ HARD=0
 THINK=0
 SYNTHETIC=1
 R1_PROMPT=0
-MAX_TOKENS_PER_GPU=20000
+MAX_TOKENS_PER_GPU=30000
 
 # ── GPU layout ──
-TRAIN_GPUS="0,1"
-VLLM_GPUS="2,3,4,5,6,7"
+TRAIN_GPUS="0,1,2,3"
+VLLM_GPUS="4,5,6,7"
 
 # ── Build flags ──
 GEN_FLAGS=""
@@ -100,5 +106,7 @@ python cli.py distributed-grpo-train \
     --seed ${SEED} \
     --wandb \
     --wandb-project "countdown-grpo" \
+    --wandb-run "test-bs-128-gs-4_adamw" \
     --best-val-ckpt-only \
+    --overwrite-best-ckpt \
     ${TRAIN_FLAGS}
