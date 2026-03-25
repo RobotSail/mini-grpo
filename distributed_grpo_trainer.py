@@ -523,7 +523,7 @@ class DistributedGRPOTrainer:
 
             with httpx.Client(timeout=timeout) as client:
                 for step_name, url in [
-                    ("pause", f"{self._vllm_base_url}/pause?wait_for_inflight_requests=false&clear_cache=true"),
+                    ("pause", f"{self._vllm_base_url}/pause?wait_for_inflight_requests=true&clear_cache=true"),
                     ("sleep", f"{self._vllm_base_url}/sleep?level=2"),
                     ("wake_up weights", f"{self._vllm_base_url}/wake_up?tags=weights"),
                 ]:
@@ -545,7 +545,39 @@ class DistributedGRPOTrainer:
                     client.post(url).raise_for_status()
 
         dist.barrier()
+
+        # Wait for vLLM to fully stabilize after resume, then health check
+        if self.rank == 0:
+            time.sleep(5)
+            self._wait_for_vllm_ready()
+
+        dist.barrier()
         log_rank_0("weight sync complete")
+
+    def _wait_for_vllm_ready(self, max_retries: int = 30, delay: float = 2.0):
+        """Send a small test request to vLLM and wait until it responds successfully."""
+        url = f"{self._vllm_base_url}/v1/completions"
+        timeout = httpx.Timeout(timeout=30.0, connect=10.0)
+        body = {
+            "model": self._vllm_served_model_name,
+            "prompt": "test",
+            "max_tokens": 1,
+            "temperature": 0.0,
+        }
+        for attempt in range(max_retries):
+            try:
+                with httpx.Client(timeout=timeout) as client:
+                    resp = client.post(url, json=body)
+                    if resp.status_code == 200:
+                        log_rank_0("vLLM health check passed")
+                        return
+                    log_rank_0("vLLM health check returned %d, retrying (%d/%d)...",
+                               resp.status_code, attempt + 1, max_retries)
+            except Exception as e:
+                log_rank_0("vLLM health check failed: %s, retrying (%d/%d)...",
+                           str(e)[:80], attempt + 1, max_retries)
+            time.sleep(delay)
+        log_rank_0("WARNING: vLLM health check did not pass after %d retries, proceeding anyway", max_retries)
 
     # ── Rollout Generation ─────────────────────────────────────────────
 
@@ -666,17 +698,39 @@ class DistributedGRPOTrainer:
                 body["top_p"] = self.top_p
 
             async with semaphore:
-                async with httpx.AsyncClient(timeout=timeout, http2=False) as client:
-                    resp = await client.post(completions_url, json=body)
-                    resp.raise_for_status()
-                    return resp.json()
+                for attempt in range(3):
+                    try:
+                        async with httpx.AsyncClient(timeout=timeout, http2=False) as client:
+                            resp = await client.post(completions_url, json=body)
+                            if resp.status_code == 200:
+                                return resp.json()
+                            if attempt < 2:
+                                await asyncio.sleep(2 ** attempt)
+                        resp.raise_for_status()
+                    except Exception:
+                        if attempt < 2:
+                            await asyncio.sleep(2 ** attempt)
+                        else:
+                            raise
 
         log_rank_0("sending %d prompts to vLLM (group_size=%d)...", len(prompts), self.group_size)
         results = await asyncio.gather(
             *[generate_for_prompt(p) for p in prompts],
             return_exceptions=True,
         )
-        return results
+        # Convert non-picklable exceptions (e.g. httpx.HTTPStatusError) to RuntimeError
+        # so they survive broadcast via pickle to other ranks
+        sanitized = []
+        n_errors = 0
+        for r in results:
+            if isinstance(r, Exception):
+                sanitized.append(RuntimeError(f"{type(r).__name__}: {str(r)[:200]}"))
+                n_errors += 1
+            else:
+                sanitized.append(r)
+        if n_errors > 0:
+            log_rank_0("WARNING: %d/%d vLLM requests failed", n_errors, len(results))
+        return sanitized
 
     def _broadcast_vllm_results(self, results):
         """Broadcast vLLM results from rank 0 to all ranks via pickling."""
