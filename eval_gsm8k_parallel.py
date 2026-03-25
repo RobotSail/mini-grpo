@@ -168,21 +168,6 @@ def run_single_eval(
     if eval_path:
         cmd.extend(["--eval-path", eval_path])
 
-    # KL divergence options
-    if eval_kwargs.get("compute_kl") or eval_kwargs.get("kl_only"):
-        cmd.extend(["--base-model", eval_kwargs["base_model"]])
-        cmd.extend(["--kl-batch-size", str(eval_kwargs["kl_batch_size"])])
-        cmd.extend(["--kl-max-new-tokens", str(eval_kwargs["kl_max_new_tokens"])])
-        cmd.extend(["--kl-max-prompt-length", str(eval_kwargs["kl_max_prompt_length"])])
-        cmd.extend(["--kl-temperature", str(eval_kwargs["kl_temperature"])])
-    if eval_kwargs.get("compute_kl"):
-        cmd.append("--compute-kl")
-    if eval_kwargs.get("kl_only"):
-        cmd.append("--kl-only")
-    if eval_kwargs.get("reverse_kl"):
-        cmd.append("--reverse-kl")
-    if eval_kwargs.get("kl_dataset"):
-        cmd.extend(["--kl-dataset", eval_kwargs["kl_dataset"]])
     if eval_kwargs.get("calibration"):
         cmd.append("--calibration")
 
@@ -216,12 +201,6 @@ def run_single_eval(
                 status_parts.append(f"Accuracy={metrics['accuracy']:.2%}")
             if "parsable_rate" in metrics:
                 status_parts.append(f"Parsable={metrics['parsable_rate']:.2%}")
-            if "kl_divergence" in metrics:
-                status_parts.append(f"KL={metrics['kl_divergence']:.4f}")
-            if "forward_kl" in metrics:
-                status_parts.append(f"FwdKL={metrics['forward_kl']:.4f}")
-            elif "reverse_kl" in metrics:
-                status_parts.append(f"RevKL={metrics['reverse_kl']:.4f}")
             if "ece" in metrics:
                 status_parts.append(f"ECE={metrics['ece']:.4f}")
             print(f"[GPU {gpu_id}] {label}: {', '.join(status_parts)}")
@@ -317,63 +296,6 @@ def main():
         help="Number of samples per prompt (for pass@k evaluation)",
     )
     parser.add_argument(
-        "--compute-kl",
-        action="store_true",
-        help="Compute KL divergence from base model",
-    )
-    parser.add_argument(
-        "--base-model",
-        type=str,
-        default="Qwen/Qwen2-1.5B-Instruct",
-        help="Base model for KL divergence computation",
-    )
-    parser.add_argument(
-        "--kl-batch-size",
-        type=int,
-        default=4,
-        help="Batch size for KL divergence computation",
-    )
-    parser.add_argument(
-        "--kl-max-new-tokens",
-        type=int,
-        default=256,
-        help="Max new tokens to generate for KL computation",
-    )
-    parser.add_argument(
-        "--kl-max-prompt-length",
-        type=int,
-        default=256,
-        help="Max prompt length for KL computation",
-    )
-    parser.add_argument(
-        "--kl-only",
-        action="store_true",
-        help="Only compute KL divergence, skip accuracy evaluation",
-    )
-    parser.add_argument(
-        "--reverse-kl",
-        action="store_true",
-        help="[Legacy name] Forward KL: generate from base (π₀), compute KL(π₀||π). Use --forward-kl.",
-    )
-    parser.add_argument(
-        "--forward-kl",
-        action="store_true",
-        help="Forward KL: generate from base (π₀), compute KL(π₀||π). Measures drift from base.",
-    )
-    parser.add_argument(
-        "--kl-dataset",
-        type=str,
-        default=None,
-        help="Dataset for KL computation. Options: 'ifeval' (recommended for drift), "
-             "'gsm8k', or path to jsonl file.",
-    )
-    parser.add_argument(
-        "--kl-temperature",
-        type=float,
-        default=0.0,
-        help="Sampling temperature for KL rollout generation (default: 0.0 for greedy)",
-    )
-    parser.add_argument(
         "--calibration",
         action="store_true",
         help="Compute ECE (Expected Calibration Error) using answer token confidence",
@@ -424,15 +346,6 @@ def main():
         "top_p": args.top_p,
         "repetition_penalty": args.repetition_penalty,
         "group_size": args.group_size,
-        "compute_kl": args.compute_kl,
-        "kl_only": args.kl_only,
-        "base_model": args.base_model,
-        "kl_batch_size": args.kl_batch_size,
-        "kl_max_new_tokens": args.kl_max_new_tokens,
-        "kl_max_prompt_length": args.kl_max_prompt_length,
-        "reverse_kl": args.reverse_kl or args.forward_kl,
-        "kl_dataset": args.kl_dataset,
-        "kl_temperature": args.kl_temperature,
         "calibration": args.calibration,
         "sampling_dtype": args.sampling_dtype,
     }
@@ -491,27 +404,12 @@ def main():
     print("SUMMARY")
     print(f"{'=' * 60}")
 
-    # Build header based on what was computed
-    has_accuracy = not args.kl_only
-    has_kl = args.compute_kl or args.kl_only
-
-    kl_header = "Fwd KL" if (args.reverse_kl or args.forward_kl) else "Rev KL"
-    header = f"{'Checkpoint':<20}"
-    if has_accuracy:
-        header += f" {'Accuracy':>12} {'Parsable':>12}"
-    if has_kl:
-        header += f" {kl_header:>12}"
+    header = f"{'Checkpoint':<20} {'Accuracy':>12} {'Parsable':>12}"
     print(header)
     print("-" * len(header))
 
-    kl_metric_key = "forward_kl" if (args.reverse_kl or args.forward_kl) else "kl_divergence"
     for label, metrics in sorted(results.items(), key=lambda x: x[1]["step"]):
-        row = f"{label:<20}"
-        if has_accuracy:
-            row += f" {metrics.get('accuracy', 0):>11.2%} {metrics.get('parsable_rate', 0):>11.2%}"
-        if has_kl:
-            row += f" {metrics.get(kl_metric_key, 0):>11.4f}"
-        print(row)
+        print(f"{label:<20} {metrics.get('accuracy', 0):>11.2%} {metrics.get('parsable_rate', 0):>11.2%}")
 
     # Save results
     if args.output:

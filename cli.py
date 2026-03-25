@@ -2680,6 +2680,8 @@ def distributed_grpo_train(
         "mixed", "--precision", "-P",
         help="'fp32' | 'bf16' | 'mixed' (FP32 master weights + BF16 fwd via FSDP2)",
     ),
+    bf16_regularization: bool = typer.Option(False, "--bf16-regularization",
+        help="Keep shadow FP32 weights updated alongside BF16 training weights"),
 
     # GPU allocation
     train_gpus: str = typer.Option("0,1", "--train-gpus", help="Comma-separated GPU indices for training"),
@@ -2853,6 +2855,8 @@ def distributed_grpo_train(
             train_cmd.append("--best-val-ckpt-only")
         if overwrite_best_ckpt:
             train_cmd.append("--overwrite-best-ckpt")
+        if bf16_regularization:
+            train_cmd.append("--bf16-regularization")
 
         train_env = os.environ.copy()
         train_env["CUDA_VISIBLE_DEVICES"] = train_gpus
@@ -2942,6 +2946,7 @@ def distributed_grpo_worker(
     seed: int = typer.Option(67, "--seed"),
     validation_path: str = typer.Option(None, "--validation-path"),
     precision: str = typer.Option("mixed", "--precision", "-P"),
+    bf16_regularization: bool = typer.Option(False, "--bf16-regularization"),
     eval_every_n_steps: int = typer.Option(0, "--eval-every-n-steps"),
     num_icl: int = typer.Option(0, "--num-icl"),
     task: str = typer.Option("gsm8k", "--task"),
@@ -2995,6 +3000,7 @@ def distributed_grpo_worker(
         seed=seed,
         validation_path=validation_path,
         precision=precision,
+        bf16_regularization=bf16_regularization,
         eval_every_n_steps=eval_every_n_steps,
         num_icl=num_icl,
         task=task,

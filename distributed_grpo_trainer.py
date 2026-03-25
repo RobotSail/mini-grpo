@@ -232,6 +232,7 @@ class DistributedGRPOTrainer:
         overwrite_best_ckpt: bool = False,
         # Precision
         precision: str = "mixed",
+        bf16_regularization: bool = False,
         # Eval frequency
         eval_every_n_steps: int = 0,
         # ICL
@@ -289,6 +290,7 @@ class DistributedGRPOTrainer:
         self.update_ref_every = update_ref_every
         self.use_wandb = use_wandb
         self.precision = precision
+        self.bf16_regularization = bf16_regularization
         self.num_icl = num_icl
         self.reward_fn = reward_fn or get_reward_fn(task)
 
@@ -353,6 +355,24 @@ class DistributedGRPOTrainer:
             )
 
         log_rank_0("using %s optimizer (lr=%g)", optimizer_type.upper(), lr)
+
+        # ── Shadow weights (opposite precision) ──
+        self._shadow_weights = {}
+        self._shadow_dtype = None
+        if self.bf16_regularization:
+            if self.precision == "bf16":
+                # Training in bf16 → shadow in fp32
+                self._shadow_dtype = torch.float32
+            elif self.precision == "mixed":
+                # Training in mixed (fp32 master) → shadow in bf16
+                self._shadow_dtype = torch.bfloat16
+            else:
+                log_rank_0("WARNING: bf16_regularization with precision=%s not supported", self.precision)
+            if self._shadow_dtype is not None:
+                for name, param in self.policy.named_parameters():
+                    self._shadow_weights[name] = param.data.detach().clone().to(self._shadow_dtype)
+                shadow_label = "fp32" if self._shadow_dtype == torch.float32 else "bf16"
+                log_rank_0("initialized %s shadow weights (%d params)", shadow_label, len(self._shadow_weights))
 
         # ── Wandb (rank 0 only) ──
         if use_wandb and self.rank == 0:
@@ -1331,8 +1351,23 @@ class DistributedGRPOTrainer:
 
                 # Gradient clipping and optimizer step
                 gradnorm = clip_grad_norm_(self.policy.parameters(), self.gradient_clip)
+
+                # Snapshot weights before step (for shadow update)
+                if self.bf16_regularization and self._shadow_weights:
+                    _pre_step = {
+                        name: param.data.detach().clone()
+                        for name, param in self.policy.named_parameters()
+                    }
+
                 self.optimizer.step()
                 self.optimizer.zero_grad()
+
+                # Update shadow weights: shadow += cast(dW, shadow_dtype)
+                if self.bf16_regularization and self._shadow_weights:
+                    for name, param in self.policy.named_parameters():
+                        dW = param.data.detach() - _pre_step[name]
+                        self._shadow_weights[name].add_(dW.to(self._shadow_dtype))
+                    del _pre_step
 
                 t_optim_step_ms = (time.perf_counter() - t_step_start) * 1000
                 avg_fwdbwd_ms = total_fwdbwd_ms / max(global_k, 1)
@@ -1712,6 +1747,54 @@ class DistributedGRPOTrainer:
             inner = getattr(self.policy, "module", self.policy)
             inner.config.to_json_file(os.path.join(path, "config.json"))
             self.tokenizer.save_pretrained(path)
+
+        # Save shadow weights if bf16 regularization is enabled
+        if self.bf16_regularization and self._shadow_weights:
+            shadow_label = "fp32" if self._shadow_dtype == torch.float32 else "bf16"
+            shadow_path = path + f"_{shadow_label}_shadow"
+            log_rank_0("saving %s shadow checkpoint to %s...", shadow_label, shadow_path)
+
+            # Temporarily swap param data with shadow values, gather, swap back
+            originals = {}
+            for name, param in self.policy.named_parameters():
+                originals[name] = param.data.detach().clone()
+                param.data.copy_(self._shadow_weights[name])
+
+            shadow_state_dict = self._gather_full_state_dict()
+
+            # Restore original weights
+            for name, param in self.policy.named_parameters():
+                param.data.copy_(originals[name])
+            del originals
+
+            dist.barrier()
+            if self.rank == 0:
+                os.makedirs(shadow_path, exist_ok=True)
+                cpu_dict = {k: v.cpu().float().clone() for k, v in shadow_state_dict.items()}
+
+                from huggingface_hub import split_torch_state_dict_into_shards
+                split = split_torch_state_dict_into_shards(
+                    cpu_dict,
+                    filename_pattern="model{suffix}.safetensors",
+                    max_shard_size="5GB",
+                )
+                for filename, tensors in split.filename_to_tensors.items():
+                    shard = {k: cpu_dict[k] for k in tensors}
+                    save_file(shard, os.path.join(shadow_path, filename))
+
+                index = {
+                    "metadata": split.metadata,
+                    "weight_map": split.tensor_to_filename,
+                }
+                with open(os.path.join(shadow_path, "model.safetensors.index.json"), "w") as f:
+                    json.dump(index, f, indent=2, sort_keys=True)
+
+                inner = getattr(self.policy, "module", self.policy)
+                inner.config.to_json_file(os.path.join(shadow_path, "config.json"))
+                self.tokenizer.save_pretrained(shadow_path)
+
+            dist.barrier()
+            log_rank_0("%s shadow checkpoint saved", shadow_label)
 
         dist.barrier()
         log_rank_0("checkpoint saved")
