@@ -2682,6 +2682,8 @@ def distributed_grpo_train(
     ),
     bf16_regularization: bool = typer.Option(False, "--bf16-regularization",
         help="Keep shadow FP32 weights updated alongside BF16 training weights"),
+    lattice_mantissa_bits: int = typer.Option(0, "--lattice-mantissa-bits",
+        help="Snap weights to N-bit mantissa lattice after each optimizer step (0 = disabled, e.g. 10 for 10-bit)"),
 
     # GPU allocation
     train_gpus: str = typer.Option("0,1", "--train-gpus", help="Comma-separated GPU indices for training"),
@@ -2857,6 +2859,8 @@ def distributed_grpo_train(
             train_cmd.append("--overwrite-best-ckpt")
         if bf16_regularization:
             train_cmd.append("--bf16-regularization")
+        if lattice_mantissa_bits > 0:
+            train_cmd += ["--lattice-mantissa-bits", str(lattice_mantissa_bits)]
 
         train_env = os.environ.copy()
         train_env["CUDA_VISIBLE_DEVICES"] = train_gpus
@@ -2947,6 +2951,8 @@ def distributed_grpo_worker(
     validation_path: str = typer.Option(None, "--validation-path"),
     precision: str = typer.Option("mixed", "--precision", "-P"),
     bf16_regularization: bool = typer.Option(False, "--bf16-regularization"),
+    lattice_mantissa_bits: int = typer.Option(0, "--lattice-mantissa-bits",
+        help="Snap weights to N-bit mantissa lattice after each step (0 = disabled)"),
     eval_every_n_steps: int = typer.Option(0, "--eval-every-n-steps"),
     num_icl: int = typer.Option(0, "--num-icl"),
     task: str = typer.Option("gsm8k", "--task"),
@@ -3001,6 +3007,7 @@ def distributed_grpo_worker(
         validation_path=validation_path,
         precision=precision,
         bf16_regularization=bf16_regularization,
+        lattice_mantissa_bits=lattice_mantissa_bits,
         eval_every_n_steps=eval_every_n_steps,
         num_icl=num_icl,
         task=task,

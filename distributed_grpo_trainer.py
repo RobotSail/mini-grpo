@@ -67,6 +67,40 @@ def log_rank_0(msg, *args, level=logging.INFO):
         logger.log(level, msg, *args)
 
 
+def _snap_tensor_to_lattice(t, shift, bias, mask):
+    """Snap a float32 tensor to a reduced-precision lattice in-place."""
+    as_int = t.view(torch.int32)
+    snapped = (as_int + bias) & mask
+    t.copy_(snapped.view(torch.float32))
+
+
+def snap_to_lattice(model, mantissa_bits):
+    """Snap all model weights to a reduced-precision mantissa lattice (in-place).
+
+    Works with both regular tensors and FSDP2 DTensors (operates on local shard).
+    Uses int32 bit manipulation. Verified idempotent for all mantissa settings 7-22.
+    """
+    if mantissa_bits <= 0 or mantissa_bits >= 23:
+        return
+    from torch.distributed.tensor import DTensor
+
+    shift = 23 - mantissa_bits
+    bias = 1 << (shift - 1)
+    mask = ~((1 << shift) - 1)
+    with torch.no_grad():
+        for p in model.parameters():
+            if isinstance(p.data, DTensor):
+                # FSDP2: operate on the local shard directly
+                local = p.data._local_tensor
+                if local.dtype == torch.bfloat16:
+                    local.copy_(local.float())
+                _snap_tensor_to_lattice(local, shift, bias, mask)
+            else:
+                if p.data.dtype == torch.bfloat16:
+                    p.data.copy_(p.data.float())
+                _snap_tensor_to_lattice(p.data, shift, bias, mask)
+
+
 class GRPOSample(pd.BaseModel):
     prompt_ids: list[int]
     response_ids: list[int]
@@ -233,6 +267,7 @@ class DistributedGRPOTrainer:
         # Precision
         precision: str = "mixed",
         bf16_regularization: bool = False,
+        lattice_mantissa_bits: int = 0,  # 0 = disabled; e.g. 10 = snap weights to 10-bit mantissa lattice
         # Eval frequency
         eval_every_n_steps: int = 0,
         # ICL
@@ -291,6 +326,7 @@ class DistributedGRPOTrainer:
         self.use_wandb = use_wandb
         self.precision = precision
         self.bf16_regularization = bf16_regularization
+        self.lattice_mantissa_bits = lattice_mantissa_bits
         self.num_icl = num_icl
         self.reward_fn = reward_fn or get_reward_fn(task)
 
@@ -355,6 +391,12 @@ class DistributedGRPOTrainer:
             )
 
         log_rank_0("using %s optimizer (lr=%g)", optimizer_type.upper(), lr)
+
+        if self.lattice_mantissa_bits > 0:
+            log_rank_0(
+                "lattice regularization enabled: snapping weights to %d-bit mantissa after each step",
+                self.lattice_mantissa_bits,
+            )
 
         # ── Shadow weights (opposite precision) ──
         self._shadow_weights = {}
@@ -1361,6 +1403,10 @@ class DistributedGRPOTrainer:
 
                 self.optimizer.step()
                 self.optimizer.zero_grad()
+
+                # Snap weights to custom mantissa lattice (if enabled)
+                if self.lattice_mantissa_bits > 0:
+                    snap_to_lattice(self.policy, self.lattice_mantissa_bits)
 
                 # Update shadow weights: shadow += cast(dW, shadow_dtype)
                 if self.bf16_regularization and self._shadow_weights:
