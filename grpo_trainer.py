@@ -278,6 +278,8 @@ class GRPOTrainer:
         gradient_clip: float = 1.0,
         # Precision
         precision: str = "fp32",
+        # BF16 regularization: snap weight updates to bf16 precision
+        bf16_regularization: bool = False,
         # Device
         gpu: int = 0,
         vllm_gpus: str = "1",
@@ -317,6 +319,7 @@ class GRPOTrainer:
         self.gradient_clip = gradient_clip
         self.use_wandb = use_wandb
         self.precision = precision
+        self.bf16_regularization = bf16_regularization
         self.reward_fn = reward_fn or (lambda resp, ans, pd: reward_response(resp, ans))
         self.num_icl = num_icl
 
@@ -386,6 +389,7 @@ class GRPOTrainer:
                     beta1=beta1,
                     beta2=beta2,
                     weight_decay=weight_decay,
+                    bf16_regularization=bf16_regularization,
                 )
             else:
                 from adamw_tracked import AdamWTracked
@@ -394,6 +398,7 @@ class GRPOTrainer:
                     lr=lr,
                     betas=(beta1, beta2),
                     weight_decay=weight_decay,
+                    bf16_regularization=bf16_regularization,
                 )
         else:
             # ── Pure FP32 or pure BF16: no FSDP2, no flash attention ──
@@ -415,6 +420,7 @@ class GRPOTrainer:
                     lr=lr,
                     betas=(beta1, beta2),
                     weight_decay=weight_decay,
+                    bf16_regularization=bf16_regularization,
                 )
             else:
                 # Use the tracked Muon (muon_fsdp2_tracked) which handles
@@ -427,6 +433,7 @@ class GRPOTrainer:
                     beta1=beta1,
                     beta2=beta2,
                     weight_decay=weight_decay,
+                    bf16_regularization=bf16_regularization,
                 )
 
         # Initialize per-parameter update norm tracking
@@ -1185,10 +1192,10 @@ class GRPOTrainer:
                 self.stats.increment_optim_step()
                 self.stats.accumulate_tokens(batch_tokens)
 
-                # Flush per-parameter update norms (captured inside optimizer.step)
-                avg_update_norm = 0.0
+                # Flush per-parameter update norms and sparsities
+                update_metrics = {"avg_norm": 0.0, "avg_sparsity_pre": 0.0, "avg_sparsity_post": 0.0}
                 if hasattr(self.optimizer, 'flush_update_norms'):
-                    avg_update_norm = self.optimizer.flush_update_norms(
+                    update_metrics = self.optimizer.flush_update_norms(
                         self.stats.optim_steps, self.stats.tokens_seen
                     )
 
@@ -1211,7 +1218,7 @@ class GRPOTrainer:
                     gradnorm.item()
                     if hasattr(gradnorm, "item")
                     else gradnorm,
-                    avg_update_norm,
+                    update_metrics["avg_norm"],
                     self.stats.tokens_seen,
                     self.stats.token_budget,
                 )
@@ -1226,7 +1233,9 @@ class GRPOTrainer:
                             "train/grad_norm": gradnorm.item()
                             if hasattr(gradnorm, "item")
                             else gradnorm,
-                            "train/avg_update_frobenius": avg_update_norm,
+                            "train/avg_update_frobenius": update_metrics["avg_norm"],
+                            "train/l0_sparsity_pre": update_metrics["avg_sparsity_pre"],
+                            "train/l0_sparsity_post": update_metrics["avg_sparsity_post"],
                             "train/optim_step": self.stats.optim_steps,
                             "train/tokens_trained": self.stats.tokens_seen,
                         },

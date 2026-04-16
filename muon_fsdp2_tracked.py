@@ -63,23 +63,45 @@ def adam_update(grad, buf1, buf2, step, betas, eps):
     return buf1c / (buf2c.sqrt() + eps)
 
 
-def _compute_update_norm(param, update, lr, wd):
-    """Compute ‖ΔW‖_F exactly from the raw optimizer update, before application.
+def _l0_sparsity(tensor, threshold=1e-5):
+    """L0 sparsity: fraction of elements with |value| <= threshold.
+
+    For FSDP DTensors, all-reduces counts across ranks for global sparsity.
+    """
+    if isinstance(tensor, DTensor):
+        local = tensor.to_local()
+        local_above = torch.tensor(
+            [(local.abs() > threshold).sum().item()],
+            dtype=torch.long, device=local.device,
+        )
+        local_numel = torch.tensor([local.numel()], dtype=torch.long, device=local.device)
+        dist.all_reduce(local_above, op=dist.ReduceOp.SUM)
+        dist.all_reduce(local_numel, op=dist.ReduceOp.SUM)
+        return 1.0 - local_above.item() / max(local_numel.item(), 1)
+    else:
+        above = (tensor.abs() > threshold).sum().item()
+        return 1.0 - above / max(tensor.numel(), 1)
+
+
+def _compute_update_metrics(param, update, lr, wd):
+    """Compute ‖ΔW‖_F and L0 sparsity from the raw optimizer update.
 
     ΔW = (-lr * wd) * W  +  (-lr) * update
     For FSDP DTensors, computes local shard norm² and all-reduces.
+
+    Returns (norm, sparsity, delta) — delta kept alive for bf16 truncation.
     """
-    wd_component = (-lr * wd) * param.data
-    update_component = (-lr) * update.reshape(param.shape)
-    delta_local = wd_component + update_component
+    delta = (-lr * wd) * param.data + (-lr) * update.reshape(param.shape)
 
     if isinstance(param.data, DTensor):
-        local_norm_sq = delta_local.to_local().norm(2).square()
+        local_norm_sq = delta.to_local().norm(2).square()
         dist.all_reduce(local_norm_sq, op=dist.ReduceOp.SUM)
     else:
-        local_norm_sq = delta_local.norm(2).square()
+        local_norm_sq = delta.norm(2).square()
 
-    return local_norm_sq.sqrt().item()
+    norm = local_norm_sq.sqrt().item()
+    sparsity = _l0_sparsity(delta)
+    return norm, sparsity, delta
 
 
 class Work(Protocol):
@@ -142,14 +164,29 @@ class Fsdp1dWork:
 
         update = apply_scaling(grad, self.group["rms_scale"])
 
-        # Capture update norm BEFORE applying to parameter
-        if self.optimizer is not None and self.optimizer._tracking_enabled:
-            norm = _compute_update_norm(self.param, update, self.group["lr"], self.group["weight_decay"])
-            param_name = self.optimizer._param_names.get(id(self.param), f"unknown_{id(self.param)}")
-            self.optimizer._step_norms[param_name] = norm
+        lr = self.group["lr"]
+        wd = self.group["weight_decay"]
+        tracking = self.optimizer is not None and self.optimizer._tracking_enabled
+        bf16_reg = self.optimizer is not None and self.optimizer.bf16_regularization
 
-        self.param.mul_(1 - self.group["lr"] * self.group["weight_decay"])
-        self.param.add_(update.reshape(self.param.shape), alpha=-self.group["lr"])
+        if tracking or bf16_reg:
+            norm, sparsity, delta = _compute_update_metrics(self.param, update, lr, wd)
+            param_name = self.optimizer._param_names.get(id(self.param), f"unknown_{id(self.param)}")
+
+            if tracking:
+                self.optimizer._step_norms[param_name] = norm
+                self.optimizer._step_sparsities[param_name] = sparsity
+
+            if bf16_reg:
+                truncated = delta.to(torch.bfloat16).to(self.param.data.dtype)
+                if tracking:
+                    self.optimizer._step_sparsities_post[param_name] = _l0_sparsity(truncated)
+                self.param.data.add_(truncated)
+            else:
+                self.param.data.add_(delta)
+        else:
+            self.param.mul_(1 - lr * wd)
+            self.param.add_(update.reshape(self.param.shape), alpha=-lr)
 
 
 class TpFsdp2dWork:
@@ -176,14 +213,29 @@ class SingelDeviceWork:
     def start(self):
         update = muon_update(self.param.grad, self.state["momentum_buffer"], self.group["momentum"], self.group["nesterov"], self.group["ns_steps"], self.group["rms_scale"])
 
-        # Capture update norm BEFORE applying to parameter
-        if self.optimizer is not None and self.optimizer._tracking_enabled:
-            norm = _compute_update_norm(self.param, update, self.group["lr"], self.group["weight_decay"])
-            param_name = self.optimizer._param_names.get(id(self.param), f"unknown_{id(self.param)}")
-            self.optimizer._step_norms[param_name] = norm
+        lr = self.group["lr"]
+        wd = self.group["weight_decay"]
+        tracking = self.optimizer is not None and self.optimizer._tracking_enabled
+        bf16_reg = self.optimizer is not None and self.optimizer.bf16_regularization
 
-        self.param.mul_(1 - self.group["lr"] * self.group["weight_decay"])
-        self.param.add_(update.reshape(self.param.shape), alpha=-self.group["lr"])
+        if tracking or bf16_reg:
+            norm, sparsity, delta = _compute_update_metrics(self.param, update, lr, wd)
+            param_name = self.optimizer._param_names.get(id(self.param), f"unknown_{id(self.param)}")
+
+            if tracking:
+                self.optimizer._step_norms[param_name] = norm
+                self.optimizer._step_sparsities[param_name] = sparsity
+
+            if bf16_reg:
+                truncated = delta.to(torch.bfloat16).to(self.param.data.dtype)
+                if tracking:
+                    self.optimizer._step_sparsities_post[param_name] = _l0_sparsity(truncated)
+                self.param.data.add_(truncated)
+            else:
+                self.param.data.add_(delta)
+        else:
+            self.param.mul_(1 - lr * wd)
+            self.param.add_(update.reshape(self.param.shape), alpha=-lr)
 
     def finish(self):
         pass
@@ -206,7 +258,7 @@ class Muon(torch.optim.Optimizer):
         init_update_tracking(dir)  — set up JSONL output
         flush_update_norms(step, tokens) — write and clear accumulated norms
     """
-    def __init__(self, param_groups):
+    def __init__(self, param_groups, bf16_regularization=False):
         for group in param_groups:
             assert "use_muon" in group
             if group["use_muon"]:
@@ -228,8 +280,11 @@ class Muon(torch.optim.Optimizer):
         # Update norm tracking state
         self._param_names: dict[int, str] = {}
         self._step_norms: dict[str, float] = {}
+        self._step_sparsities: dict[str, float] = {}
+        self._step_sparsities_post: dict[str, float] = {}
         self._update_norm_path: str | None = None
         self._tracking_enabled = False
+        self.bf16_regularization = bf16_regularization
 
     def set_param_names(self, model):
         """Map parameter ids to their names for logging."""
@@ -246,21 +301,35 @@ class Muon(torch.optim.Optimizer):
             os.remove(self._update_norm_path)
         self._tracking_enabled = True
 
-    def flush_update_norms(self, step: int, tokens: int) -> float:
-        """Write accumulated norms to JSONL (rank 0 only), return average norm."""
-        if not self._step_norms:
-            return 0.0
+    def flush_update_norms(self, step: int, tokens: int) -> dict:
+        """Write accumulated norms/sparsities to JSONL (rank 0 only), return averages."""
+        result = {"avg_norm": 0.0, "avg_sparsity_pre": 0.0, "avg_sparsity_post": 0.0}
 
-        avg_norm = sum(self._step_norms.values()) / len(self._step_norms)
+        if not self._step_norms:
+            return result
+
+        result["avg_norm"] = sum(self._step_norms.values()) / len(self._step_norms)
+        if self._step_sparsities:
+            result["avg_sparsity_pre"] = sum(self._step_sparsities.values()) / len(self._step_sparsities)
+        if self._step_sparsities_post:
+            result["avg_sparsity_post"] = sum(self._step_sparsities_post.values()) / len(self._step_sparsities_post)
 
         rank = int(os.environ.get("RANK", "0"))
         if rank == 0 and self._update_norm_path:
-            record = {"step": step, "tokens": tokens, "norms": self._step_norms}
+            record = {
+                "step": step, "tokens": tokens,
+                "norms": self._step_norms,
+                "sparsities_pre": self._step_sparsities,
+            }
+            if self._step_sparsities_post:
+                record["sparsities_post"] = self._step_sparsities_post
             with open(self._update_norm_path, "a") as f:
                 f.write(json.dumps(record) + "\n")
 
         self._step_norms = {}
-        return avg_norm
+        self._step_sparsities = {}
+        self._step_sparsities_post = {}
+        return result
 
     def _get_work_class(self, p: torch.Tensor) -> tuple[type[Work], int]:
         if isinstance(p, DTensor):
@@ -293,6 +362,10 @@ class Muon(torch.optim.Optimizer):
                     if len(state) == 0:
                         state["momentum_buffer"] = torch.zeros_like(p)
 
+                    if self.bf16_regularization:
+                        assert p.grad.dtype == torch.float32, f"bf16_regularization: expected fp32 grad, got {p.grad.dtype}"
+                        assert state["momentum_buffer"].dtype == torch.float32, f"bf16_regularization: expected fp32 momentum_buffer, got {state['momentum_buffer'].dtype}"
+
                     class_work, prefetch_factor = self._get_work_class(p)
 
                     work = class_work(p, state, group, i, optimizer=self)
@@ -310,18 +383,37 @@ class Muon(torch.optim.Optimizer):
                         state["exp_avg"] = torch.zeros_like(p)
                         state["exp_avg_sq"] = torch.zeros_like(p)
                         state["step"] = 0
+
+                    if self.bf16_regularization:
+                        assert p.grad.dtype == torch.float32, f"bf16_regularization: expected fp32 grad, got {p.grad.dtype}"
+                        assert state["exp_avg"].dtype == torch.float32, f"bf16_regularization: expected fp32 exp_avg, got {state['exp_avg'].dtype}"
+                        assert state["exp_avg_sq"].dtype == torch.float32, f"bf16_regularization: expected fp32 exp_avg_sq, got {state['exp_avg_sq'].dtype}"
+
                     state["step"] += 1
                     update = adam_update(p.grad, state["exp_avg"], state["exp_avg_sq"],
                                          state["step"], group["betas"], group["eps"])
 
-                    # Capture update norm BEFORE applying to parameter
-                    if self._tracking_enabled:
-                        norm = _compute_update_norm(p, update, group["lr"], group["weight_decay"])
-                        param_name = self._param_names.get(id(p), f"unknown_{id(p)}")
-                        self._step_norms[param_name] = norm
+                    lr = group["lr"]
+                    wd = group["weight_decay"]
 
-                    p.mul_(1 - group["lr"] * group["weight_decay"])
-                    p.add_(update, alpha=-group["lr"])
+                    if self._tracking_enabled or self.bf16_regularization:
+                        norm, sparsity, delta = _compute_update_metrics(p, update, lr, wd)
+                        param_name = self._param_names.get(id(p), f"unknown_{id(p)}")
+
+                        if self._tracking_enabled:
+                            self._step_norms[param_name] = norm
+                            self._step_sparsities[param_name] = sparsity
+
+                        if self.bf16_regularization:
+                            truncated = delta.to(torch.bfloat16).to(p.data.dtype)
+                            if self._tracking_enabled:
+                                self._step_sparsities_post[param_name] = _l0_sparsity(truncated)
+                            p.data.add_(truncated)
+                        else:
+                            p.data.add_(delta)
+                    else:
+                        p.mul_(1 - lr * wd)
+                        p.add_(update, alpha=-lr)
 
         for work in dq:
             work.finish()

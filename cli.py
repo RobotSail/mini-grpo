@@ -2063,6 +2063,10 @@ def grpo_train(
         "fp32", "--precision", "-P",
         help="'fp32' | 'bf16' | 'mixed' (FP32 master weights + BF16 fwd via FSDP2)",
     ),
+    bf16_regularization: bool = typer.Option(
+        False, "--bf16-regularization",
+        help="Snap weight updates to bf16 precision before applying (simulates bf16 training in fp32)",
+    ),
 
     # Device
     gpu: int = typer.Option(0, "--gpu", "-g", help="CUDA GPU for training"),
@@ -2123,6 +2127,7 @@ def grpo_train(
         weight_decay=wd,
         gradient_clip=gradient_clip,
         precision=precision,
+        bf16_regularization=bf16_regularization,
         gpu=gpu,
         vllm_gpus=vllm_gpus,
         use_wandb=use_wandb,
@@ -2684,6 +2689,10 @@ def distributed_grpo_train(
         help="Keep shadow FP32 weights updated alongside BF16 training weights"),
     lattice_mantissa_bits: int = typer.Option(0, "--lattice-mantissa-bits",
         help="Snap weights to N-bit mantissa lattice after each optimizer step (0 = disabled, e.g. 10 for 10-bit)"),
+    bf16_master_weights: bool = typer.Option(
+        False, "--bf16-master-weights",
+        help="Store master weights as bf16; optimizer internals (moments, computation) stay fp32",
+    ),
 
     # GPU allocation
     train_gpus: str = typer.Option("0,1", "--train-gpus", help="Comma-separated GPU indices for training"),
@@ -2861,6 +2870,8 @@ def distributed_grpo_train(
             train_cmd.append("--bf16-regularization")
         if lattice_mantissa_bits > 0:
             train_cmd += ["--lattice-mantissa-bits", str(lattice_mantissa_bits)]
+        if bf16_master_weights:
+            train_cmd.append("--bf16-master-weights")
 
         train_env = os.environ.copy()
         train_env["CUDA_VISIBLE_DEVICES"] = train_gpus
@@ -2953,6 +2964,7 @@ def distributed_grpo_worker(
     bf16_regularization: bool = typer.Option(False, "--bf16-regularization"),
     lattice_mantissa_bits: int = typer.Option(0, "--lattice-mantissa-bits",
         help="Snap weights to N-bit mantissa lattice after each step (0 = disabled)"),
+    bf16_master_weights: bool = typer.Option(False, "--bf16-master-weights"),
     eval_every_n_steps: int = typer.Option(0, "--eval-every-n-steps"),
     num_icl: int = typer.Option(0, "--num-icl"),
     task: str = typer.Option("gsm8k", "--task"),
@@ -3008,6 +3020,7 @@ def distributed_grpo_worker(
         precision=precision,
         bf16_regularization=bf16_regularization,
         lattice_mantissa_bits=lattice_mantissa_bits,
+        bf16_master_weights=bf16_master_weights,
         eval_every_n_steps=eval_every_n_steps,
         num_icl=num_icl,
         task=task,

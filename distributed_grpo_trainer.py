@@ -266,8 +266,11 @@ class DistributedGRPOTrainer:
         overwrite_best_ckpt: bool = False,
         # Precision
         precision: str = "mixed",
+        # BF16 regularization: snap weight updates to bf16 precision
         bf16_regularization: bool = False,
         lattice_mantissa_bits: int = 0,  # 0 = disabled; e.g. 10 = snap weights to 10-bit mantissa lattice
+        # BF16 master weights: store weights as bf16, optimizer internals fp32
+        bf16_master_weights: bool = False,
         # Eval frequency
         eval_every_n_steps: int = 0,
         # ICL
@@ -327,6 +330,7 @@ class DistributedGRPOTrainer:
         self.precision = precision
         self.bf16_regularization = bf16_regularization
         self.lattice_mantissa_bits = lattice_mantissa_bits
+        self.bf16_master_weights = bf16_master_weights
         self.num_icl = num_icl
         self.reward_fn = reward_fn or get_reward_fn(task)
 
@@ -380,15 +384,24 @@ class DistributedGRPOTrainer:
                 beta1=beta1,
                 beta2=beta2,
                 weight_decay=weight_decay,
+                bf16_regularization=bf16_regularization,
             )
         else:
-            from torch.optim import AdamW
-            self.optimizer = AdamW(
+            from adamw_tracked import AdamWTracked
+            self.optimizer = AdamWTracked(
                 self.policy.parameters(),
                 lr=lr,
                 betas=(beta1, beta2),
                 weight_decay=weight_decay,
+                bf16_regularization=bf16_regularization,
+                bf16_master_weights=bf16_master_weights,
             )
+
+        # Initialize per-parameter update norm tracking
+        if hasattr(self.optimizer, 'set_param_names'):
+            self.optimizer.set_param_names(self.policy)
+        if hasattr(self.optimizer, 'init_update_tracking'):
+            self.optimizer.init_update_tracking(output_dir)
 
         log_rank_0("using %s optimizer (lr=%g)", optimizer_type.upper(), lr)
 
@@ -469,7 +482,14 @@ class DistributedGRPOTrainer:
         """Load policy and ref models with FSDP2 wrapping + activation checkpointing."""
         use_mp = self.precision != "bf16"
 
-        if self.precision == "mixed":
+        if self.bf16_master_weights:
+            # bf16 master weights: load in bf16, but reduce grads in fp32
+            load_dtype = torch.bfloat16
+            mp_policy = MixedPrecisionPolicy(
+                param_dtype=torch.bfloat16,
+                reduce_dtype=torch.float32,
+            )
+        elif self.precision == "mixed":
             load_dtype = torch.float32
             mp_policy = MixedPrecisionPolicy(
                 param_dtype=torch.bfloat16,
@@ -1418,6 +1438,13 @@ class DistributedGRPOTrainer:
                 t_optim_step_ms = (time.perf_counter() - t_step_start) * 1000
                 avg_fwdbwd_ms = total_fwdbwd_ms / max(global_k, 1)
 
+                # Flush per-parameter update norms and sparsities
+                update_metrics = {"avg_norm": 0.0, "avg_sparsity_pre": 0.0, "avg_sparsity_post": 0.0}
+                if hasattr(self.optimizer, 'flush_update_norms'):
+                    update_metrics = self.optimizer.flush_update_norms(
+                        self.stats.optim_steps + 1, self.stats.tokens_seen
+                    )
+
                 self.stats.increment_optim_step()
                 self._maybe_update_ref_policy()
 
@@ -1451,17 +1478,21 @@ class DistributedGRPOTrainer:
                 )
 
                 if self.use_wandb and WANDB_AVAILABLE and self.rank == 0:
-                    wandb.log({
+                    log_dict = {
                         "train/loss": avg_loss,
                         "train/kl_divergence": avg_kl,
                         "train/importance_ratio": avg_ir,
                         "train/entropy": avg_entropy,
                         "train/grad_norm": gradnorm.item() if hasattr(gradnorm, "item") else gradnorm,
+                        "train/avg_update_frobenius": update_metrics["avg_norm"],
+                        "train/l0_sparsity_pre": update_metrics["avg_sparsity_pre"],
+                        "train/l0_sparsity_post": update_metrics["avg_sparsity_post"],
                         "train/optim_step": self.stats.optim_steps,
                         "train/tokens_trained": self.stats.tokens_seen,
                         "timing/optim_step_ms": t_optim_step_ms,
                         "timing/avg_fwdbwd_ms": avg_fwdbwd_ms,
-                    }, step=self.stats.optim_steps)
+                    }
+                    wandb.log(log_dict, step=self.stats.optim_steps)
 
                 torch.cuda.empty_cache()
 

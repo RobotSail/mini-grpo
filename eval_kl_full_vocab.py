@@ -122,7 +122,7 @@ def generate_base_rollouts(
     llm = LLM(
         model=base_model_path,
         tensor_parallel_size=1,
-        gpu_memory_utilization=0.4,
+        gpu_memory_utilization=0.9,
         dtype="bfloat16",
     )
 

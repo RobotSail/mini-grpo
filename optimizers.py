@@ -28,6 +28,7 @@ def create_fsdp2_muon_optimizer(
     nesterov: bool = True,
     ns_steps: int = 5,
     rms_scale: bool = True,
+    bf16_regularization: bool = False,
 ):
     """
     Create Muon optimizer compatible with FSDP2 using muon-fsdp2 package.
@@ -84,7 +85,7 @@ def create_fsdp2_muon_optimizer(
             )
         )
 
-    return Muon(param_groups)
+    return Muon(param_groups, bf16_regularization=bf16_regularization)
 
 
 def get_muon_param_groups(model: PreTrainedModel):
