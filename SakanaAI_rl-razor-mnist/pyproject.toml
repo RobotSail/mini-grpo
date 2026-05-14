@@ -1,0 +1,61 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rl-razor-mnist"
+version = "0.1.0"
+description = "MNIST experiments demonstrating RL's Razor: KL divergence predicts catastrophic forgetting"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+authors = [
+    {name = "Sakana AI"}
+]
+keywords = ["machine-learning", "reinforcement-learning", "catastrophic-forgetting", "fine-tuning"]
+
+dependencies = [
+    "torch>=2.0",
+    "torchvision",
+    "numpy",
+    "wandb",
+    "matplotlib",
+    "scikit-learn",
+    "pyyaml",
+    "tqdm",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-cov",
+    "black",
+    "ruff",
+]
+
+[project.scripts]
+rl-razor-pretrain = "scripts.pretrain:main"
+rl-razor-finetune = "scripts.finetune:main"
+rl-razor-evaluate = "scripts.evaluate:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-dir]
+"" = "src"
+
+[tool.black]
+line-length = 100
+target-version = ["py39", "py310", "py311"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
