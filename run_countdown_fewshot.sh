@@ -8,12 +8,12 @@ set -euo pipefail
 
 MODEL="Qwen/Qwen2-1.5B-Instruct"
 DATA_DIR="generated_data/countdown_fewshot5_full_synthetic"
-OUTPUT_DIR="/mnt/nvme0n1/experiments/grpo-countdown/countdown-fewshot5-grpo-adamw-full-synthetic-v2"
+OUTPUT_DIR="/mnt/nvme1n1/adamw-bf16-countdown_100k-synth-full_gs-128"
 
 # ── Hyperparameters ──
 # scale LR by sqrt(ebs_new/ebs_old) = 1024/128 = sqrt(8) = 2 sqrt(2) ~= 8.5e-7 
-LR='8.5e-7'
-OPTIMIZER=muon
+LR='5e-7'
+OPTIMIZER=adamw
 # old size: 32
 BATCH_SIZE=32       # prompts per rollout iteration
 # old size: 16 --> 128, so num samples: 512 * 8 = 4096 
@@ -23,7 +23,7 @@ GROUP_SIZE=128       # rollouts per prompt
 # INNER_BATCH_SIZE=128   
 INNER_BATCH_SIZE=1024 
 INNER_EPOCHS=2
-MAX_STEPS=100_000  # we can kill it earlier if we need
+MAX_STEPS=50000
 SAVE_EVERY=100      # checkpoint every N steps
 EVAL_EVERY=2      # validate every N steps (via save_every_n_steps)
 TEMPERATURE=1.0
@@ -106,7 +106,8 @@ python cli.py distributed-grpo-train \
     --seed ${SEED} \
     --wandb \
     --wandb-project "countdown-grpo" \
-    --wandb-run "test-bs-128-gs-4_adamw" \
+    --wandb-run "adamw-bf16_gs-128-bs-32" \
+    --precision bf16 \
     --best-val-ckpt-only \
     --overwrite-best-ckpt \
     ${TRAIN_FLAGS}

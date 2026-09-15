@@ -1,0 +1,569 @@
+{
+  "grpo-adamw-bf16master-30m_checkpoint-1541102": {
+    "step": 0,
+    "path": "/mnt/nvme4n1/checkpoints/grpo-adamw-bf16master-30m/checkpoint-1541102",
+    "total_samples": 1319,
+    "correct": 587,
+    "parsable": 903,
+    "accuracy": 0.4450341167551175,
+    "parsable_rate": 0.6846095526914329
+  },
+  "grpo-adamw-bf16master-30m_checkpoint-2049780": {
+    "step": 0,
+    "path": "/mnt/nvme4n1/checkpoints/grpo-adamw-bf16master-30m/checkpoint-2049780",
+    "total_samples": 1319,
+    "correct": 670,
+    "parsable": 1028,
+    "accuracy": 0.5079605761940864,
+    "parsable_rate": 0.7793783169067475
+  },
+  "grpo-adamw-bf16master-30m_checkpoint-initial": {
+    "step": 0,
+    "path": "/mnt/nvme4n1/checkpoints/grpo-adamw-bf16master-30m/checkpoint-initial",
+    "total_samples": 1319,
+    "correct": 57,
+    "parsable": 88,
+    "accuracy": 0.043214556482183475,
+    "parsable_rate": 0.0667172100075815
+  },
+  "grpo-adamw-bf16master-30m_checkpoint-1534886": {
+    "step": 0,
+    "path": "/mnt/nvme4n1/checkpoints/grpo-adamw-bf16master-30m/checkpoint-1534886",
+    "total_samples": 1319,
+    "correct": 581,
+    "parsable": 885,
+    "accuracy": 0.4404852160727824,
+    "parsable_rate": 0.6709628506444276
+  },
+  "grpo-adamw-bf16master-30m_checkpoint-513642": {
+    "step": 0,
+    "path": "/mnt/nvme4n1/checkpoints/grpo-adamw-bf16master-30m/checkpoint-513642",
+    "total_samples": 1319,
+    "correct": 163,
+    "parsable": 249,
+    "accuracy": 0.12357846853677028,
+    "parsable_rate": 0.18877937831690675
+  },
+  "grpo-adamw-bf16master-30m_checkpoint-1022000": {
+    "step": 0,
+    "path": "/mnt/nvme4n1/checkpoints/grpo-adamw-bf16master-30m/checkpoint-1022000",
+    "total_samples": 1319,
+    "correct": 401,
+    "parsable": 612,
+    "accuracy": 0.30401819560272936,
+    "parsable_rate": 0.46398786959818045
+  },
+  "grpo-adamw-bf16master-30m_checkpoint-510958": {
+    "step": 0,
+    "path": "/mnt/nvme4n1/checkpoints/grpo-adamw-bf16master-30m/checkpoint-510958",
+    "total_samples": 1319,
+    "correct": 165,
+    "parsable": 236,
+    "accuracy": 0.12509476876421532,
+    "parsable_rate": 0.17892342683851403
+  },
+  "grpo-adamw-bf16master-30m_checkpoint-1029670": {
+    "step": 0,
+    "path": "/mnt/nvme4n1/checkpoints/grpo-adamw-bf16master-30m/checkpoint-1029670",
+    "total_samples": 1319,
+    "correct": 422,
+    "parsable": 639,
+    "accuracy": 0.3199393479909022,
+    "parsable_rate": 0.4844579226686884
+  },
+  "grpo-adamw-bf16master-30m_checkpoint-2555186": {
+    "step": 0,
+    "path": "/mnt/nvme4n1/checkpoints/grpo-adamw-bf16master-30m/checkpoint-2555186",
+    "total_samples": 1319,
+    "correct": 706,
+    "parsable": 1104,
+    "accuracy": 0.535253980288097,
+    "parsable_rate": 0.8369977255496588
+  },
+  "grpo-adamw-bf16master-30m_checkpoint-3065372": {
+    "step": 0,
+    "path": "/mnt/nvme4n1/checkpoints/grpo-adamw-bf16master-30m/checkpoint-3065372",
+    "total_samples": 1319,
+    "correct": 733,
+    "parsable": 1148,
+    "accuracy": 0.555724033358605,
+    "parsable_rate": 0.8703563305534496
+  },
+  "grpo-adamw-bf16master-30m_checkpoint-3566020": {
+    "step": 0,
+    "path": "/mnt/nvme4n1/checkpoints/grpo-adamw-bf16master-30m/checkpoint-3566020",
+    "total_samples": 1319,
+    "correct": 739,
+    "parsable": 1157,
+    "accuracy": 0.5602729340409401,
+    "parsable_rate": 0.8771796815769523
+  },
+  "grpo-adamw-bf16master-30m_checkpoint-4081472": {
+    "step": 0,
+    "path": "/mnt/nvme4n1/checkpoints/grpo-adamw-bf16master-30m/checkpoint-4081472",
+    "total_samples": 1319,
+    "correct": 744,
+    "parsable": 1178,
+    "accuracy": 0.5640636846095527,
+    "parsable_rate": 0.8931008339651251
+  },
+  "grpo-adamw-bf16master-30m_checkpoint-5085800": {
+    "step": 0,
+    "path": "/mnt/nvme4n1/checkpoints/grpo-adamw-bf16master-30m/checkpoint-5085800",
+    "total_samples": 1319,
+    "correct": 768,
+    "parsable": 1213,
+    "accuracy": 0.5822592873388931,
+    "parsable_rate": 0.9196360879454132
+  },
+  "grpo-adamw-bf16master-30m_checkpoint-6106682": {
+    "step": 0,
+    "path": "/mnt/nvme4n1/checkpoints/grpo-adamw-bf16master-30m/checkpoint-6106682",
+    "total_samples": 1319,
+    "correct": 777,
+    "parsable": 1222,
+    "accuracy": 0.5890826383623957,
+    "parsable_rate": 0.9264594389689158
+  },
+  "grpo-adamw-bf16master-30m_checkpoint-5596920": {
+    "step": 0,
+    "path": "/mnt/nvme4n1/checkpoints/grpo-adamw-bf16master-30m/checkpoint-5596920",
+    "total_samples": 1319,
+    "correct": 761,
+    "parsable": 1216,
+    "accuracy": 0.5769522365428355,
+    "parsable_rate": 0.9219105382865808
+  },
+  "grpo-adamw-bf16master-30m_checkpoint-4584794": {
+    "step": 0,
+    "path": "/mnt/nvme4n1/checkpoints/grpo-adamw-bf16master-30m/checkpoint-4584794",
+    "total_samples": 1319,
+    "correct": 766,
+    "parsable": 1198,
+    "accuracy": 0.5807429871114481,
+    "parsable_rate": 0.9082638362395754
+  },
+  "grpo-adamw-bf16master-30m_checkpoint-6609628": {
+    "step": 0,
+    "path": "/mnt/nvme4n1/checkpoints/grpo-adamw-bf16master-30m/checkpoint-6609628",
+    "total_samples": 1319,
+    "correct": 773,
+    "parsable": 1219,
+    "accuracy": 0.5860500379075056,
+    "parsable_rate": 0.9241849886277483
+  },
+  "grpo-adamw-bf16master-30m_checkpoint-7628974": {
+    "step": 0,
+    "path": "/mnt/nvme4n1/checkpoints/grpo-adamw-bf16master-30m/checkpoint-7628974",
+    "total_samples": 1319,
+    "correct": 770,
+    "parsable": 1233,
+    "accuracy": 0.5837755875663382,
+    "parsable_rate": 0.9347990902198635
+  },
+  "grpo-adamw-bf16master-30m_checkpoint-7111286": {
+    "step": 0,
+    "path": "/mnt/nvme4n1/checkpoints/grpo-adamw-bf16master-30m/checkpoint-7111286",
+    "total_samples": 1319,
+    "correct": 772,
+    "parsable": 1222,
+    "accuracy": 0.5852918877937832,
+    "parsable_rate": 0.9264594389689158
+  },
+  "grpo-adamw-bf16master-30m_checkpoint-8136534": {
+    "step": 0,
+    "path": "/mnt/nvme4n1/checkpoints/grpo-adamw-bf16master-30m/checkpoint-8136534",
+    "total_samples": 1319,
+    "correct": 770,
+    "parsable": 1234,
+    "accuracy": 0.5837755875663382,
+    "parsable_rate": 0.935557240333586
+  },
+  "grpo-adamw-bf16master-30m_checkpoint-10176196": {
+    "step": 0,
+    "path": "/mnt/nvme4n1/checkpoints/grpo-adamw-bf16master-30m/checkpoint-10176196",
+    "total_samples": 1319,
+    "correct": 781,
+    "parsable": 1244,
+    "accuracy": 0.5921152388172858,
+    "parsable_rate": 0.9431387414708112
+  },
+  "grpo-adamw-bf16master-30m_checkpoint-8641724": {
+    "step": 0,
+    "path": "/mnt/nvme4n1/checkpoints/grpo-adamw-bf16master-30m/checkpoint-8641724",
+    "total_samples": 1319,
+    "correct": 779,
+    "parsable": 1238,
+    "accuracy": 0.5905989385898408,
+    "parsable_rate": 0.9385898407884761
+  },
+  "grpo-adamw-bf16master-30m_checkpoint-9675174": {
+    "step": 0,
+    "path": "/mnt/nvme4n1/checkpoints/grpo-adamw-bf16master-30m/checkpoint-9675174",
+    "total_samples": 1319,
+    "correct": 784,
+    "parsable": 1245,
+    "accuracy": 0.5943896891584534,
+    "parsable_rate": 0.9438968915845337
+  },
+  "grpo-adamw-bf16master-30m_checkpoint-9157416": {
+    "step": 0,
+    "path": "/mnt/nvme4n1/checkpoints/grpo-adamw-bf16master-30m/checkpoint-9157416",
+    "total_samples": 1319,
+    "correct": 776,
+    "parsable": 1234,
+    "accuracy": 0.5883244882486732,
+    "parsable_rate": 0.935557240333586
+  },
+  "grpo-adamw-bf16master-30m_checkpoint-10692662": {
+    "step": 0,
+    "path": "/mnt/nvme4n1/checkpoints/grpo-adamw-bf16master-30m/checkpoint-10692662",
+    "total_samples": 1319,
+    "correct": 785,
+    "parsable": 1245,
+    "accuracy": 0.5951478392721758,
+    "parsable_rate": 0.9438968915845337
+  },
+  "grpo-adamw-bf16master-30m_checkpoint-11192684": {
+    "step": 0,
+    "path": "/mnt/nvme4n1/checkpoints/grpo-adamw-bf16master-30m/checkpoint-11192684",
+    "total_samples": 1319,
+    "correct": 785,
+    "parsable": 1238,
+    "accuracy": 0.5951478392721758,
+    "parsable_rate": 0.9385898407884761
+  },
+  "grpo-adamw-bf16master-30m_checkpoint-11694996": {
+    "step": 0,
+    "path": "/mnt/nvme4n1/checkpoints/grpo-adamw-bf16master-30m/checkpoint-11694996",
+    "total_samples": 1319,
+    "correct": 788,
+    "parsable": 1243,
+    "accuracy": 0.5974222896133434,
+    "parsable_rate": 0.9423805913570887
+  },
+  "grpo-adamw-bf16master-30m_checkpoint-12202350": {
+    "step": 0,
+    "path": "/mnt/nvme4n1/checkpoints/grpo-adamw-bf16master-30m/checkpoint-12202350",
+    "total_samples": 1319,
+    "correct": 781,
+    "parsable": 1241,
+    "accuracy": 0.5921152388172858,
+    "parsable_rate": 0.9408642911296436
+  },
+  "grpo-adamw-bf16master-30m_checkpoint-12709752": {
+    "step": 0,
+    "path": "/mnt/nvme4n1/checkpoints/grpo-adamw-bf16master-30m/checkpoint-12709752",
+    "total_samples": 1319,
+    "correct": 782,
+    "parsable": 1245,
+    "accuracy": 0.5928733889310084,
+    "parsable_rate": 0.9438968915845337
+  },
+  "grpo-adamw-bf16master-30m_checkpoint-13724228": {
+    "step": 0,
+    "path": "/mnt/nvme4n1/checkpoints/grpo-adamw-bf16master-30m/checkpoint-13724228",
+    "total_samples": 1319,
+    "correct": 779,
+    "parsable": 1243,
+    "accuracy": 0.5905989385898408,
+    "parsable_rate": 0.9423805913570887
+  },
+  "grpo-adamw-bf16master-30m_checkpoint-13223900": {
+    "step": 0,
+    "path": "/mnt/nvme4n1/checkpoints/grpo-adamw-bf16master-30m/checkpoint-13223900",
+    "total_samples": 1319,
+    "correct": 775,
+    "parsable": 1251,
+    "accuracy": 0.5875663381349507,
+    "parsable_rate": 0.9484457922668689
+  },
+  "grpo-adamw-bf16master-30m_checkpoint-14240144": {
+    "step": 0,
+    "path": "/mnt/nvme4n1/checkpoints/grpo-adamw-bf16master-30m/checkpoint-14240144",
+    "total_samples": 1319,
+    "correct": 798,
+    "parsable": 1245,
+    "accuracy": 0.6050037907505686,
+    "parsable_rate": 0.9438968915845337
+  },
+  "grpo-adamw-bf16master-30m_checkpoint-15781262": {
+    "step": 0,
+    "path": "/mnt/nvme4n1/checkpoints/grpo-adamw-bf16master-30m/checkpoint-15781262",
+    "total_samples": 1319,
+    "correct": 794,
+    "parsable": 1251,
+    "accuracy": 0.6019711902956786,
+    "parsable_rate": 0.9484457922668689
+  },
+  "grpo-adamw-bf16master-30m_checkpoint-14747408": {
+    "step": 0,
+    "path": "/mnt/nvme4n1/checkpoints/grpo-adamw-bf16master-30m/checkpoint-14747408",
+    "total_samples": 1319,
+    "correct": 798,
+    "parsable": 1249,
+    "accuracy": 0.6050037907505686,
+    "parsable_rate": 0.9469294920394238
+  },
+  "grpo-adamw-bf16master-30m_checkpoint-15265904": {
+    "step": 0,
+    "path": "/mnt/nvme4n1/checkpoints/grpo-adamw-bf16master-30m/checkpoint-15265904",
+    "total_samples": 1319,
+    "correct": 795,
+    "parsable": 1249,
+    "accuracy": 0.6027293404094011,
+    "parsable_rate": 0.9469294920394238
+  },
+  "grpo-adamw-bf16master-30m_checkpoint-16286750": {
+    "step": 0,
+    "path": "/mnt/nvme4n1/checkpoints/grpo-adamw-bf16master-30m/checkpoint-16286750",
+    "total_samples": 1319,
+    "correct": 791,
+    "parsable": 1251,
+    "accuracy": 0.599696739954511,
+    "parsable_rate": 0.9484457922668689
+  },
+  "grpo-adamw-bf16master-30m_checkpoint-17306308": {
+    "step": 0,
+    "path": "/mnt/nvme4n1/checkpoints/grpo-adamw-bf16master-30m/checkpoint-17306308",
+    "total_samples": 1319,
+    "correct": 791,
+    "parsable": 1250,
+    "accuracy": 0.599696739954511,
+    "parsable_rate": 0.9476876421531463
+  },
+  "grpo-adamw-bf16master-30m_checkpoint-18333988": {
+    "step": 0,
+    "path": "/mnt/nvme4n1/checkpoints/grpo-adamw-bf16master-30m/checkpoint-18333988",
+    "total_samples": 1319,
+    "correct": 794,
+    "parsable": 1251,
+    "accuracy": 0.6019711902956786,
+    "parsable_rate": 0.9484457922668689
+  },
+  "grpo-adamw-bf16master-30m_checkpoint-16802680": {
+    "step": 0,
+    "path": "/mnt/nvme4n1/checkpoints/grpo-adamw-bf16master-30m/checkpoint-16802680",
+    "total_samples": 1319,
+    "correct": 785,
+    "parsable": 1249,
+    "accuracy": 0.5951478392721758,
+    "parsable_rate": 0.9469294920394238
+  },
+  "grpo-adamw-bf16master-30m_checkpoint-17816638": {
+    "step": 0,
+    "path": "/mnt/nvme4n1/checkpoints/grpo-adamw-bf16master-30m/checkpoint-17816638",
+    "total_samples": 1319,
+    "correct": 800,
+    "parsable": 1250,
+    "accuracy": 0.6065200909780136,
+    "parsable_rate": 0.9476876421531463
+  },
+  "grpo-adamw-bf16master-30m_checkpoint-18838782": {
+    "step": 0,
+    "path": "/mnt/nvme4n1/checkpoints/grpo-adamw-bf16master-30m/checkpoint-18838782",
+    "total_samples": 1319,
+    "correct": 792,
+    "parsable": 1252,
+    "accuracy": 0.6004548900682335,
+    "parsable_rate": 0.9492039423805914
+  },
+  "grpo-adamw-bf16master-30m_checkpoint-19345540": {
+    "step": 0,
+    "path": "/mnt/nvme4n1/checkpoints/grpo-adamw-bf16master-30m/checkpoint-19345540",
+    "total_samples": 1319,
+    "correct": 795,
+    "parsable": 1255,
+    "accuracy": 0.6027293404094011,
+    "parsable_rate": 0.9514783927217589
+  },
+  "grpo-adamw-bf16master-30m_checkpoint-19854606": {
+    "step": 0,
+    "path": "/mnt/nvme4n1/checkpoints/grpo-adamw-bf16master-30m/checkpoint-19854606",
+    "total_samples": 1319,
+    "correct": 788,
+    "parsable": 1254,
+    "accuracy": 0.5974222896133434,
+    "parsable_rate": 0.9507202426080363
+  },
+  "grpo-adamw-bf16master-30m_checkpoint-20869998": {
+    "step": 0,
+    "path": "/mnt/nvme4n1/checkpoints/grpo-adamw-bf16master-30m/checkpoint-20869998",
+    "total_samples": 1319,
+    "correct": 792,
+    "parsable": 1244,
+    "accuracy": 0.6004548900682335,
+    "parsable_rate": 0.9431387414708112
+  },
+  "grpo-adamw-bf16master-30m_checkpoint-22395210": {
+    "step": 0,
+    "path": "/mnt/nvme4n1/checkpoints/grpo-adamw-bf16master-30m/checkpoint-22395210",
+    "total_samples": 1319,
+    "correct": 784,
+    "parsable": 1246,
+    "accuracy": 0.5943896891584534,
+    "parsable_rate": 0.9446550416982562
+  },
+  "grpo-adamw-bf16master-30m_checkpoint-20357110": {
+    "step": 0,
+    "path": "/mnt/nvme4n1/checkpoints/grpo-adamw-bf16master-30m/checkpoint-20357110",
+    "total_samples": 1319,
+    "correct": 787,
+    "parsable": 1247,
+    "accuracy": 0.5966641394996209,
+    "parsable_rate": 0.9454131918119788
+  },
+  "grpo-adamw-bf16master-30m_checkpoint-21375536": {
+    "step": 0,
+    "path": "/mnt/nvme4n1/checkpoints/grpo-adamw-bf16master-30m/checkpoint-21375536",
+    "total_samples": 1319,
+    "correct": 781,
+    "parsable": 1252,
+    "accuracy": 0.5921152388172858,
+    "parsable_rate": 0.9492039423805914
+  },
+  "grpo-adamw-bf16master-30m_checkpoint-21891124": {
+    "step": 0,
+    "path": "/mnt/nvme4n1/checkpoints/grpo-adamw-bf16master-30m/checkpoint-21891124",
+    "total_samples": 1319,
+    "correct": 793,
+    "parsable": 1260,
+    "accuracy": 0.601213040181956,
+    "parsable_rate": 0.9552691432903715
+  },
+  "grpo-adamw-bf16master-30m_checkpoint-23920684": {
+    "step": 0,
+    "path": "/mnt/nvme4n1/checkpoints/grpo-adamw-bf16master-30m/checkpoint-23920684",
+    "total_samples": 1319,
+    "correct": 792,
+    "parsable": 1254,
+    "accuracy": 0.6004548900682335,
+    "parsable_rate": 0.9507202426080363
+  },
+  "grpo-adamw-bf16master-30m_checkpoint-22899614": {
+    "step": 0,
+    "path": "/mnt/nvme4n1/checkpoints/grpo-adamw-bf16master-30m/checkpoint-22899614",
+    "total_samples": 1319,
+    "correct": 790,
+    "parsable": 1257,
+    "accuracy": 0.5989385898407885,
+    "parsable_rate": 0.9529946929492039
+  },
+  "grpo-adamw-bf16master-30m_checkpoint-23404350": {
+    "step": 0,
+    "path": "/mnt/nvme4n1/checkpoints/grpo-adamw-bf16master-30m/checkpoint-23404350",
+    "total_samples": 1319,
+    "correct": 791,
+    "parsable": 1250,
+    "accuracy": 0.599696739954511,
+    "parsable_rate": 0.9476876421531463
+  },
+  "grpo-adamw-bf16master-30m_checkpoint-24957016": {
+    "step": 0,
+    "path": "/mnt/nvme4n1/checkpoints/grpo-adamw-bf16master-30m/checkpoint-24957016",
+    "total_samples": 1319,
+    "correct": 790,
+    "parsable": 1253,
+    "accuracy": 0.5989385898407885,
+    "parsable_rate": 0.9499620924943138
+  },
+  "grpo-adamw-bf16master-30m_checkpoint-25972026": {
+    "step": 0,
+    "path": "/mnt/nvme4n1/checkpoints/grpo-adamw-bf16master-30m/checkpoint-25972026",
+    "total_samples": 1319,
+    "correct": 795,
+    "parsable": 1262,
+    "accuracy": 0.6027293404094011,
+    "parsable_rate": 0.9567854435178166
+  },
+  "grpo-adamw-bf16master-30m_checkpoint-26490106": {
+    "step": 0,
+    "path": "/mnt/nvme4n1/checkpoints/grpo-adamw-bf16master-30m/checkpoint-26490106",
+    "total_samples": 1319,
+    "correct": 797,
+    "parsable": 1262,
+    "accuracy": 0.604245640636846,
+    "parsable_rate": 0.9567854435178166
+  },
+  "grpo-adamw-bf16master-30m_checkpoint-25461004": {
+    "step": 0,
+    "path": "/mnt/nvme4n1/checkpoints/grpo-adamw-bf16master-30m/checkpoint-25461004",
+    "total_samples": 1319,
+    "correct": 794,
+    "parsable": 1257,
+    "accuracy": 0.6019711902956786,
+    "parsable_rate": 0.9529946929492039
+  },
+  "grpo-adamw-bf16master-30m_checkpoint-24436540": {
+    "step": 0,
+    "path": "/mnt/nvme4n1/checkpoints/grpo-adamw-bf16master-30m/checkpoint-24436540",
+    "total_samples": 1319,
+    "correct": 788,
+    "parsable": 1254,
+    "accuracy": 0.5974222896133434,
+    "parsable_rate": 0.9507202426080363
+  },
+  "grpo-adamw-bf16master-30m_checkpoint-26993846": {
+    "step": 0,
+    "path": "/mnt/nvme4n1/checkpoints/grpo-adamw-bf16master-30m/checkpoint-26993846",
+    "total_samples": 1319,
+    "correct": 796,
+    "parsable": 1261,
+    "accuracy": 0.6034874905231236,
+    "parsable_rate": 0.956027293404094
+  },
+  "grpo-adamw-bf16master-30m_checkpoint-28003646": {
+    "step": 0,
+    "path": "/mnt/nvme4n1/checkpoints/grpo-adamw-bf16master-30m/checkpoint-28003646",
+    "total_samples": 1319,
+    "correct": 794,
+    "parsable": 1263,
+    "accuracy": 0.6019711902956786,
+    "parsable_rate": 0.9575435936315391
+  },
+  "grpo-adamw-bf16master-30m_checkpoint-27497198": {
+    "step": 0,
+    "path": "/mnt/nvme4n1/checkpoints/grpo-adamw-bf16master-30m/checkpoint-27497198",
+    "total_samples": 1319,
+    "correct": 798,
+    "parsable": 1262,
+    "accuracy": 0.6050037907505686,
+    "parsable_rate": 0.9567854435178166
+  },
+  "grpo-adamw-bf16master-30m_checkpoint-28507470": {
+    "step": 0,
+    "path": "/mnt/nvme4n1/checkpoints/grpo-adamw-bf16master-30m/checkpoint-28507470",
+    "total_samples": 1319,
+    "correct": 794,
+    "parsable": 1264,
+    "accuracy": 0.6019711902956786,
+    "parsable_rate": 0.9583017437452616
+  },
+  "grpo-adamw-bf16master-30m_checkpoint-29018002": {
+    "step": 0,
+    "path": "/mnt/nvme4n1/checkpoints/grpo-adamw-bf16master-30m/checkpoint-29018002",
+    "total_samples": 1319,
+    "correct": 790,
+    "parsable": 1265,
+    "accuracy": 0.5989385898407885,
+    "parsable_rate": 0.959059893858984
+  },
+  "grpo-adamw-bf16master-30m_checkpoint-29525680": {
+    "step": 0,
+    "path": "/mnt/nvme4n1/checkpoints/grpo-adamw-bf16master-30m/checkpoint-29525680",
+    "total_samples": 1319,
+    "correct": 798,
+    "parsable": 1263,
+    "accuracy": 0.6050037907505686,
+    "parsable_rate": 0.9575435936315391
+  },
+  "grpo-adamw-bf16master-30m_checkpoint-30007994": {
+    "step": 0,
+    "path": "/mnt/nvme4n1/checkpoints/grpo-adamw-bf16master-30m/checkpoint-30007994",
+    "total_samples": 1319,
+    "correct": 799,
+    "parsable": 1267,
+    "accuracy": 0.6057619408642911,
+    "parsable_rate": 0.9605761940864291
+  }
+}

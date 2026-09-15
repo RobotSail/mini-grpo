@@ -1,0 +1,2642 @@
+{
+  "m3_seed8": {
+    "parity": 0.9318,
+    "fashion": 0.7825,
+    "kl": 0.00017690852805972098,
+    "mantissa": "m3",
+    "mantissa_bits": 3,
+    "seed": 8
+  },
+  "m1_seed6": {
+    "parity": 0.9302,
+    "fashion": 0.7821,
+    "kl": 0.000992342895269394,
+    "mantissa": "m1",
+    "mantissa_bits": 1,
+    "seed": 6
+  },
+  "m1_seed15": {
+    "parity": 0.9302,
+    "fashion": 0.7821,
+    "kl": 0.000997434678673744,
+    "mantissa": "m1",
+    "mantissa_bits": 1,
+    "seed": 15
+  },
+  "m2_seed10": {
+    "parity": 0.931,
+    "fashion": 0.7821,
+    "kl": 0.00038218813240528107,
+    "mantissa": "m2",
+    "mantissa_bits": 2,
+    "seed": 10
+  },
+  "m3_seed13": {
+    "parity": 0.9318,
+    "fashion": 0.7823,
+    "kl": 0.00019057276174426079,
+    "mantissa": "m3",
+    "mantissa_bits": 3,
+    "seed": 13
+  },
+  "m2_seed0": {
+    "parity": 0.9309,
+    "fashion": 0.7818,
+    "kl": 0.000359931705147028,
+    "mantissa": "m2",
+    "mantissa_bits": 2,
+    "seed": 0
+  },
+  "m3_seed3": {
+    "parity": 0.9314,
+    "fashion": 0.7828,
+    "kl": 0.00018003842234611513,
+    "mantissa": "m3",
+    "mantissa_bits": 3,
+    "seed": 3
+  },
+  "m1_seed14": {
+    "parity": 0.9304,
+    "fashion": 0.782,
+    "kl": 0.0009900172144174577,
+    "mantissa": "m1",
+    "mantissa_bits": 1,
+    "seed": 14
+  },
+  "m1_seed7": {
+    "parity": 0.9304,
+    "fashion": 0.7821,
+    "kl": 0.0009916926383972168,
+    "mantissa": "m1",
+    "mantissa_bits": 1,
+    "seed": 7
+  },
+  "m2_seed26": {
+    "parity": 0.9307,
+    "fashion": 0.7823,
+    "kl": 0.0003625195488333702,
+    "mantissa": "m2",
+    "mantissa_bits": 2,
+    "seed": 26
+  },
+  "m1_seed3": {
+    "parity": 0.9303,
+    "fashion": 0.7821,
+    "kl": 0.0009923395097255706,
+    "mantissa": "m1",
+    "mantissa_bits": 1,
+    "seed": 3
+  },
+  "m1_seed28": {
+    "parity": 0.9303,
+    "fashion": 0.7821,
+    "kl": 0.0009914020001888274,
+    "mantissa": "m1",
+    "mantissa_bits": 1,
+    "seed": 28
+  },
+  "m2_seed2": {
+    "parity": 0.9311,
+    "fashion": 0.7825,
+    "kl": 0.00035233222842216493,
+    "mantissa": "m2",
+    "mantissa_bits": 2,
+    "seed": 2
+  },
+  "m1_seed8": {
+    "parity": 0.9301,
+    "fashion": 0.7821,
+    "kl": 0.0009940884083509446,
+    "mantissa": "m1",
+    "mantissa_bits": 1,
+    "seed": 8
+  },
+  "m2_seed15": {
+    "parity": 0.9311,
+    "fashion": 0.7822,
+    "kl": 0.00036971047446131706,
+    "mantissa": "m2",
+    "mantissa_bits": 2,
+    "seed": 15
+  },
+  "m3_seed17": {
+    "parity": 0.9317,
+    "fashion": 0.7823,
+    "kl": 0.00024207633659243584,
+    "mantissa": "m3",
+    "mantissa_bits": 3,
+    "seed": 17
+  },
+  "m1_seed9": {
+    "parity": 0.9301,
+    "fashion": 0.782,
+    "kl": 0.000995543822646141,
+    "mantissa": "m1",
+    "mantissa_bits": 1,
+    "seed": 9
+  },
+  "m1_seed1": {
+    "parity": 0.9301,
+    "fashion": 0.7821,
+    "kl": 0.0009927897930145264,
+    "mantissa": "m1",
+    "mantissa_bits": 1,
+    "seed": 1
+  },
+  "m2_seed11": {
+    "parity": 0.9311,
+    "fashion": 0.7824,
+    "kl": 0.00035952086448669436,
+    "mantissa": "m2",
+    "mantissa_bits": 2,
+    "seed": 11
+  },
+  "m2_seed9": {
+    "parity": 0.931,
+    "fashion": 0.7824,
+    "kl": 0.0003578536093235016,
+    "mantissa": "m2",
+    "mantissa_bits": 2,
+    "seed": 9
+  },
+  "m1_seed26": {
+    "parity": 0.9302,
+    "fashion": 0.7821,
+    "kl": 0.0009950500398874284,
+    "mantissa": "m1",
+    "mantissa_bits": 1,
+    "seed": 26
+  },
+  "m2_seed23": {
+    "parity": 0.931,
+    "fashion": 0.7826,
+    "kl": 0.00035530569329857826,
+    "mantissa": "m2",
+    "mantissa_bits": 2,
+    "seed": 23
+  },
+  "m2_seed18": {
+    "parity": 0.9311,
+    "fashion": 0.7826,
+    "kl": 0.00035562401115894315,
+    "mantissa": "m2",
+    "mantissa_bits": 2,
+    "seed": 18
+  },
+  "m3_seed7": {
+    "parity": 0.9321,
+    "fashion": 0.7828,
+    "kl": 0.00019248570576310158,
+    "mantissa": "m3",
+    "mantissa_bits": 3,
+    "seed": 7
+  },
+  "m1_seed24": {
+    "parity": 0.9303,
+    "fashion": 0.7821,
+    "kl": 0.000991006299853325,
+    "mantissa": "m1",
+    "mantissa_bits": 1,
+    "seed": 24
+  },
+  "m3_seed1": {
+    "parity": 0.9317,
+    "fashion": 0.7824,
+    "kl": 0.0002526314534246922,
+    "mantissa": "m3",
+    "mantissa_bits": 3,
+    "seed": 1
+  },
+  "m1_seed19": {
+    "parity": 0.9304,
+    "fashion": 0.7821,
+    "kl": 0.0009924393445253372,
+    "mantissa": "m1",
+    "mantissa_bits": 1,
+    "seed": 19
+  },
+  "m2_seed17": {
+    "parity": 0.931,
+    "fashion": 0.7822,
+    "kl": 0.00036341207325458526,
+    "mantissa": "m2",
+    "mantissa_bits": 2,
+    "seed": 17
+  },
+  "m3_seed4": {
+    "parity": 0.9318,
+    "fashion": 0.7825,
+    "kl": 0.00022585832774639128,
+    "mantissa": "m3",
+    "mantissa_bits": 3,
+    "seed": 4
+  },
+  "m2_seed16": {
+    "parity": 0.931,
+    "fashion": 0.7824,
+    "kl": 0.0003571259155869484,
+    "mantissa": "m2",
+    "mantissa_bits": 2,
+    "seed": 16
+  },
+  "m1_seed29": {
+    "parity": 0.9301,
+    "fashion": 0.782,
+    "kl": 0.0009975344359874725,
+    "mantissa": "m1",
+    "mantissa_bits": 1,
+    "seed": 29
+  },
+  "m1_seed2": {
+    "parity": 0.9304,
+    "fashion": 0.7822,
+    "kl": 0.0009878674238920212,
+    "mantissa": "m1",
+    "mantissa_bits": 1,
+    "seed": 2
+  },
+  "m2_seed27": {
+    "parity": 0.9308,
+    "fashion": 0.7825,
+    "kl": 0.00035962839275598525,
+    "mantissa": "m2",
+    "mantissa_bits": 2,
+    "seed": 27
+  },
+  "m2_seed13": {
+    "parity": 0.931,
+    "fashion": 0.7824,
+    "kl": 0.00035473922863602636,
+    "mantissa": "m2",
+    "mantissa_bits": 2,
+    "seed": 13
+  },
+  "m2_seed1": {
+    "parity": 0.931,
+    "fashion": 0.7823,
+    "kl": 0.00035981654822826384,
+    "mantissa": "m2",
+    "mantissa_bits": 2,
+    "seed": 1
+  },
+  "m1_seed12": {
+    "parity": 0.9301,
+    "fashion": 0.7821,
+    "kl": 0.0009952437311410904,
+    "mantissa": "m1",
+    "mantissa_bits": 1,
+    "seed": 12
+  },
+  "m1_seed13": {
+    "parity": 0.9304,
+    "fashion": 0.7821,
+    "kl": 0.0009939946621656418,
+    "mantissa": "m1",
+    "mantissa_bits": 1,
+    "seed": 13
+  },
+  "m1_seed25": {
+    "parity": 0.9301,
+    "fashion": 0.7821,
+    "kl": 0.0009974537789821626,
+    "mantissa": "m1",
+    "mantissa_bits": 1,
+    "seed": 25
+  },
+  "m2_seed14": {
+    "parity": 0.931,
+    "fashion": 0.7826,
+    "kl": 0.00035413718223571776,
+    "mantissa": "m2",
+    "mantissa_bits": 2,
+    "seed": 14
+  },
+  "m1_seed0": {
+    "parity": 0.9302,
+    "fashion": 0.7822,
+    "kl": 0.0009931094497442246,
+    "mantissa": "m1",
+    "mantissa_bits": 1,
+    "seed": 0
+  },
+  "m1_seed20": {
+    "parity": 0.9301,
+    "fashion": 0.7821,
+    "kl": 0.0009943911105394364,
+    "mantissa": "m1",
+    "mantissa_bits": 1,
+    "seed": 20
+  },
+  "m3_seed5": {
+    "parity": 0.9315,
+    "fashion": 0.7825,
+    "kl": 0.0002184185564517975,
+    "mantissa": "m3",
+    "mantissa_bits": 3,
+    "seed": 5
+  },
+  "m3_seed16": {
+    "parity": 0.9315,
+    "fashion": 0.7827,
+    "kl": 0.00019028663858771324,
+    "mantissa": "m3",
+    "mantissa_bits": 3,
+    "seed": 16
+  },
+  "m2_seed21": {
+    "parity": 0.9311,
+    "fashion": 0.7825,
+    "kl": 0.0003596157148480415,
+    "mantissa": "m2",
+    "mantissa_bits": 2,
+    "seed": 21
+  },
+  "m1_seed18": {
+    "parity": 0.9302,
+    "fashion": 0.7821,
+    "kl": 0.0009906722038984298,
+    "mantissa": "m1",
+    "mantissa_bits": 1,
+    "seed": 18
+  },
+  "m2_seed6": {
+    "parity": 0.9309,
+    "fashion": 0.7824,
+    "kl": 0.00035912777557969096,
+    "mantissa": "m2",
+    "mantissa_bits": 2,
+    "seed": 6
+  },
+  "m3_seed15": {
+    "parity": 0.9316,
+    "fashion": 0.7822,
+    "kl": 0.00027799420654773713,
+    "mantissa": "m3",
+    "mantissa_bits": 3,
+    "seed": 15
+  },
+  "m1_seed16": {
+    "parity": 0.9302,
+    "fashion": 0.7821,
+    "kl": 0.0009971686273813247,
+    "mantissa": "m1",
+    "mantissa_bits": 1,
+    "seed": 16
+  },
+  "m1_seed5": {
+    "parity": 0.9302,
+    "fashion": 0.7821,
+    "kl": 0.0009927013397216797,
+    "mantissa": "m1",
+    "mantissa_bits": 1,
+    "seed": 5
+  },
+  "m2_seed28": {
+    "parity": 0.9311,
+    "fashion": 0.7823,
+    "kl": 0.00035612848103046415,
+    "mantissa": "m2",
+    "mantissa_bits": 2,
+    "seed": 28
+  },
+  "m1_seed10": {
+    "parity": 0.9303,
+    "fashion": 0.7821,
+    "kl": 0.0010011830329895019,
+    "mantissa": "m1",
+    "mantissa_bits": 1,
+    "seed": 10
+  },
+  "m3_seed0": {
+    "parity": 0.9319,
+    "fashion": 0.7825,
+    "kl": 0.00024754228219389917,
+    "mantissa": "m3",
+    "mantissa_bits": 3,
+    "seed": 0
+  },
+  "m2_seed3": {
+    "parity": 0.9309,
+    "fashion": 0.7824,
+    "kl": 0.0003560212761163712,
+    "mantissa": "m2",
+    "mantissa_bits": 2,
+    "seed": 3
+  },
+  "m3_seed12": {
+    "parity": 0.9317,
+    "fashion": 0.7825,
+    "kl": 0.000183726217597723,
+    "mantissa": "m3",
+    "mantissa_bits": 3,
+    "seed": 12
+  },
+  "m2_seed20": {
+    "parity": 0.9309,
+    "fashion": 0.7822,
+    "kl": 0.0003664431981742382,
+    "mantissa": "m2",
+    "mantissa_bits": 2,
+    "seed": 20
+  },
+  "m3_seed2": {
+    "parity": 0.932,
+    "fashion": 0.7825,
+    "kl": 0.00018443113826215266,
+    "mantissa": "m3",
+    "mantissa_bits": 3,
+    "seed": 2
+  },
+  "m1_seed21": {
+    "parity": 0.9301,
+    "fashion": 0.7821,
+    "kl": 0.0009914668172597886,
+    "mantissa": "m1",
+    "mantissa_bits": 1,
+    "seed": 21
+  },
+  "m2_seed19": {
+    "parity": 0.931,
+    "fashion": 0.7825,
+    "kl": 0.0003529541850090027,
+    "mantissa": "m2",
+    "mantissa_bits": 2,
+    "seed": 19
+  },
+  "m3_seed18": {
+    "parity": 0.9316,
+    "fashion": 0.7827,
+    "kl": 0.0001883124489337206,
+    "mantissa": "m3",
+    "mantissa_bits": 3,
+    "seed": 18
+  },
+  "m2_seed25": {
+    "parity": 0.931,
+    "fashion": 0.7823,
+    "kl": 0.0003663837224245071,
+    "mantissa": "m2",
+    "mantissa_bits": 2,
+    "seed": 25
+  },
+  "m3_seed14": {
+    "parity": 0.9315,
+    "fashion": 0.7827,
+    "kl": 0.00016249829903244972,
+    "mantissa": "m3",
+    "mantissa_bits": 3,
+    "seed": 14
+  },
+  "m2_seed5": {
+    "parity": 0.9308,
+    "fashion": 0.7822,
+    "kl": 0.0003559700727462769,
+    "mantissa": "m2",
+    "mantissa_bits": 2,
+    "seed": 5
+  },
+  "m3_seed6": {
+    "parity": 0.9319,
+    "fashion": 0.7826,
+    "kl": 0.00023361675813794136,
+    "mantissa": "m3",
+    "mantissa_bits": 3,
+    "seed": 6
+  },
+  "m2_seed7": {
+    "parity": 0.9311,
+    "fashion": 0.7824,
+    "kl": 0.00035617108941078185,
+    "mantissa": "m2",
+    "mantissa_bits": 2,
+    "seed": 7
+  },
+  "m2_seed24": {
+    "parity": 0.9309,
+    "fashion": 0.7827,
+    "kl": 0.000366411779820919,
+    "mantissa": "m2",
+    "mantissa_bits": 2,
+    "seed": 24
+  },
+  "m3_seed10": {
+    "parity": 0.9315,
+    "fashion": 0.782,
+    "kl": 0.0003432598851621151,
+    "mantissa": "m3",
+    "mantissa_bits": 3,
+    "seed": 10
+  },
+  "m1_seed23": {
+    "parity": 0.9304,
+    "fashion": 0.7821,
+    "kl": 0.0009938695311546325,
+    "mantissa": "m1",
+    "mantissa_bits": 1,
+    "seed": 23
+  },
+  "m2_seed29": {
+    "parity": 0.9309,
+    "fashion": 0.7819,
+    "kl": 0.00036728618741035463,
+    "mantissa": "m2",
+    "mantissa_bits": 2,
+    "seed": 29
+  },
+  "m1_seed27": {
+    "parity": 0.9301,
+    "fashion": 0.7821,
+    "kl": 0.0009957174122333526,
+    "mantissa": "m1",
+    "mantissa_bits": 1,
+    "seed": 27
+  },
+  "m1_seed17": {
+    "parity": 0.9301,
+    "fashion": 0.7821,
+    "kl": 0.0009950419872999192,
+    "mantissa": "m1",
+    "mantissa_bits": 1,
+    "seed": 17
+  },
+  "m3_seed19": {
+    "parity": 0.9315,
+    "fashion": 0.7823,
+    "kl": 0.00015322611257433892,
+    "mantissa": "m3",
+    "mantissa_bits": 3,
+    "seed": 19
+  },
+  "m2_seed12": {
+    "parity": 0.9309,
+    "fashion": 0.7822,
+    "kl": 0.0003558551385998726,
+    "mantissa": "m2",
+    "mantissa_bits": 2,
+    "seed": 12
+  },
+  "m2_seed22": {
+    "parity": 0.931,
+    "fashion": 0.7826,
+    "kl": 0.00035746791586279867,
+    "mantissa": "m2",
+    "mantissa_bits": 2,
+    "seed": 22
+  },
+  "m1_seed4": {
+    "parity": 0.9301,
+    "fashion": 0.7821,
+    "kl": 0.0009949220508337021,
+    "mantissa": "m1",
+    "mantissa_bits": 1,
+    "seed": 4
+  },
+  "m3_seed9": {
+    "parity": 0.9321,
+    "fashion": 0.7823,
+    "kl": 0.0002036231905221939,
+    "mantissa": "m3",
+    "mantissa_bits": 3,
+    "seed": 9
+  },
+  "m1_seed11": {
+    "parity": 0.9304,
+    "fashion": 0.7821,
+    "kl": 0.000997540321946144,
+    "mantissa": "m1",
+    "mantissa_bits": 1,
+    "seed": 11
+  },
+  "m1_seed22": {
+    "parity": 0.9302,
+    "fashion": 0.7821,
+    "kl": 0.0009901463955640792,
+    "mantissa": "m1",
+    "mantissa_bits": 1,
+    "seed": 22
+  },
+  "m2_seed8": {
+    "parity": 0.9308,
+    "fashion": 0.7825,
+    "kl": 0.0003574313446879387,
+    "mantissa": "m2",
+    "mantissa_bits": 2,
+    "seed": 8
+  },
+  "m3_seed11": {
+    "parity": 0.9317,
+    "fashion": 0.7828,
+    "kl": 0.00019011054188013078,
+    "mantissa": "m3",
+    "mantissa_bits": 3,
+    "seed": 11
+  },
+  "m2_seed4": {
+    "parity": 0.931,
+    "fashion": 0.7822,
+    "kl": 0.0003616807214915752,
+    "mantissa": "m2",
+    "mantissa_bits": 2,
+    "seed": 4
+  },
+  "m3_seed26": {
+    "parity": 0.9317,
+    "fashion": 0.7823,
+    "kl": 0.00022215148657560348,
+    "mantissa": "m3",
+    "mantissa_bits": 3,
+    "seed": 26
+  },
+  "m5_seed28": {
+    "parity": 0.937,
+    "fashion": 0.7813,
+    "kl": 0.007155512499809265,
+    "mantissa": "m5",
+    "mantissa_bits": 5,
+    "seed": 28
+  },
+  "m5_seed0": {
+    "parity": 0.9367,
+    "fashion": 0.7803,
+    "kl": 0.006894641041755676,
+    "mantissa": "m5",
+    "mantissa_bits": 5,
+    "seed": 0
+  },
+  "m4_seed5": {
+    "parity": 0.9329,
+    "fashion": 0.7824,
+    "kl": 0.0014553876370191573,
+    "mantissa": "m4",
+    "mantissa_bits": 4,
+    "seed": 5
+  },
+  "m4_seed20": {
+    "parity": 0.9332,
+    "fashion": 0.782,
+    "kl": 0.001555849626660347,
+    "mantissa": "m4",
+    "mantissa_bits": 4,
+    "seed": 20
+  },
+  "m4_seed18": {
+    "parity": 0.933,
+    "fashion": 0.7816,
+    "kl": 0.0013829899907112121,
+    "mantissa": "m4",
+    "mantissa_bits": 4,
+    "seed": 18
+  },
+  "m3_seed29": {
+    "parity": 0.9318,
+    "fashion": 0.7824,
+    "kl": 0.0002534263275563717,
+    "mantissa": "m3",
+    "mantissa_bits": 3,
+    "seed": 29
+  },
+  "m4_seed4": {
+    "parity": 0.9334,
+    "fashion": 0.7816,
+    "kl": 0.0014207209646701813,
+    "mantissa": "m4",
+    "mantissa_bits": 4,
+    "seed": 4
+  },
+  "m5_seed16": {
+    "parity": 0.9369,
+    "fashion": 0.7813,
+    "kl": 0.006492502546310425,
+    "mantissa": "m5",
+    "mantissa_bits": 5,
+    "seed": 16
+  },
+  "m5_seed1": {
+    "parity": 0.9366,
+    "fashion": 0.7815,
+    "kl": 0.006800398397445679,
+    "mantissa": "m5",
+    "mantissa_bits": 5,
+    "seed": 1
+  },
+  "m5_seed5": {
+    "parity": 0.9371,
+    "fashion": 0.7814,
+    "kl": 0.006977495980262757,
+    "mantissa": "m5",
+    "mantissa_bits": 5,
+    "seed": 5
+  },
+  "m4_seed22": {
+    "parity": 0.9332,
+    "fashion": 0.7816,
+    "kl": 0.0013544137060642243,
+    "mantissa": "m4",
+    "mantissa_bits": 4,
+    "seed": 22
+  },
+  "m4_seed16": {
+    "parity": 0.9334,
+    "fashion": 0.7817,
+    "kl": 0.0012800302296876907,
+    "mantissa": "m4",
+    "mantissa_bits": 4,
+    "seed": 16
+  },
+  "m5_seed24": {
+    "parity": 0.9368,
+    "fashion": 0.7802,
+    "kl": 0.00663406572341919,
+    "mantissa": "m5",
+    "mantissa_bits": 5,
+    "seed": 24
+  },
+  "m3_seed27": {
+    "parity": 0.9316,
+    "fashion": 0.7824,
+    "kl": 0.0002113849848508835,
+    "mantissa": "m3",
+    "mantissa_bits": 3,
+    "seed": 27
+  },
+  "m3_seed21": {
+    "parity": 0.9317,
+    "fashion": 0.7827,
+    "kl": 0.00019066873490810395,
+    "mantissa": "m3",
+    "mantissa_bits": 3,
+    "seed": 21
+  },
+  "m6_seed3": {
+    "parity": 0.9435,
+    "fashion": 0.7757,
+    "kl": 0.0310479248046875,
+    "mantissa": "m6",
+    "mantissa_bits": 6,
+    "seed": 3
+  },
+  "m3_seed28": {
+    "parity": 0.9317,
+    "fashion": 0.7823,
+    "kl": 0.00021815760284662247,
+    "mantissa": "m3",
+    "mantissa_bits": 3,
+    "seed": 28
+  },
+  "m5_seed23": {
+    "parity": 0.9378,
+    "fashion": 0.782,
+    "kl": 0.007655356812477112,
+    "mantissa": "m5",
+    "mantissa_bits": 5,
+    "seed": 23
+  },
+  "m3_seed23": {
+    "parity": 0.9315,
+    "fashion": 0.7825,
+    "kl": 0.00017214643135666848,
+    "mantissa": "m3",
+    "mantissa_bits": 3,
+    "seed": 23
+  },
+  "m4_seed29": {
+    "parity": 0.9329,
+    "fashion": 0.7831,
+    "kl": 0.0014001601636409759,
+    "mantissa": "m4",
+    "mantissa_bits": 4,
+    "seed": 29
+  },
+  "m6_seed7": {
+    "parity": 0.9436,
+    "fashion": 0.774,
+    "kl": 0.03074067440032959,
+    "mantissa": "m6",
+    "mantissa_bits": 6,
+    "seed": 7
+  },
+  "m5_seed13": {
+    "parity": 0.9369,
+    "fashion": 0.7798,
+    "kl": 0.006679042196273804,
+    "mantissa": "m5",
+    "mantissa_bits": 5,
+    "seed": 13
+  },
+  "m5_seed7": {
+    "parity": 0.9372,
+    "fashion": 0.7802,
+    "kl": 0.006162845778465271,
+    "mantissa": "m5",
+    "mantissa_bits": 5,
+    "seed": 7
+  },
+  "m5_seed6": {
+    "parity": 0.9373,
+    "fashion": 0.7805,
+    "kl": 0.007432933187484741,
+    "mantissa": "m5",
+    "mantissa_bits": 5,
+    "seed": 6
+  },
+  "m5_seed27": {
+    "parity": 0.937,
+    "fashion": 0.7817,
+    "kl": 0.006358304238319397,
+    "mantissa": "m5",
+    "mantissa_bits": 5,
+    "seed": 27
+  },
+  "m5_seed21": {
+    "parity": 0.9372,
+    "fashion": 0.7815,
+    "kl": 0.006976387619972229,
+    "mantissa": "m5",
+    "mantissa_bits": 5,
+    "seed": 21
+  },
+  "m5_seed8": {
+    "parity": 0.9373,
+    "fashion": 0.7814,
+    "kl": 0.0061339045643806454,
+    "mantissa": "m5",
+    "mantissa_bits": 5,
+    "seed": 8
+  },
+  "m4_seed21": {
+    "parity": 0.9334,
+    "fashion": 0.7823,
+    "kl": 0.0013249505788087844,
+    "mantissa": "m4",
+    "mantissa_bits": 4,
+    "seed": 21
+  },
+  "m3_seed20": {
+    "parity": 0.9318,
+    "fashion": 0.7824,
+    "kl": 0.0002607129096984863,
+    "mantissa": "m3",
+    "mantissa_bits": 3,
+    "seed": 20
+  },
+  "m5_seed4": {
+    "parity": 0.9368,
+    "fashion": 0.7808,
+    "kl": 0.007692082643508911,
+    "mantissa": "m5",
+    "mantissa_bits": 5,
+    "seed": 4
+  },
+  "m4_seed14": {
+    "parity": 0.9329,
+    "fashion": 0.782,
+    "kl": 0.0011887326538562776,
+    "mantissa": "m4",
+    "mantissa_bits": 4,
+    "seed": 14
+  },
+  "m5_seed17": {
+    "parity": 0.937,
+    "fashion": 0.7818,
+    "kl": 0.007221651315689087,
+    "mantissa": "m5",
+    "mantissa_bits": 5,
+    "seed": 17
+  },
+  "m4_seed3": {
+    "parity": 0.933,
+    "fashion": 0.7824,
+    "kl": 0.0012570386797189712,
+    "mantissa": "m4",
+    "mantissa_bits": 4,
+    "seed": 3
+  },
+  "m4_seed2": {
+    "parity": 0.9332,
+    "fashion": 0.7823,
+    "kl": 0.0012779449820518494,
+    "mantissa": "m4",
+    "mantissa_bits": 4,
+    "seed": 2
+  },
+  "m4_seed10": {
+    "parity": 0.933,
+    "fashion": 0.7823,
+    "kl": 0.001544086942076683,
+    "mantissa": "m4",
+    "mantissa_bits": 4,
+    "seed": 10
+  },
+  "m4_seed9": {
+    "parity": 0.9331,
+    "fashion": 0.7817,
+    "kl": 0.001294276088476181,
+    "mantissa": "m4",
+    "mantissa_bits": 4,
+    "seed": 9
+  },
+  "m3_seed22": {
+    "parity": 0.9315,
+    "fashion": 0.7825,
+    "kl": 0.00019027878567576408,
+    "mantissa": "m3",
+    "mantissa_bits": 3,
+    "seed": 22
+  },
+  "m5_seed3": {
+    "parity": 0.9372,
+    "fashion": 0.7826,
+    "kl": 0.006415414810180664,
+    "mantissa": "m5",
+    "mantissa_bits": 5,
+    "seed": 3
+  },
+  "m4_seed15": {
+    "parity": 0.9332,
+    "fashion": 0.7819,
+    "kl": 0.0013488354921340942,
+    "mantissa": "m4",
+    "mantissa_bits": 4,
+    "seed": 15
+  },
+  "m4_seed8": {
+    "parity": 0.9331,
+    "fashion": 0.7816,
+    "kl": 0.00126077441573143,
+    "mantissa": "m4",
+    "mantissa_bits": 4,
+    "seed": 8
+  },
+  "m6_seed5": {
+    "parity": 0.9435,
+    "fashion": 0.7749,
+    "kl": 0.031959413528442386,
+    "mantissa": "m6",
+    "mantissa_bits": 6,
+    "seed": 5
+  },
+  "m4_seed19": {
+    "parity": 0.9328,
+    "fashion": 0.7819,
+    "kl": 0.0010452283263206483,
+    "mantissa": "m4",
+    "mantissa_bits": 4,
+    "seed": 19
+  },
+  "m5_seed11": {
+    "parity": 0.9365,
+    "fashion": 0.781,
+    "kl": 0.007408443188667298,
+    "mantissa": "m5",
+    "mantissa_bits": 5,
+    "seed": 11
+  },
+  "m6_seed6": {
+    "parity": 0.9439,
+    "fashion": 0.7741,
+    "kl": 0.03195923891067505,
+    "mantissa": "m6",
+    "mantissa_bits": 6,
+    "seed": 6
+  },
+  "m4_seed26": {
+    "parity": 0.9331,
+    "fashion": 0.7819,
+    "kl": 0.0012864024341106414,
+    "mantissa": "m4",
+    "mantissa_bits": 4,
+    "seed": 26
+  },
+  "m5_seed25": {
+    "parity": 0.9364,
+    "fashion": 0.7811,
+    "kl": 0.006734368920326233,
+    "mantissa": "m5",
+    "mantissa_bits": 5,
+    "seed": 25
+  },
+  "m4_seed6": {
+    "parity": 0.933,
+    "fashion": 0.7815,
+    "kl": 0.0015554465740919114,
+    "mantissa": "m4",
+    "mantissa_bits": 4,
+    "seed": 6
+  },
+  "m4_seed11": {
+    "parity": 0.9332,
+    "fashion": 0.7818,
+    "kl": 0.0013655132681131363,
+    "mantissa": "m4",
+    "mantissa_bits": 4,
+    "seed": 11
+  },
+  "m4_seed25": {
+    "parity": 0.9331,
+    "fashion": 0.782,
+    "kl": 0.0014249460220336913,
+    "mantissa": "m4",
+    "mantissa_bits": 4,
+    "seed": 25
+  },
+  "m4_seed23": {
+    "parity": 0.9337,
+    "fashion": 0.7825,
+    "kl": 0.0012737161487340928,
+    "mantissa": "m4",
+    "mantissa_bits": 4,
+    "seed": 23
+  },
+  "m4_seed0": {
+    "parity": 0.933,
+    "fashion": 0.7824,
+    "kl": 0.0013904719144105912,
+    "mantissa": "m4",
+    "mantissa_bits": 4,
+    "seed": 0
+  },
+  "m6_seed2": {
+    "parity": 0.9435,
+    "fashion": 0.775,
+    "kl": 0.030747382831573487,
+    "mantissa": "m6",
+    "mantissa_bits": 6,
+    "seed": 2
+  },
+  "m5_seed10": {
+    "parity": 0.9366,
+    "fashion": 0.7815,
+    "kl": 0.007384044003486633,
+    "mantissa": "m5",
+    "mantissa_bits": 5,
+    "seed": 10
+  },
+  "m4_seed13": {
+    "parity": 0.9332,
+    "fashion": 0.7821,
+    "kl": 0.0013066439479589463,
+    "mantissa": "m4",
+    "mantissa_bits": 4,
+    "seed": 13
+  },
+  "m6_seed8": {
+    "parity": 0.9435,
+    "fashion": 0.7767,
+    "kl": 0.030284763050079346,
+    "mantissa": "m6",
+    "mantissa_bits": 6,
+    "seed": 8
+  },
+  "m5_seed19": {
+    "parity": 0.9366,
+    "fashion": 0.781,
+    "kl": 0.005693726229667664,
+    "mantissa": "m5",
+    "mantissa_bits": 5,
+    "seed": 19
+  },
+  "m5_seed18": {
+    "parity": 0.9364,
+    "fashion": 0.7812,
+    "kl": 0.007009614634513855,
+    "mantissa": "m5",
+    "mantissa_bits": 5,
+    "seed": 18
+  },
+  "m5_seed29": {
+    "parity": 0.9372,
+    "fashion": 0.7822,
+    "kl": 0.007064035391807556,
+    "mantissa": "m5",
+    "mantissa_bits": 5,
+    "seed": 29
+  },
+  "m8_seed18": {
+    "parity": 0.9648,
+    "fashion": 0.7151,
+    "kl": 0.3259676696777344,
+    "mantissa": "m8",
+    "mantissa_bits": 8,
+    "seed": 18
+  },
+  "m5_seed9": {
+    "parity": 0.9375,
+    "fashion": 0.7809,
+    "kl": 0.006793553233146668,
+    "mantissa": "m5",
+    "mantissa_bits": 5,
+    "seed": 9
+  },
+  "m6_seed16": {
+    "parity": 0.9434,
+    "fashion": 0.7746,
+    "kl": 0.030296806621551514,
+    "mantissa": "m6",
+    "mantissa_bits": 6,
+    "seed": 16
+  },
+  "m5_seed15": {
+    "parity": 0.9366,
+    "fashion": 0.7808,
+    "kl": 0.006392735743522644,
+    "mantissa": "m5",
+    "mantissa_bits": 5,
+    "seed": 15
+  },
+  "m3_seed24": {
+    "parity": 0.9318,
+    "fashion": 0.7826,
+    "kl": 0.0002155046246945858,
+    "mantissa": "m3",
+    "mantissa_bits": 3,
+    "seed": 24
+  },
+  "m4_seed1": {
+    "parity": 0.9326,
+    "fashion": 0.7816,
+    "kl": 0.0014611517667770385,
+    "mantissa": "m4",
+    "mantissa_bits": 4,
+    "seed": 1
+  },
+  "m3_seed25": {
+    "parity": 0.9318,
+    "fashion": 0.7823,
+    "kl": 0.00023518120571970938,
+    "mantissa": "m3",
+    "mantissa_bits": 3,
+    "seed": 25
+  },
+  "m4_seed27": {
+    "parity": 0.9329,
+    "fashion": 0.782,
+    "kl": 0.0012361996769905091,
+    "mantissa": "m4",
+    "mantissa_bits": 4,
+    "seed": 27
+  },
+  "m4_seed7": {
+    "parity": 0.9331,
+    "fashion": 0.7823,
+    "kl": 0.0010958115845918655,
+    "mantissa": "m4",
+    "mantissa_bits": 4,
+    "seed": 7
+  },
+  "m5_seed20": {
+    "parity": 0.937,
+    "fashion": 0.781,
+    "kl": 0.0074925030708312985,
+    "mantissa": "m5",
+    "mantissa_bits": 5,
+    "seed": 20
+  },
+  "m4_seed17": {
+    "parity": 0.9331,
+    "fashion": 0.7823,
+    "kl": 0.001367716559767723,
+    "mantissa": "m4",
+    "mantissa_bits": 4,
+    "seed": 17
+  },
+  "m5_seed14": {
+    "parity": 0.9368,
+    "fashion": 0.7824,
+    "kl": 0.006654163646697998,
+    "mantissa": "m5",
+    "mantissa_bits": 5,
+    "seed": 14
+  },
+  "m6_seed0": {
+    "parity": 0.9429,
+    "fashion": 0.7753,
+    "kl": 0.03082668037414551,
+    "mantissa": "m6",
+    "mantissa_bits": 6,
+    "seed": 0
+  },
+  "m6_seed1": {
+    "parity": 0.9439,
+    "fashion": 0.7717,
+    "kl": 0.03373918952941894,
+    "mantissa": "m6",
+    "mantissa_bits": 6,
+    "seed": 1
+  },
+  "m6_seed9": {
+    "parity": 0.9438,
+    "fashion": 0.7745,
+    "kl": 0.03290143642425537,
+    "mantissa": "m6",
+    "mantissa_bits": 6,
+    "seed": 9
+  },
+  "m5_seed26": {
+    "parity": 0.9369,
+    "fashion": 0.7814,
+    "kl": 0.0066546495437622075,
+    "mantissa": "m5",
+    "mantissa_bits": 5,
+    "seed": 26
+  },
+  "m6_seed4": {
+    "parity": 0.943,
+    "fashion": 0.7752,
+    "kl": 0.03220511264801025,
+    "mantissa": "m6",
+    "mantissa_bits": 6,
+    "seed": 4
+  },
+  "m4_seed12": {
+    "parity": 0.933,
+    "fashion": 0.7818,
+    "kl": 0.0012209099262952806,
+    "mantissa": "m4",
+    "mantissa_bits": 4,
+    "seed": 12
+  },
+  "m5_seed12": {
+    "parity": 0.9369,
+    "fashion": 0.7822,
+    "kl": 0.005985975587368011,
+    "mantissa": "m5",
+    "mantissa_bits": 5,
+    "seed": 12
+  },
+  "m4_seed24": {
+    "parity": 0.9332,
+    "fashion": 0.7818,
+    "kl": 0.0012331286638975144,
+    "mantissa": "m4",
+    "mantissa_bits": 4,
+    "seed": 24
+  },
+  "m6_seed25": {
+    "parity": 0.943,
+    "fashion": 0.7766,
+    "kl": 0.030690525341033937,
+    "mantissa": "m6",
+    "mantissa_bits": 6,
+    "seed": 25
+  },
+  "m5_seed22": {
+    "parity": 0.9364,
+    "fashion": 0.7806,
+    "kl": 0.00721702036857605,
+    "mantissa": "m5",
+    "mantissa_bits": 5,
+    "seed": 22
+  },
+  "m5_seed2": {
+    "parity": 0.9372,
+    "fashion": 0.7807,
+    "kl": 0.007155006313323975,
+    "mantissa": "m5",
+    "mantissa_bits": 5,
+    "seed": 2
+  },
+  "m4_seed28": {
+    "parity": 0.9329,
+    "fashion": 0.7816,
+    "kl": 0.0014925159752368928,
+    "mantissa": "m4",
+    "mantissa_bits": 4,
+    "seed": 28
+  },
+  "m7_seed10": {
+    "parity": 0.9543,
+    "fashion": 0.7613,
+    "kl": 0.10424010124206542,
+    "mantissa": "m7",
+    "mantissa_bits": 7,
+    "seed": 10
+  },
+  "m6_seed24": {
+    "parity": 0.9435,
+    "fashion": 0.7741,
+    "kl": 0.027452399158477782,
+    "mantissa": "m6",
+    "mantissa_bits": 6,
+    "seed": 24
+  },
+  "m7_seed8": {
+    "parity": 0.955,
+    "fashion": 0.764,
+    "kl": 0.10373692016601563,
+    "mantissa": "m7",
+    "mantissa_bits": 7,
+    "seed": 8
+  },
+  "m7_seed20": {
+    "parity": 0.9562,
+    "fashion": 0.723,
+    "kl": 0.16018137588500977,
+    "mantissa": "m7",
+    "mantissa_bits": 7,
+    "seed": 20
+  },
+  "m6_seed19": {
+    "parity": 0.9435,
+    "fashion": 0.7736,
+    "kl": 0.03009624490737915,
+    "mantissa": "m6",
+    "mantissa_bits": 6,
+    "seed": 19
+  },
+  "m8_seed6": {
+    "parity": 0.9645,
+    "fashion": 0.6312,
+    "kl": 0.7052038986206055,
+    "mantissa": "m8",
+    "mantissa_bits": 8,
+    "seed": 6
+  },
+  "m7_seed21": {
+    "parity": 0.955,
+    "fashion": 0.7554,
+    "kl": 0.10787251625061035,
+    "mantissa": "m7",
+    "mantissa_bits": 7,
+    "seed": 21
+  },
+  "m7_seed6": {
+    "parity": 0.9545,
+    "fashion": 0.7551,
+    "kl": 0.12320949172973633,
+    "mantissa": "m7",
+    "mantissa_bits": 7,
+    "seed": 6
+  },
+  "m6_seed11": {
+    "parity": 0.9442,
+    "fashion": 0.7747,
+    "kl": 0.035817511749267575,
+    "mantissa": "m6",
+    "mantissa_bits": 6,
+    "seed": 11
+  },
+  "m8_seed13": {
+    "parity": 0.9645,
+    "fashion": 0.6169,
+    "kl": 0.5382636123657226,
+    "mantissa": "m8",
+    "mantissa_bits": 8,
+    "seed": 13
+  },
+  "m7_seed12": {
+    "parity": 0.9542,
+    "fashion": 0.7604,
+    "kl": 0.10475183029174805,
+    "mantissa": "m7",
+    "mantissa_bits": 7,
+    "seed": 12
+  },
+  "m8_seed14": {
+    "parity": 0.9644,
+    "fashion": 0.587,
+    "kl": 0.8275807785034179,
+    "mantissa": "m8",
+    "mantissa_bits": 8,
+    "seed": 14
+  },
+  "m8_seed3": {
+    "parity": 0.965,
+    "fashion": 0.6922,
+    "kl": 0.41632865447998046,
+    "mantissa": "m8",
+    "mantissa_bits": 8,
+    "seed": 3
+  },
+  "m6_seed17": {
+    "parity": 0.9435,
+    "fashion": 0.7769,
+    "kl": 0.03389009771347046,
+    "mantissa": "m6",
+    "mantissa_bits": 6,
+    "seed": 17
+  },
+  "m6_seed18": {
+    "parity": 0.9435,
+    "fashion": 0.7759,
+    "kl": 0.02922744140625,
+    "mantissa": "m6",
+    "mantissa_bits": 6,
+    "seed": 18
+  },
+  "m8_seed11": {
+    "parity": 0.9642,
+    "fashion": 0.6798,
+    "kl": 0.35481210632324217,
+    "mantissa": "m8",
+    "mantissa_bits": 8,
+    "seed": 11
+  },
+  "m8_seed17": {
+    "parity": 0.9648,
+    "fashion": 0.6434,
+    "kl": 0.5837842926025391,
+    "mantissa": "m8",
+    "mantissa_bits": 8,
+    "seed": 17
+  },
+  "m8_seed23": {
+    "parity": 0.9644,
+    "fashion": 0.6909,
+    "kl": 0.38179203720092775,
+    "mantissa": "m8",
+    "mantissa_bits": 8,
+    "seed": 23
+  },
+  "m7_seed25": {
+    "parity": 0.9544,
+    "fashion": 0.7564,
+    "kl": 0.1205846923828125,
+    "mantissa": "m7",
+    "mantissa_bits": 7,
+    "seed": 25
+  },
+  "m7_seed24": {
+    "parity": 0.9542,
+    "fashion": 0.7505,
+    "kl": 0.09770311222076417,
+    "mantissa": "m7",
+    "mantissa_bits": 7,
+    "seed": 24
+  },
+  "m6_seed13": {
+    "parity": 0.9434,
+    "fashion": 0.7732,
+    "kl": 0.03206098308563232,
+    "mantissa": "m6",
+    "mantissa_bits": 6,
+    "seed": 13
+  },
+  "m8_seed7": {
+    "parity": 0.9646,
+    "fashion": 0.706,
+    "kl": 0.37152636642456055,
+    "mantissa": "m8",
+    "mantissa_bits": 8,
+    "seed": 7
+  },
+  "m7_seed11": {
+    "parity": 0.9548,
+    "fashion": 0.7624,
+    "kl": 0.11527267532348633,
+    "mantissa": "m7",
+    "mantissa_bits": 7,
+    "seed": 11
+  },
+  "m7_seed4": {
+    "parity": 0.955,
+    "fashion": 0.7591,
+    "kl": 0.10159275283813476,
+    "mantissa": "m7",
+    "mantissa_bits": 7,
+    "seed": 4
+  },
+  "m7_seed19": {
+    "parity": 0.9545,
+    "fashion": 0.7579,
+    "kl": 0.10030781173706055,
+    "mantissa": "m7",
+    "mantissa_bits": 7,
+    "seed": 19
+  },
+  "m7_seed27": {
+    "parity": 0.9537,
+    "fashion": 0.7668,
+    "kl": 0.10098036994934081,
+    "mantissa": "m7",
+    "mantissa_bits": 7,
+    "seed": 27
+  },
+  "m6_seed28": {
+    "parity": 0.944,
+    "fashion": 0.7747,
+    "kl": 0.03307143697738647,
+    "mantissa": "m6",
+    "mantissa_bits": 6,
+    "seed": 28
+  },
+  "m7_seed0": {
+    "parity": 0.9547,
+    "fashion": 0.7431,
+    "kl": 0.11654657974243164,
+    "mantissa": "m7",
+    "mantissa_bits": 7,
+    "seed": 0
+  },
+  "m6_seed22": {
+    "parity": 0.9433,
+    "fashion": 0.7732,
+    "kl": 0.034162324619293215,
+    "mantissa": "m6",
+    "mantissa_bits": 6,
+    "seed": 22
+  },
+  "m7_seed26": {
+    "parity": 0.9552,
+    "fashion": 0.7503,
+    "kl": 0.11236154251098633,
+    "mantissa": "m7",
+    "mantissa_bits": 7,
+    "seed": 26
+  },
+  "m7_seed5": {
+    "parity": 0.9546,
+    "fashion": 0.7609,
+    "kl": 0.10724004974365234,
+    "mantissa": "m7",
+    "mantissa_bits": 7,
+    "seed": 5
+  },
+  "m7_seed28": {
+    "parity": 0.9558,
+    "fashion": 0.7559,
+    "kl": 0.1133948886871338,
+    "mantissa": "m7",
+    "mantissa_bits": 7,
+    "seed": 28
+  },
+  "m6_seed12": {
+    "parity": 0.944,
+    "fashion": 0.7774,
+    "kl": 0.029904358768463136,
+    "mantissa": "m6",
+    "mantissa_bits": 6,
+    "seed": 12
+  },
+  "m8_seed27": {
+    "parity": 0.9643,
+    "fashion": 0.6818,
+    "kl": 0.401018586730957,
+    "mantissa": "m8",
+    "mantissa_bits": 8,
+    "seed": 27
+  },
+  "m6_seed10": {
+    "parity": 0.9433,
+    "fashion": 0.7767,
+    "kl": 0.03197708282470703,
+    "mantissa": "m6",
+    "mantissa_bits": 6,
+    "seed": 10
+  },
+  "m6_seed29": {
+    "parity": 0.9441,
+    "fashion": 0.7754,
+    "kl": 0.03239887990951538,
+    "mantissa": "m6",
+    "mantissa_bits": 6,
+    "seed": 29
+  },
+  "m6_seed23": {
+    "parity": 0.9442,
+    "fashion": 0.7724,
+    "kl": 0.03552334194183349,
+    "mantissa": "m6",
+    "mantissa_bits": 6,
+    "seed": 23
+  },
+  "m7_seed23": {
+    "parity": 0.955,
+    "fashion": 0.7665,
+    "kl": 0.10092520713806152,
+    "mantissa": "m7",
+    "mantissa_bits": 7,
+    "seed": 23
+  },
+  "m8_seed25": {
+    "parity": 0.9645,
+    "fashion": 0.7172,
+    "kl": 0.44026150360107424,
+    "mantissa": "m8",
+    "mantissa_bits": 8,
+    "seed": 25
+  },
+  "m7_seed9": {
+    "parity": 0.9541,
+    "fashion": 0.7626,
+    "kl": 0.09546674327850342,
+    "mantissa": "m7",
+    "mantissa_bits": 7,
+    "seed": 9
+  },
+  "fp32_seed8": {
+    "parity": 0.9723,
+    "fashion": 0.6724,
+    "kl": 0.7824464569091797,
+    "mantissa": "fp32",
+    "mantissa_bits": 23,
+    "seed": 8
+  },
+  "m8_seed15": {
+    "parity": 0.9637,
+    "fashion": 0.6869,
+    "kl": 0.33753317794799803,
+    "mantissa": "m8",
+    "mantissa_bits": 8,
+    "seed": 15
+  },
+  "m7_seed16": {
+    "parity": 0.9549,
+    "fashion": 0.7433,
+    "kl": 0.1153422695159912,
+    "mantissa": "m7",
+    "mantissa_bits": 7,
+    "seed": 16
+  },
+  "m8_seed26": {
+    "parity": 0.9647,
+    "fashion": 0.7245,
+    "kl": 0.337556689453125,
+    "mantissa": "m8",
+    "mantissa_bits": 8,
+    "seed": 26
+  },
+  "m8_seed1": {
+    "parity": 0.965,
+    "fashion": 0.7175,
+    "kl": 0.27829240036010744,
+    "mantissa": "m8",
+    "mantissa_bits": 8,
+    "seed": 1
+  },
+  "m9_seed6": {
+    "parity": 0.9703,
+    "fashion": 0.5215,
+    "kl": 1.538334375,
+    "mantissa": "m9",
+    "mantissa_bits": 9,
+    "seed": 6
+  },
+  "m6_seed26": {
+    "parity": 0.9434,
+    "fashion": 0.7767,
+    "kl": 0.031081586933135986,
+    "mantissa": "m6",
+    "mantissa_bits": 6,
+    "seed": 26
+  },
+  "m9_seed15": {
+    "parity": 0.9689,
+    "fashion": 0.6411,
+    "kl": 0.7486209442138672,
+    "mantissa": "m9",
+    "mantissa_bits": 9,
+    "seed": 15
+  },
+  "m7_seed1": {
+    "parity": 0.9546,
+    "fashion": 0.7281,
+    "kl": 0.1315959442138672,
+    "mantissa": "m7",
+    "mantissa_bits": 7,
+    "seed": 1
+  },
+  "fp32_seed3": {
+    "parity": 0.9725,
+    "fashion": 0.6411,
+    "kl": 1.0172043975830078,
+    "mantissa": "fp32",
+    "mantissa_bits": 23,
+    "seed": 3
+  },
+  "m9_seed9": {
+    "parity": 0.9687,
+    "fashion": 0.6869,
+    "kl": 0.5258175796508789,
+    "mantissa": "m9",
+    "mantissa_bits": 9,
+    "seed": 9
+  },
+  "m9_seed1": {
+    "parity": 0.9691,
+    "fashion": 0.6494,
+    "kl": 0.7328748580932617,
+    "mantissa": "m9",
+    "mantissa_bits": 9,
+    "seed": 1
+  },
+  "m10_seed0": {
+    "parity": 0.9714,
+    "fashion": 0.4983,
+    "kl": 1.8210742797851562,
+    "mantissa": "m10",
+    "mantissa_bits": 10,
+    "seed": 0
+  },
+  "m9_seed28": {
+    "parity": 0.9699,
+    "fashion": 0.7188,
+    "kl": 0.5678683853149414,
+    "mantissa": "m9",
+    "mantissa_bits": 9,
+    "seed": 28
+  },
+  "m10_seed10": {
+    "parity": 0.9716,
+    "fashion": 0.5497,
+    "kl": 1.5012710479736329,
+    "mantissa": "m10",
+    "mantissa_bits": 10,
+    "seed": 10
+  },
+  "m7_seed15": {
+    "parity": 0.9549,
+    "fashion": 0.7291,
+    "kl": 0.12564445343017577,
+    "mantissa": "m7",
+    "mantissa_bits": 7,
+    "seed": 15
+  },
+  "fp32_seed13": {
+    "parity": 0.9716,
+    "fashion": 0.5645,
+    "kl": 1.3394958679199218,
+    "mantissa": "fp32",
+    "mantissa_bits": 23,
+    "seed": 13
+  },
+  "fp32_seed7": {
+    "parity": 0.9707,
+    "fashion": 0.5271,
+    "kl": 1.2882495391845703,
+    "mantissa": "fp32",
+    "mantissa_bits": 23,
+    "seed": 7
+  },
+  "fp32_seed1": {
+    "parity": 0.9714,
+    "fashion": 0.6047,
+    "kl": 1.0472851165771484,
+    "mantissa": "fp32",
+    "mantissa_bits": 23,
+    "seed": 1
+  },
+  "fp32_seed4": {
+    "parity": 0.9714,
+    "fashion": 0.7064,
+    "kl": 0.5449409484863281,
+    "mantissa": "fp32",
+    "mantissa_bits": 23,
+    "seed": 4
+  },
+  "m6_seed20": {
+    "parity": 0.9437,
+    "fashion": 0.7754,
+    "kl": 0.03144169912338257,
+    "mantissa": "m6",
+    "mantissa_bits": 6,
+    "seed": 20
+  },
+  "m7_seed13": {
+    "parity": 0.9552,
+    "fashion": 0.7397,
+    "kl": 0.10282694129943848,
+    "mantissa": "m7",
+    "mantissa_bits": 7,
+    "seed": 13
+  },
+  "m6_seed27": {
+    "parity": 0.9431,
+    "fashion": 0.7763,
+    "kl": 0.03162910795211792,
+    "mantissa": "m6",
+    "mantissa_bits": 6,
+    "seed": 27
+  },
+  "m8_seed0": {
+    "parity": 0.9647,
+    "fashion": 0.5992,
+    "kl": 0.8980935150146484,
+    "mantissa": "m8",
+    "mantissa_bits": 8,
+    "seed": 0
+  },
+  "m10_seed2": {
+    "parity": 0.9712,
+    "fashion": 0.6872,
+    "kl": 0.5766659194946289,
+    "mantissa": "m10",
+    "mantissa_bits": 10,
+    "seed": 2
+  },
+  "m9_seed14": {
+    "parity": 0.9704,
+    "fashion": 0.5356,
+    "kl": 1.131500003051758,
+    "mantissa": "m9",
+    "mantissa_bits": 9,
+    "seed": 14
+  },
+  "m7_seed29": {
+    "parity": 0.9556,
+    "fashion": 0.7601,
+    "kl": 0.11536045188903808,
+    "mantissa": "m7",
+    "mantissa_bits": 7,
+    "seed": 29
+  },
+  "m8_seed22": {
+    "parity": 0.9643,
+    "fashion": 0.6299,
+    "kl": 0.5098736312866211,
+    "mantissa": "m8",
+    "mantissa_bits": 8,
+    "seed": 22
+  },
+  "m8_seed9": {
+    "parity": 0.9642,
+    "fashion": 0.7109,
+    "kl": 0.2694463020324707,
+    "mantissa": "m8",
+    "mantissa_bits": 8,
+    "seed": 9
+  },
+  "m8_seed5": {
+    "parity": 0.9642,
+    "fashion": 0.7335,
+    "kl": 0.2948280128479004,
+    "mantissa": "m8",
+    "mantissa_bits": 8,
+    "seed": 5
+  },
+  "m8_seed28": {
+    "parity": 0.9656,
+    "fashion": 0.6687,
+    "kl": 0.3917159683227539,
+    "mantissa": "m8",
+    "mantissa_bits": 8,
+    "seed": 28
+  },
+  "m7_seed7": {
+    "parity": 0.9557,
+    "fashion": 0.749,
+    "kl": 0.11800315933227538,
+    "mantissa": "m7",
+    "mantissa_bits": 7,
+    "seed": 7
+  },
+  "m10_seed23": {
+    "parity": 0.9713,
+    "fashion": 0.6405,
+    "kl": 0.8189657760620117,
+    "mantissa": "m10",
+    "mantissa_bits": 10,
+    "seed": 23
+  },
+  "m9_seed7": {
+    "parity": 0.9697,
+    "fashion": 0.6656,
+    "kl": 0.6181855438232422,
+    "mantissa": "m9",
+    "mantissa_bits": 9,
+    "seed": 7
+  },
+  "m8_seed8": {
+    "parity": 0.965,
+    "fashion": 0.7338,
+    "kl": 0.2783099540710449,
+    "mantissa": "m8",
+    "mantissa_bits": 8,
+    "seed": 8
+  },
+  "m8_seed19": {
+    "parity": 0.9647,
+    "fashion": 0.6939,
+    "kl": 0.35497242965698245,
+    "mantissa": "m8",
+    "mantissa_bits": 8,
+    "seed": 19
+  },
+  "m9_seed3": {
+    "parity": 0.9705,
+    "fashion": 0.6428,
+    "kl": 0.9084142272949218,
+    "mantissa": "m9",
+    "mantissa_bits": 9,
+    "seed": 3
+  },
+  "m10_seed14": {
+    "parity": 0.9719,
+    "fashion": 0.5681,
+    "kl": 1.0575418090820312,
+    "mantissa": "m10",
+    "mantissa_bits": 10,
+    "seed": 14
+  },
+  "m8_seed4": {
+    "parity": 0.9653,
+    "fashion": 0.7042,
+    "kl": 0.2883414810180664,
+    "mantissa": "m8",
+    "mantissa_bits": 8,
+    "seed": 4
+  },
+  "m10_seed27": {
+    "parity": 0.9716,
+    "fashion": 0.654,
+    "kl": 0.7659874145507812,
+    "mantissa": "m10",
+    "mantissa_bits": 10,
+    "seed": 27
+  },
+  "m7_seed3": {
+    "parity": 0.9555,
+    "fashion": 0.7622,
+    "kl": 0.10243606986999512,
+    "mantissa": "m7",
+    "mantissa_bits": 7,
+    "seed": 3
+  },
+  "m6_seed15": {
+    "parity": 0.9436,
+    "fashion": 0.7749,
+    "kl": 0.02975372533798218,
+    "mantissa": "m6",
+    "mantissa_bits": 6,
+    "seed": 15
+  },
+  "m8_seed21": {
+    "parity": 0.9653,
+    "fashion": 0.6653,
+    "kl": 0.33632250900268557,
+    "mantissa": "m8",
+    "mantissa_bits": 8,
+    "seed": 21
+  },
+  "m10_seed26": {
+    "parity": 0.9697,
+    "fashion": 0.6805,
+    "kl": 0.6607125122070312,
+    "mantissa": "m10",
+    "mantissa_bits": 10,
+    "seed": 26
+  },
+  "m8_seed10": {
+    "parity": 0.9651,
+    "fashion": 0.5996,
+    "kl": 0.7399994903564453,
+    "mantissa": "m8",
+    "mantissa_bits": 8,
+    "seed": 10
+  },
+  "m7_seed17": {
+    "parity": 0.9548,
+    "fashion": 0.7577,
+    "kl": 0.11693258476257325,
+    "mantissa": "m7",
+    "mantissa_bits": 7,
+    "seed": 17
+  },
+  "m6_seed14": {
+    "parity": 0.9437,
+    "fashion": 0.7779,
+    "kl": 0.032016036033630374,
+    "mantissa": "m6",
+    "mantissa_bits": 6,
+    "seed": 14
+  },
+  "m9_seed8": {
+    "parity": 0.9689,
+    "fashion": 0.7143,
+    "kl": 0.4718042083740234,
+    "mantissa": "m9",
+    "mantissa_bits": 9,
+    "seed": 8
+  },
+  "m10_seed11": {
+    "parity": 0.9711,
+    "fashion": 0.528,
+    "kl": 1.3913641387939453,
+    "mantissa": "m10",
+    "mantissa_bits": 10,
+    "seed": 11
+  },
+  "m6_seed21": {
+    "parity": 0.9438,
+    "fashion": 0.7765,
+    "kl": 0.03199407444000244,
+    "mantissa": "m6",
+    "mantissa_bits": 6,
+    "seed": 21
+  },
+  "m8_seed24": {
+    "parity": 0.9639,
+    "fashion": 0.6118,
+    "kl": 0.6434717864990235,
+    "mantissa": "m8",
+    "mantissa_bits": 8,
+    "seed": 24
+  },
+  "m8_seed2": {
+    "parity": 0.9646,
+    "fashion": 0.7081,
+    "kl": 0.24548345565795898,
+    "mantissa": "m8",
+    "mantissa_bits": 8,
+    "seed": 2
+  },
+  "m10_seed9": {
+    "parity": 0.9726,
+    "fashion": 0.6797,
+    "kl": 0.6479585906982422,
+    "mantissa": "m10",
+    "mantissa_bits": 10,
+    "seed": 9
+  },
+  "m9_seed12": {
+    "parity": 0.9691,
+    "fashion": 0.6056,
+    "kl": 0.703915412902832,
+    "mantissa": "m9",
+    "mantissa_bits": 9,
+    "seed": 12
+  },
+  "m10_seed18": {
+    "parity": 0.9706,
+    "fashion": 0.6944,
+    "kl": 0.4628727035522461,
+    "mantissa": "m10",
+    "mantissa_bits": 10,
+    "seed": 18
+  },
+  "m10_seed16": {
+    "parity": 0.9691,
+    "fashion": 0.6578,
+    "kl": 0.8249133819580078,
+    "mantissa": "m10",
+    "mantissa_bits": 10,
+    "seed": 16
+  },
+  "m10_seed15": {
+    "parity": 0.9703,
+    "fashion": 0.6338,
+    "kl": 0.9220019775390625,
+    "mantissa": "m10",
+    "mantissa_bits": 10,
+    "seed": 15
+  },
+  "m9_seed24": {
+    "parity": 0.9686,
+    "fashion": 0.5409,
+    "kl": 1.2552620147705078,
+    "mantissa": "m9",
+    "mantissa_bits": 9,
+    "seed": 24
+  },
+  "m9_seed18": {
+    "parity": 0.9695,
+    "fashion": 0.6694,
+    "kl": 0.5366284866333008,
+    "mantissa": "m9",
+    "mantissa_bits": 9,
+    "seed": 18
+  },
+  "m10_seed17": {
+    "parity": 0.9707,
+    "fashion": 0.6146,
+    "kl": 0.7172947128295899,
+    "mantissa": "m10",
+    "mantissa_bits": 10,
+    "seed": 17
+  },
+  "fp32_seed17": {
+    "parity": 0.9702,
+    "fashion": 0.5781,
+    "kl": 0.9512275024414063,
+    "mantissa": "fp32",
+    "mantissa_bits": 23,
+    "seed": 17
+  },
+  "m9_seed20": {
+    "parity": 0.9689,
+    "fashion": 0.527,
+    "kl": 1.3228979278564452,
+    "mantissa": "m9",
+    "mantissa_bits": 9,
+    "seed": 20
+  },
+  "m10_seed1": {
+    "parity": 0.971,
+    "fashion": 0.6465,
+    "kl": 0.7708454620361328,
+    "mantissa": "m10",
+    "mantissa_bits": 10,
+    "seed": 1
+  },
+  "m9_seed13": {
+    "parity": 0.9696,
+    "fashion": 0.5848,
+    "kl": 1.2024317626953125,
+    "mantissa": "m9",
+    "mantissa_bits": 9,
+    "seed": 13
+  },
+  "m8_seed29": {
+    "parity": 0.9656,
+    "fashion": 0.6627,
+    "kl": 0.6128818756103516,
+    "mantissa": "m8",
+    "mantissa_bits": 8,
+    "seed": 29
+  },
+  "m7_seed2": {
+    "parity": 0.9556,
+    "fashion": 0.7554,
+    "kl": 0.09681718254089355,
+    "mantissa": "m7",
+    "mantissa_bits": 7,
+    "seed": 2
+  },
+  "m9_seed26": {
+    "parity": 0.9687,
+    "fashion": 0.7458,
+    "kl": 0.38751828689575196,
+    "mantissa": "m9",
+    "mantissa_bits": 9,
+    "seed": 26
+  },
+  "m8_seed12": {
+    "parity": 0.9647,
+    "fashion": 0.724,
+    "kl": 0.29663631210327146,
+    "mantissa": "m8",
+    "mantissa_bits": 8,
+    "seed": 12
+  },
+  "m9_seed25": {
+    "parity": 0.9704,
+    "fashion": 0.6653,
+    "kl": 0.8151135482788086,
+    "mantissa": "m9",
+    "mantissa_bits": 9,
+    "seed": 25
+  },
+  "m7_seed14": {
+    "parity": 0.9544,
+    "fashion": 0.7549,
+    "kl": 0.11304281158447266,
+    "mantissa": "m7",
+    "mantissa_bits": 7,
+    "seed": 14
+  },
+  "m8_seed16": {
+    "parity": 0.9643,
+    "fashion": 0.6652,
+    "kl": 0.41472356262207033,
+    "mantissa": "m8",
+    "mantissa_bits": 8,
+    "seed": 16
+  },
+  "m8_seed20": {
+    "parity": 0.9644,
+    "fashion": 0.6073,
+    "kl": 0.67242529296875,
+    "mantissa": "m8",
+    "mantissa_bits": 8,
+    "seed": 20
+  },
+  "m7_seed22": {
+    "parity": 0.954,
+    "fashion": 0.7241,
+    "kl": 0.15388025588989257,
+    "mantissa": "m7",
+    "mantissa_bits": 7,
+    "seed": 22
+  },
+  "m7_seed18": {
+    "parity": 0.9548,
+    "fashion": 0.7611,
+    "kl": 0.10944501228332519,
+    "mantissa": "m7",
+    "mantissa_bits": 7,
+    "seed": 18
+  },
+  "m9_seed2": {
+    "parity": 0.9692,
+    "fashion": 0.6152,
+    "kl": 0.5887765106201172,
+    "mantissa": "m9",
+    "mantissa_bits": 9,
+    "seed": 2
+  },
+  "fp32_seed15": {
+    "parity": 0.9706,
+    "fashion": 0.6646,
+    "kl": 0.786104638671875,
+    "mantissa": "fp32",
+    "mantissa_bits": 23,
+    "seed": 15
+  },
+  "m9_seed0": {
+    "parity": 0.9701,
+    "fashion": 0.5338,
+    "kl": 1.3619851440429687,
+    "mantissa": "m9",
+    "mantissa_bits": 9,
+    "seed": 0
+  },
+  "m9_seed19": {
+    "parity": 0.9699,
+    "fashion": 0.688,
+    "kl": 0.6001889862060547,
+    "mantissa": "m9",
+    "mantissa_bits": 9,
+    "seed": 19
+  },
+  "m10_seed13": {
+    "parity": 0.9714,
+    "fashion": 0.556,
+    "kl": 1.4100866516113282,
+    "mantissa": "m10",
+    "mantissa_bits": 10,
+    "seed": 13
+  },
+  "fp32_seed26": {
+    "parity": 0.9708,
+    "fashion": 0.7037,
+    "kl": 0.495121647644043,
+    "mantissa": "fp32",
+    "mantissa_bits": 23,
+    "seed": 26
+  },
+  "fp32_seed29": {
+    "parity": 0.9715,
+    "fashion": 0.6078,
+    "kl": 1.0122577514648436,
+    "mantissa": "fp32",
+    "mantissa_bits": 23,
+    "seed": 29
+  },
+  "fp32_seed5": {
+    "parity": 0.9724,
+    "fashion": 0.689,
+    "kl": 0.6376678985595703,
+    "mantissa": "fp32",
+    "mantissa_bits": 23,
+    "seed": 5
+  },
+  "fp32_seed27": {
+    "parity": 0.9726,
+    "fashion": 0.6506,
+    "kl": 0.9775330749511719,
+    "mantissa": "fp32",
+    "mantissa_bits": 23,
+    "seed": 27
+  },
+  "fp32_seed21": {
+    "parity": 0.9736,
+    "fashion": 0.5561,
+    "kl": 1.1050493957519532,
+    "mantissa": "fp32",
+    "mantissa_bits": 23,
+    "seed": 21
+  },
+  "m9_seed29": {
+    "parity": 0.9696,
+    "fashion": 0.6291,
+    "kl": 0.8559988159179688,
+    "mantissa": "m9",
+    "mantissa_bits": 9,
+    "seed": 29
+  },
+  "fp32_seed16": {
+    "parity": 0.9696,
+    "fashion": 0.6261,
+    "kl": 1.0492685180664063,
+    "mantissa": "fp32",
+    "mantissa_bits": 23,
+    "seed": 16
+  },
+  "fp32_seed23": {
+    "parity": 0.9719,
+    "fashion": 0.6204,
+    "kl": 1.0979128540039063,
+    "mantissa": "fp32",
+    "mantissa_bits": 23,
+    "seed": 23
+  },
+  "m10_seed6": {
+    "parity": 0.9713,
+    "fashion": 0.5624,
+    "kl": 1.1746190734863282,
+    "mantissa": "m10",
+    "mantissa_bits": 10,
+    "seed": 6
+  },
+  "m10_seed21": {
+    "parity": 0.9709,
+    "fashion": 0.6567,
+    "kl": 0.5828164138793945,
+    "mantissa": "m10",
+    "mantissa_bits": 10,
+    "seed": 21
+  },
+  "fp32_seed28": {
+    "parity": 0.9715,
+    "fashion": 0.6968,
+    "kl": 0.830325732421875,
+    "mantissa": "fp32",
+    "mantissa_bits": 23,
+    "seed": 28
+  },
+  "fp32_seed12": {
+    "parity": 0.9724,
+    "fashion": 0.5561,
+    "kl": 1.0696429870605468,
+    "mantissa": "fp32",
+    "mantissa_bits": 23,
+    "seed": 12
+  },
+  "m9_seed21": {
+    "parity": 0.9706,
+    "fashion": 0.586,
+    "kl": 0.7133950317382812,
+    "mantissa": "m9",
+    "mantissa_bits": 9,
+    "seed": 21
+  },
+  "fp32_seed14": {
+    "parity": 0.9721,
+    "fashion": 0.5615,
+    "kl": 1.2200031860351563,
+    "mantissa": "fp32",
+    "mantissa_bits": 23,
+    "seed": 14
+  },
+  "m9_seed16": {
+    "parity": 0.9689,
+    "fashion": 0.6675,
+    "kl": 0.6586484237670899,
+    "mantissa": "m9",
+    "mantissa_bits": 9,
+    "seed": 16
+  },
+  "m10_seed19": {
+    "parity": 0.9711,
+    "fashion": 0.6438,
+    "kl": 0.7640685150146485,
+    "mantissa": "m10",
+    "mantissa_bits": 10,
+    "seed": 19
+  },
+  "fp32_seed22": {
+    "parity": 0.9716,
+    "fashion": 0.5896,
+    "kl": 0.941345687866211,
+    "mantissa": "fp32",
+    "mantissa_bits": 23,
+    "seed": 22
+  },
+  "fp32_seed20": {
+    "parity": 0.9721,
+    "fashion": 0.5426,
+    "kl": 1.67811962890625,
+    "mantissa": "fp32",
+    "mantissa_bits": 23,
+    "seed": 20
+  },
+  "m9_seed17": {
+    "parity": 0.9694,
+    "fashion": 0.6359,
+    "kl": 0.6763211029052735,
+    "mantissa": "m9",
+    "mantissa_bits": 9,
+    "seed": 17
+  },
+  "fp32_seed9": {
+    "parity": 0.973,
+    "fashion": 0.6752,
+    "kl": 0.7903494277954102,
+    "mantissa": "fp32",
+    "mantissa_bits": 23,
+    "seed": 9
+  },
+  "m10_seed5": {
+    "parity": 0.9717,
+    "fashion": 0.657,
+    "kl": 0.7562093200683594,
+    "mantissa": "m10",
+    "mantissa_bits": 10,
+    "seed": 5
+  },
+  "fp32_seed18": {
+    "parity": 0.9717,
+    "fashion": 0.6631,
+    "kl": 0.5761256439208985,
+    "mantissa": "fp32",
+    "mantissa_bits": 23,
+    "seed": 18
+  },
+  "m10_seed25": {
+    "parity": 0.9716,
+    "fashion": 0.6114,
+    "kl": 1.2184139190673828,
+    "mantissa": "m10",
+    "mantissa_bits": 10,
+    "seed": 25
+  },
+  "m10_seed29": {
+    "parity": 0.9716,
+    "fashion": 0.5783,
+    "kl": 1.089215673828125,
+    "mantissa": "m10",
+    "mantissa_bits": 10,
+    "seed": 29
+  },
+  "m10_seed3": {
+    "parity": 0.9713,
+    "fashion": 0.6865,
+    "kl": 0.6283794158935547,
+    "mantissa": "m10",
+    "mantissa_bits": 10,
+    "seed": 3
+  },
+  "m10_seed28": {
+    "parity": 0.971,
+    "fashion": 0.7294,
+    "kl": 0.5419137496948242,
+    "mantissa": "m10",
+    "mantissa_bits": 10,
+    "seed": 28
+  },
+  "m9_seed27": {
+    "parity": 0.9706,
+    "fashion": 0.6521,
+    "kl": 0.7217820983886719,
+    "mantissa": "m9",
+    "mantissa_bits": 9,
+    "seed": 27
+  },
+  "m9_seed5": {
+    "parity": 0.97,
+    "fashion": 0.7062,
+    "kl": 0.4781763671875,
+    "mantissa": "m9",
+    "mantissa_bits": 9,
+    "seed": 5
+  },
+  "m9_seed10": {
+    "parity": 0.9703,
+    "fashion": 0.5348,
+    "kl": 1.481083432006836,
+    "mantissa": "m9",
+    "mantissa_bits": 9,
+    "seed": 10
+  },
+  "fp32_seed0": {
+    "parity": 0.9725,
+    "fashion": 0.5124,
+    "kl": 1.800668572998047,
+    "mantissa": "fp32",
+    "mantissa_bits": 23,
+    "seed": 0
+  },
+  "m9_seed23": {
+    "parity": 0.9698,
+    "fashion": 0.6701,
+    "kl": 0.5981749877929687,
+    "mantissa": "m9",
+    "mantissa_bits": 9,
+    "seed": 23
+  },
+  "fp32_seed11": {
+    "parity": 0.9727,
+    "fashion": 0.5326,
+    "kl": 1.443210546875,
+    "mantissa": "fp32",
+    "mantissa_bits": 23,
+    "seed": 11
+  },
+  "fp32_seed6": {
+    "parity": 0.9718,
+    "fashion": 0.5257,
+    "kl": 1.4020400726318358,
+    "mantissa": "fp32",
+    "mantissa_bits": 23,
+    "seed": 6
+  },
+  "m10_seed24": {
+    "parity": 0.9711,
+    "fashion": 0.5871,
+    "kl": 0.8573850555419922,
+    "mantissa": "m10",
+    "mantissa_bits": 10,
+    "seed": 24
+  },
+  "m9_seed4": {
+    "parity": 0.9695,
+    "fashion": 0.7046,
+    "kl": 0.43897107696533205,
+    "mantissa": "m9",
+    "mantissa_bits": 9,
+    "seed": 4
+  },
+  "m10_seed12": {
+    "parity": 0.9712,
+    "fashion": 0.6363,
+    "kl": 0.7956750122070313,
+    "mantissa": "m10",
+    "mantissa_bits": 10,
+    "seed": 12
+  },
+  "m10_seed7": {
+    "parity": 0.9711,
+    "fashion": 0.5538,
+    "kl": 1.1388859741210937,
+    "mantissa": "m10",
+    "mantissa_bits": 10,
+    "seed": 7
+  },
+  "m10_seed22": {
+    "parity": 0.9698,
+    "fashion": 0.5637,
+    "kl": 1.216020458984375,
+    "mantissa": "m10",
+    "mantissa_bits": 10,
+    "seed": 22
+  },
+  "m9_seed22": {
+    "parity": 0.9687,
+    "fashion": 0.5609,
+    "kl": 1.0032163024902343,
+    "mantissa": "m9",
+    "mantissa_bits": 9,
+    "seed": 22
+  },
+  "m9_seed11": {
+    "parity": 0.97,
+    "fashion": 0.5718,
+    "kl": 1.0283277740478516,
+    "mantissa": "m9",
+    "mantissa_bits": 9,
+    "seed": 11
+  },
+  "m10_seed20": {
+    "parity": 0.971,
+    "fashion": 0.5451,
+    "kl": 1.4144747344970703,
+    "mantissa": "m10",
+    "mantissa_bits": 10,
+    "seed": 20
+  },
+  "fp32_seed19": {
+    "parity": 0.972,
+    "fashion": 0.6378,
+    "kl": 0.8061874267578125,
+    "mantissa": "fp32",
+    "mantissa_bits": 23,
+    "seed": 19
+  },
+  "fp32_seed2": {
+    "parity": 0.9715,
+    "fashion": 0.6464,
+    "kl": 0.7208610397338867,
+    "mantissa": "fp32",
+    "mantissa_bits": 23,
+    "seed": 2
+  },
+  "fp32_seed10": {
+    "parity": 0.9724,
+    "fashion": 0.5265,
+    "kl": 1.5841248291015626,
+    "mantissa": "fp32",
+    "mantissa_bits": 23,
+    "seed": 10
+  },
+  "m10_seed4": {
+    "parity": 0.9715,
+    "fashion": 0.6695,
+    "kl": 0.7015380279541016,
+    "mantissa": "m10",
+    "mantissa_bits": 10,
+    "seed": 4
+  },
+  "m10_seed8": {
+    "parity": 0.9705,
+    "fashion": 0.6757,
+    "kl": 0.8562194961547852,
+    "mantissa": "m10",
+    "mantissa_bits": 10,
+    "seed": 8
+  },
+  "fp32_seed25": {
+    "parity": 0.9719,
+    "fashion": 0.6567,
+    "kl": 1.031332064819336,
+    "mantissa": "fp32",
+    "mantissa_bits": 23,
+    "seed": 25
+  },
+  "fp32_seed24": {
+    "parity": 0.9709,
+    "fashion": 0.5447,
+    "kl": 1.1382676177978515,
+    "mantissa": "fp32",
+    "mantissa_bits": 23,
+    "seed": 24
+  }
+}

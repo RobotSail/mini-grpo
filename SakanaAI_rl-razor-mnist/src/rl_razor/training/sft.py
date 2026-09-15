@@ -15,7 +15,7 @@ from rl_razor.data import get_finetuning_data, create_dataloader
 from rl_razor.training.pretrain import get_scheduler
 from rl_razor.training.oracle import compute_oracle_loss
 from rl_razor.metrics import parity_accuracy, forward_kl
-from rl_razor.utils import set_seed, get_device, checkpoint_step_set, snap_to_lattice, save_weights, quantize_update_from_saved
+from rl_razor.utils import set_seed, get_device, checkpoint_step_set, snap_to_lattice, save_weights, quantize_update_from_saved, apply_magnitude_threshold
 
 
 def sft_finetune(
@@ -37,6 +37,7 @@ def sft_finetune(
     fashion_loader: Optional[DataLoader] = None,
     verbose: bool = True,
     mantissa_bits: int = 0,
+    magnitude_threshold: float = 0.0,
 ) -> Dict[str, Any]:
     """Fine-tune model on ParityMNIST using supervised learning.
 
@@ -138,7 +139,8 @@ def sft_finetune(
                 loss = F.cross_entropy(logits, y)
 
             loss.backward()
-            if mantissa_bits > 0 and mantissa_bits < 7:
+            need_saved = (mantissa_bits > 0 and mantissa_bits < 7) or magnitude_threshold > 0
+            if need_saved:
                 w_old = save_weights(model)
             optimizer.step()
             if mantissa_bits > 0:
@@ -146,6 +148,8 @@ def sft_finetune(
                     quantize_update_from_saved(model, w_old, mantissa_bits)
                 else:
                     snap_to_lattice(model, mantissa_bits)
+            if magnitude_threshold > 0:
+                apply_magnitude_threshold(model, w_old, magnitude_threshold)
 
             if scheduler is not None:
                 scheduler.step()

@@ -114,6 +114,9 @@ def parse_args():
     )
 
     # Skip expensive metrics
+    parser.add_argument("--magnitude-threshold", type=float, default=0.0,
+        help="Drop updates with |delta| < threshold after each step (0=disabled)")
+
     parser.add_argument("--skip-alt-metrics", action="store_true",
         help="Skip Section 6 alternative metrics (Fisher, CKNNA, etc.) for faster runs")
 
@@ -198,6 +201,7 @@ def main():
             fashion_loader=fashion_loader,
             verbose=args.verbose,
             mantissa_bits=args.mantissa_bits,
+            magnitude_threshold=args.magnitude_threshold,
         )
     elif args.method in ["grpo", "grpo_kl"]:
         kl_coef = args.kl_coef if args.method == "grpo_kl" else 0.0
@@ -223,6 +227,7 @@ def main():
             fashion_loader=fashion_loader,
             verbose=args.verbose,
             mantissa_bits=args.mantissa_bits,
+            magnitude_threshold=args.magnitude_threshold,
         )
     else:
         raise ValueError(f"Unknown method: {args.method}")

@@ -1,26 +1,22 @@
 #!/bin/bash
-
 set -eo pipefail
 
 export WANDB_API_KEY="${WANDB_API_KEY:?Set WANDB_API_KEY}"
+export WANDB_ENTITY=olegsilkin
 
-CHECKPOINT_PREFIX="/mnt/nvme2n1/checkpoints/bf16-master-weights-500steps"
 DATA_PATH="adamw-vs-muon-grpo-v1-artifacts/generated-data-v2/gsm8k_grpo_train.jsonl"
 VALIDATION_PATH="adamw-vs-muon-grpo-v1-artifacts/generated-data-v2/gsm8k_grpo_test.jsonl"
 MODEL="Qwen/Qwen2-1.5B-Instruct"
 
-SEED=2025
-MAX_STEPS=500
-EVAL_EVERY=15
-
 echo "========================================="
-echo "GRPO 500 steps: AdamW + bf16 master weights (seed=${SEED})"
+echo "GRPO AdamW | bf16 master weights | 30M tokens | lr=1e-6"
 echo "========================================="
 python cli.py distributed-grpo-train \
     --data-path "${DATA_PATH}" \
     --model "${MODEL}" \
-    --output-dir "${CHECKPOINT_PREFIX}/grpo-adamw-bf16master" \
-    --max-steps ${MAX_STEPS} \
+    --output-dir "/mnt/nvme4n1/checkpoints/grpo-adamw-bf16master-30m" \
+    --max-tokens 30000000 \
+    --save-every-n-tokens 500000 \
     --group-size 8 \
     --batch-size 8 \
     --inner-batch-size 64 \
@@ -33,16 +29,15 @@ python cli.py distributed-grpo-train \
     --lr 1e-6 \
     --precision mixed \
     --bf16-master-weights \
-    --save-every-n-steps ${EVAL_EVERY} \
-    --eval-every-n-steps ${EVAL_EVERY} \
-    --seed ${SEED} \
+    --seed 2025 \
     --train-gpus "0,1,2,3" \
     --vllm-gpus "4,5,6,7" \
     --wandb \
-    --wandb-project gsm8k-comparison \
-    --wandb-run "bf16-master_adamw" \
+    --wandb-entity olegsilkin \
+    --wandb-project gsm8k-precision-sweep \
+    --wandb-run "bf16-master_adamw-30m" \
     --validation-path "${VALIDATION_PATH}"
 
 echo "========================================="
-echo "bf16 master weights experiment completed!"
+echo "bf16 master weights 30M run completed!"
 echo "========================================="

@@ -36,8 +36,12 @@ from torch.distributed.fsdp import (
 from torch.distributed.algorithms._checkpoint.checkpoint_wrapper import (
     checkpoint_wrapper as ptd_checkpoint_wrapper,
 )
+import torch.distributed.checkpoint as dcp
 from torch.distributed.checkpoint.state_dict import (
     get_model_state_dict,
+    set_model_state_dict,
+    get_optimizer_state_dict,
+    set_optimizer_state_dict,
     StateDictOptions,
 )
 from torch.nn.utils.clip_grad import clip_grad_norm_
@@ -271,6 +275,8 @@ class DistributedGRPOTrainer:
         lattice_mantissa_bits: int = 0,  # 0 = disabled; e.g. 10 = snap weights to 10-bit mantissa lattice
         # BF16 master weights: store weights as bf16, optimizer internals fp32
         bf16_master_weights: bool = False,
+        # Gradient mask: path to .pt file with per-param boolean masks (lottery ticket experiment)
+        gradient_mask_path: str = None,
         # Eval frequency
         eval_every_n_steps: int = 0,
         # ICL
@@ -278,6 +284,8 @@ class DistributedGRPOTrainer:
         # Task
         reward_fn=None,
         task: str = "gsm8k",
+        # Resume
+        resume_from: str = None,
     ):
         utils.set_determinism(seed)
 
@@ -331,6 +339,7 @@ class DistributedGRPOTrainer:
         self.bf16_regularization = bf16_regularization
         self.lattice_mantissa_bits = lattice_mantissa_bits
         self.bf16_master_weights = bf16_master_weights
+        self.gradient_mask_path = gradient_mask_path
         self.num_icl = num_icl
         self.reward_fn = reward_fn or get_reward_fn(task)
 
@@ -429,6 +438,66 @@ class DistributedGRPOTrainer:
                 shadow_label = "fp32" if self._shadow_dtype == torch.float32 else "bf16"
                 log_rank_0("initialized %s shadow weights (%d params)", shadow_label, len(self._shadow_weights))
 
+        # ── Gradient mask (lottery ticket experiment) ──
+        self._gradient_mask = {}
+        if gradient_mask_path:
+            from torch.distributed.tensor import DTensor
+            mask_data = torch.load(gradient_mask_path, map_location="cpu", weights_only=True)
+            full_masks = mask_data["masks"]
+            mask_sparsity = mask_data.get("sparsity", 0)
+            mask_type = mask_data.get("mask_type", "unknown")
+
+            total_mask_params = 0
+            total_mask_nonzero = 0
+            mismatches = []
+
+            # Debug: log parameter names vs mask keys to find mismatches
+            param_names = [n for n, _ in self.policy.named_parameters()]
+            mask_keys = set(full_masks.keys())
+            matched = set(param_names) & mask_keys
+            unmatched_params = set(param_names) - mask_keys
+            if len(matched) < len(mask_keys) // 2:
+                log_rank_0(
+                    "WARNING: low mask coverage (%d/%d params matched). "
+                    "Param example: %s, Mask example: %s",
+                    len(matched), len(param_names),
+                    param_names[0] if param_names else "?",
+                    list(mask_keys)[0] if mask_keys else "?",
+                )
+
+            for name, param in self.policy.named_parameters():
+                if name in full_masks:
+                    full_mask = full_masks[name].float()
+                    if isinstance(param.data, DTensor):
+                        # FSDP2 shards along dim 0
+                        local_shape = param.data._local_tensor.shape
+                        shard_size = local_shape[0]
+                        shard_start = self.rank * shard_size
+                        local_mask = full_mask[shard_start:shard_start + shard_size]
+                        # Verify shape matches
+                        if local_mask.shape != local_shape:
+                            mismatches.append(f"{name}: mask_shard={list(local_mask.shape)} vs param={list(local_shape)}")
+                            continue
+                        self._gradient_mask[name] = local_mask.to(self.device)
+                        total_mask_params += local_mask.numel()
+                        total_mask_nonzero += (local_mask > 0).sum().item()
+                    else:
+                        self._gradient_mask[name] = full_mask.to(self.device)
+                        total_mask_params += full_mask.numel()
+                        total_mask_nonzero += (full_mask > 0).sum().item()
+
+            if mismatches:
+                for m in mismatches:
+                    log_rank_0("WARNING: mask shape mismatch: %s", m)
+
+            local_density = total_mask_nonzero / max(total_mask_params, 1)
+            log_rank_0(
+                "gradient mask loaded: %d params masked, mask_sparsity=%.4f, "
+                "local_density=%.6f (%d/%d nonzero), type=%s",
+                len(self._gradient_mask), mask_sparsity, local_density,
+                total_mask_nonzero, total_mask_params, mask_type,
+            )
+
         # ── Wandb (rank 0 only) ──
         if use_wandb and self.rank == 0:
             if not WANDB_AVAILABLE:
@@ -458,6 +527,7 @@ class DistributedGRPOTrainer:
                         "optimizer": optimizer_type,
                         "world_size": self.world_size,
                         "max_tokens_per_gpu": max_tokens_per_gpu,
+                        "gradient_mask": gradient_mask_path or "none",
                     },
                     entity=wandb_entity,
                 )
@@ -467,6 +537,19 @@ class DistributedGRPOTrainer:
         self._vllm_served_model_name = "policy"
         self._vllm_checkpoint_dir = vllm_checkpoint_dir
         log_rank_0("using external vLLM at %s", vllm_url)
+
+        # ── Resume from checkpoint ──
+        self._is_resumed = False
+        if resume_from:
+            resumable_dir = os.path.join(resume_from, "_resumable")
+            if os.path.isdir(resumable_dir):
+                self._load_resumable_state(resume_from)
+                self._is_resumed = True
+            else:
+                log_rank_0(
+                    "WARNING: --resume-from specified but no _resumable/ in %s. "
+                    "Weights loaded from model_name only.", resume_from,
+                )
 
     @property
     def train_iterator(self):
@@ -507,6 +590,9 @@ class DistributedGRPOTrainer:
 
         # ── Policy model ──
         log_rank_0("loading policy model (%s, flash_attention_2, precision=%s)...", load_dtype, self.precision)
+        if self.precision == "bf16" and not self.bf16_master_weights:
+            assert load_dtype == torch.bfloat16, f"bf16 precision requires bfloat16 load, got {load_dtype}"
+            assert mp_policy is None, "bf16 precision must not use MixedPrecisionPolicy"
         policy = AutoModelForCausalLM.from_pretrained(
             model_name,
             dtype=load_dtype,
@@ -531,6 +617,14 @@ class DistributedGRPOTrainer:
             fully_shard(block, **fsdp_kwargs, reshard_after_forward=reshard)
         fully_shard(policy, **fsdp_kwargs, reshard_after_forward=False)
         log_rank_0("policy model loaded and FSDP2 wrapped")
+
+        if self.precision == "bf16":
+            # Verify no fp32 master weights exist
+            for name, p in policy.named_parameters():
+                assert p.dtype == torch.bfloat16, (
+                    f"bf16 precision but param {name} is {p.dtype}"
+                )
+            log_rank_0("VERIFIED: all policy parameters are bfloat16 (no fp32 master weights)")
 
         # ── Reference model (frozen) ──
         offload_str = ", CPU offload" if ref_cpu_offload else ""
@@ -762,7 +856,7 @@ class DistributedGRPOTrainer:
     async def _vllm_generate_async(self, prompts):
         """Rank 0: send prompts to vLLM and collect results."""
         completions_url = f"{self._vllm_base_url}/v1/completions"
-        timeout = httpx.Timeout(timeout=1200.0, connect=10.0)
+        timeout = httpx.Timeout(timeout=3600.0, connect=30.0)
         semaphore = asyncio.Semaphore(32)
 
         async def generate_for_prompt(prompt_data):
@@ -1411,6 +1505,17 @@ class DistributedGRPOTrainer:
 
                 del microbatches
 
+                # Apply gradient mask (lottery ticket experiment)
+                if self._gradient_mask:
+                    from torch.distributed.tensor import DTensor
+                    with torch.no_grad():
+                        for name, param in self.policy.named_parameters():
+                            if param.grad is not None and name in self._gradient_mask:
+                                if isinstance(param.grad, DTensor):
+                                    param.grad._local_tensor.mul_(self._gradient_mask[name])
+                                else:
+                                    param.grad.mul_(self._gradient_mask[name])
+
                 # Gradient clipping and optimizer step
                 gradnorm = clip_grad_norm_(self.policy.parameters(), self.gradient_clip)
 
@@ -1876,6 +1981,124 @@ class DistributedGRPOTrainer:
         dist.barrier()
         log_rank_0("checkpoint saved")
 
+    # ── Resumable State ─────────────────────────────────────────────────
+
+    def _save_resumable_state(self):
+        """Save full training state to output_dir/_resumable/ (single rolling checkpoint)."""
+        if not self.output_dir:
+            return
+        resumable_dir = os.path.join(self.output_dir, "_resumable")
+        if self.rank == 0:
+            os.makedirs(resumable_dir, exist_ok=True)
+        dist.barrier()
+
+        sharded_opts = StateDictOptions(full_state_dict=False)
+        model_sd = get_model_state_dict(self.policy, options=sharded_opts)
+        optim_sd = get_optimizer_state_dict(self.policy, self.optimizer, options=sharded_opts)
+
+        dcp_state = {"model": model_sd, "optimizer": optim_sd}
+        if self._shadow_weights:
+            dcp_state["shadow_weights"] = dict(self._shadow_weights)
+
+        log_rank_0("saving resumable state to %s...", resumable_dir)
+        dcp.save(dcp_state, checkpoint_id=resumable_dir)
+
+        rng_state = {
+            "python": random.getstate(),
+            "torch": torch.get_rng_state(),
+            "cuda": torch.cuda.get_rng_state(self.device),
+        }
+        torch.save(rng_state, os.path.join(resumable_dir, f"rng_state_rank{self.rank}.pt"))
+
+        if self.rank == 0:
+            train_state = {
+                "tokens_seen": self.stats._tokens_seen,
+                "last_checkpoint_tokens": self.stats._last_checkpoint_tokens,
+                "last_checkpoint_steps": self.stats._last_checkpoint_steps,
+                "last_eval_step": self.stats._last_eval_step,
+                "optim_steps": self.stats._optim_steps,
+                "iteration": self.stats._iteration,
+                "best_val_accuracy": self._best_val_accuracy,
+                "precision": self.precision,
+                "bf16_regularization": self.bf16_regularization,
+                "lattice_mantissa_bits": self.lattice_mantissa_bits,
+                "bf16_master_weights": self.bf16_master_weights,
+                "world_size": self.world_size,
+            }
+            with open(os.path.join(resumable_dir, "train_state.json"), "w") as f:
+                json.dump(train_state, f, indent=2)
+
+        dist.barrier()
+        log_rank_0("resumable state saved")
+
+    def _load_resumable_state(self, checkpoint_path: str):
+        """Load full training state from a resumable checkpoint."""
+        resumable_dir = os.path.join(checkpoint_path, "_resumable")
+        if not os.path.isdir(resumable_dir):
+            raise FileNotFoundError(
+                f"No _resumable/ directory in {checkpoint_path}. "
+                "Checkpoint was saved without resumable state."
+            )
+
+        with open(os.path.join(resumable_dir, "train_state.json")) as f:
+            saved = json.load(f)
+
+        for key in ("precision", "bf16_regularization", "bf16_master_weights"):
+            if saved.get(key) != getattr(self, key):
+                raise ValueError(
+                    f"Config mismatch on resume: {key}={saved[key]} in checkpoint, "
+                    f"{key}={getattr(self, key)} in current config"
+                )
+
+        saved_ws = saved.get("world_size", self.world_size)
+        if saved_ws != self.world_size:
+            log_rank_0(
+                "WARNING: checkpoint world_size=%d, current=%d. DCP will reshard.",
+                saved_ws, self.world_size,
+            )
+
+        sharded_opts = StateDictOptions(full_state_dict=False)
+        model_sd = get_model_state_dict(self.policy, options=sharded_opts)
+        optim_sd = get_optimizer_state_dict(self.policy, self.optimizer, options=sharded_opts)
+
+        dcp_state = {"model": model_sd, "optimizer": optim_sd}
+        if self._shadow_weights:
+            dcp_state["shadow_weights"] = dict(self._shadow_weights)
+
+        log_rank_0("loading resumable state from %s...", resumable_dir)
+        dcp.load(dcp_state, checkpoint_id=resumable_dir)
+
+        set_model_state_dict(self.policy, dcp_state["model"], options=sharded_opts)
+        set_optimizer_state_dict(
+            self.policy, self.optimizer, dcp_state["optimizer"], options=sharded_opts
+        )
+        if self._shadow_weights and "shadow_weights" in dcp_state:
+            self._shadow_weights = dcp_state["shadow_weights"]
+
+        rng_path = os.path.join(resumable_dir, f"rng_state_rank{self.rank}.pt")
+        if os.path.exists(rng_path):
+            rng = torch.load(rng_path, weights_only=False)
+            random.setstate(rng["python"])
+            torch.set_rng_state(rng["torch"])
+            torch.cuda.set_rng_state(rng["cuda"], self.device)
+        else:
+            log_rank_0("WARNING: no RNG state for rank %d, skipping", self.rank)
+
+        self.stats._tokens_seen = saved["tokens_seen"]
+        self.stats._last_checkpoint_tokens = saved["last_checkpoint_tokens"]
+        self.stats._last_checkpoint_steps = saved["last_checkpoint_steps"]
+        self.stats._last_eval_step = saved["last_eval_step"]
+        self.stats._optim_steps = saved["optim_steps"]
+        self.stats._iteration = saved["iteration"]
+        self._best_val_accuracy = saved.get("best_val_accuracy", -1.0)
+
+        dist.barrier()
+        log_rank_0(
+            "resumed from %s: step=%d, tokens=%d, iteration=%d",
+            checkpoint_path, self.stats.optim_steps,
+            self.stats.tokens_seen, self.stats.iteration,
+        )
+
     # ── Main Training Loop ─────────────────────────────────────────────
 
     def train(self):
@@ -1893,8 +2116,8 @@ class DistributedGRPOTrainer:
         )
         self.policy.eval()
 
-        # Save initial checkpoint
-        if self.output_dir:
+        # Save initial checkpoint (skip on resume)
+        if self.output_dir and not self._is_resumed:
             init_path = os.path.join(self.output_dir, "checkpoint-initial")
             log_rank_0("saving initial checkpoint...")
             state_dict = self._gather_full_state_dict()
@@ -1913,6 +2136,17 @@ class DistributedGRPOTrainer:
                 self.tokenizer.save_pretrained(init_path)
             dist.barrier()
             log_rank_0("saved initial checkpoint: %s", init_path)
+
+        if self._is_resumed:
+            items_to_skip = self.stats.iteration * self.batch_size
+            log_rank_0("fast-forwarding dataset iterator by %d items...", items_to_skip)
+            for _ in range(items_to_skip):
+                next(self.train_iterator)
+            self._sync_weights_to_vllm()
+            log_rank_0(
+                "resume complete, continuing from step %d (%d tokens)",
+                self.stats.optim_steps, self.stats.tokens_seen,
+            )
 
         while not self.stats.completed():
             self.stats.advance_iteration()
@@ -1987,6 +2221,7 @@ class DistributedGRPOTrainer:
                 if should_save_ckpt:
                     t0 = time.perf_counter()
                     self._save_checkpoint(best_only=self.overwrite_best_ckpt)
+                    self._save_resumable_state()
                     t_ckpt_ms = (time.perf_counter() - t0) * 1000
                     log_rank_0("timing: checkpoint_save=%.0fms", t_ckpt_ms)
                     if self.use_wandb and WANDB_AVAILABLE and self.rank == 0:
@@ -2011,6 +2246,7 @@ class DistributedGRPOTrainer:
         )
 
         self._save_checkpoint()
+        self._save_resumable_state()
 
         if self.use_wandb and WANDB_AVAILABLE and self.rank == 0:
             wandb.finish()

@@ -1,0 +1,5282 @@
+{
+  "thresh_5.01e-10_seed26": {
+    "parity": 0.9739,
+    "fashion": 0.4418,
+    "kl": 2.908809387207031,
+    "threshold": 5.012374302376282e-10,
+    "mode": "threshold",
+    "seed": 26
+  },
+  "thresh_2.33e-10_seed18": {
+    "parity": 0.9767,
+    "fashion": 0.4262,
+    "kl": 2.884737658691406,
+    "threshold": 2.3300000000000044e-10,
+    "mode": "threshold",
+    "seed": 18
+  },
+  "thresh_2.33e-10_seed16": {
+    "parity": 0.978,
+    "fashion": 0.4703,
+    "kl": 2.497045880126953,
+    "threshold": 2.3300000000000044e-10,
+    "mode": "threshold",
+    "seed": 16
+  },
+  "thresh_2.32e-09_seed17": {
+    "parity": 0.9723,
+    "fashion": 0.4991,
+    "kl": 2.09810859375,
+    "threshold": 2.3196296012710656e-09,
+    "mode": "threshold",
+    "seed": 17
+  },
+  "thresh_2.32e-09_seed11": {
+    "parity": 0.9769,
+    "fashion": 0.38,
+    "kl": 2.7401073974609376,
+    "threshold": 2.3196296012710656e-09,
+    "mode": "threshold",
+    "seed": 11
+  },
+  "thresh_1.08e-09_seed23": {
+    "parity": 0.9746,
+    "fashion": 0.4362,
+    "kl": 3.207465679931641,
+    "threshold": 1.0782788045975136e-09,
+    "mode": "threshold",
+    "seed": 23
+  },
+  "thresh_1.08e-09_seed5": {
+    "parity": 0.9743,
+    "fashion": 0.4779,
+    "kl": 2.84629345703125,
+    "threshold": 1.0782788045975136e-09,
+    "mode": "threshold",
+    "seed": 5
+  },
+  "thresh_2.33e-10_seed4": {
+    "parity": 0.9754,
+    "fashion": 0.3973,
+    "kl": 2.8329109497070313,
+    "threshold": 2.3300000000000044e-10,
+    "mode": "threshold",
+    "seed": 4
+  },
+  "thresh_2.32e-09_seed3": {
+    "parity": 0.9751,
+    "fashion": 0.5094,
+    "kl": 2.5106558349609376,
+    "threshold": 2.3196296012710656e-09,
+    "mode": "threshold",
+    "seed": 3
+  },
+  "thresh_5.01e-10_seed17": {
+    "parity": 0.9723,
+    "fashion": 0.4991,
+    "kl": 2.0981088989257812,
+    "threshold": 5.012374302376282e-10,
+    "mode": "threshold",
+    "seed": 17
+  },
+  "thresh_1.08e-09_seed22": {
+    "parity": 0.9761,
+    "fashion": 0.5372,
+    "kl": 1.8967064636230468,
+    "threshold": 1.0782788045975136e-09,
+    "mode": "threshold",
+    "seed": 22
+  },
+  "thresh_2.32e-09_seed7": {
+    "parity": 0.9781,
+    "fashion": 0.5337,
+    "kl": 1.9089902465820312,
+    "threshold": 2.3196296012710656e-09,
+    "mode": "threshold",
+    "seed": 7
+  },
+  "thresh_1.08e-09_seed10": {
+    "parity": 0.9744,
+    "fashion": 0.4466,
+    "kl": 2.562314044189453,
+    "threshold": 1.0782788045975136e-09,
+    "mode": "threshold",
+    "seed": 10
+  },
+  "thresh_5.01e-10_seed12": {
+    "parity": 0.9751,
+    "fashion": 0.3565,
+    "kl": 3.045621472167969,
+    "threshold": 5.012374302376282e-10,
+    "mode": "threshold",
+    "seed": 12
+  },
+  "thresh_1.08e-09_seed21": {
+    "parity": 0.9758,
+    "fashion": 0.5757,
+    "kl": 1.9897188232421874,
+    "threshold": 1.0782788045975136e-09,
+    "mode": "threshold",
+    "seed": 21
+  },
+  "thresh_2.33e-10_seed1": {
+    "parity": 0.9758,
+    "fashion": 0.4685,
+    "kl": 2.6306899047851564,
+    "threshold": 2.3300000000000044e-10,
+    "mode": "threshold",
+    "seed": 1
+  },
+  "thresh_1.08e-09_seed3": {
+    "parity": 0.9751,
+    "fashion": 0.5094,
+    "kl": 2.5106616455078123,
+    "threshold": 1.0782788045975136e-09,
+    "mode": "threshold",
+    "seed": 3
+  },
+  "thresh_1.08e-09_seed1": {
+    "parity": 0.9758,
+    "fashion": 0.4685,
+    "kl": 2.630690020751953,
+    "threshold": 1.0782788045975136e-09,
+    "mode": "threshold",
+    "seed": 1
+  },
+  "thresh_5.01e-10_seed9": {
+    "parity": 0.9767,
+    "fashion": 0.4199,
+    "kl": 3.002136297607422,
+    "threshold": 5.012374302376282e-10,
+    "mode": "threshold",
+    "seed": 9
+  },
+  "thresh_1.07e-08_seed0": {
+    "parity": 0.9746,
+    "fashion": 0.4506,
+    "kl": 2.5373953979492185,
+    "threshold": 1.073479585222132e-08,
+    "mode": "threshold",
+    "seed": 0
+  },
+  "thresh_2.33e-10_seed21": {
+    "parity": 0.9758,
+    "fashion": 0.5757,
+    "kl": 1.989718585205078,
+    "threshold": 2.3300000000000044e-10,
+    "mode": "threshold",
+    "seed": 21
+  },
+  "thresh_2.33e-10_seed5": {
+    "parity": 0.9757,
+    "fashion": 0.4604,
+    "kl": 2.929923846435547,
+    "threshold": 2.3300000000000044e-10,
+    "mode": "threshold",
+    "seed": 5
+  },
+  "thresh_2.33e-10_seed24": {
+    "parity": 0.9751,
+    "fashion": 0.4637,
+    "kl": 2.555473370361328,
+    "threshold": 2.3300000000000044e-10,
+    "mode": "threshold",
+    "seed": 24
+  },
+  "thresh_5.01e-10_seed15": {
+    "parity": 0.9717,
+    "fashion": 0.4855,
+    "kl": 2.4054206115722656,
+    "threshold": 5.012374302376282e-10,
+    "mode": "threshold",
+    "seed": 15
+  },
+  "thresh_2.33e-10_seed7": {
+    "parity": 0.9777,
+    "fashion": 0.4962,
+    "kl": 1.9887002197265624,
+    "threshold": 2.3300000000000044e-10,
+    "mode": "threshold",
+    "seed": 7
+  },
+  "thresh_2.33e-10_seed22": {
+    "parity": 0.9761,
+    "fashion": 0.5372,
+    "kl": 1.8967064514160157,
+    "threshold": 2.3300000000000044e-10,
+    "mode": "threshold",
+    "seed": 22
+  },
+  "thresh_2.33e-10_seed15": {
+    "parity": 0.9717,
+    "fashion": 0.4855,
+    "kl": 2.4054207153320313,
+    "threshold": 2.3300000000000044e-10,
+    "mode": "threshold",
+    "seed": 15
+  },
+  "thresh_5.01e-10_seed28": {
+    "parity": 0.9755,
+    "fashion": 0.2838,
+    "kl": 3.410519952392578,
+    "threshold": 5.012374302376282e-10,
+    "mode": "threshold",
+    "seed": 28
+  },
+  "thresh_2.32e-09_seed8": {
+    "parity": 0.9719,
+    "fashion": 0.4736,
+    "kl": 3.1043487548828126,
+    "threshold": 2.3196296012710656e-09,
+    "mode": "threshold",
+    "seed": 8
+  },
+  "thresh_4.99e-09_seed10": {
+    "parity": 0.9737,
+    "fashion": 0.4639,
+    "kl": 2.3462465393066405,
+    "threshold": 4.990065152121205e-09,
+    "mode": "threshold",
+    "seed": 10
+  },
+  "thresh_2.33e-10_seed26": {
+    "parity": 0.9739,
+    "fashion": 0.4418,
+    "kl": 2.9088090881347655,
+    "threshold": 2.3300000000000044e-10,
+    "mode": "threshold",
+    "seed": 26
+  },
+  "thresh_2.32e-09_seed22": {
+    "parity": 0.9761,
+    "fashion": 0.5372,
+    "kl": 1.8967064819335937,
+    "threshold": 2.3196296012710656e-09,
+    "mode": "threshold",
+    "seed": 22
+  },
+  "thresh_5.01e-10_seed18": {
+    "parity": 0.9767,
+    "fashion": 0.4262,
+    "kl": 2.884737518310547,
+    "threshold": 5.012374302376282e-10,
+    "mode": "threshold",
+    "seed": 18
+  },
+  "thresh_1.08e-09_seed15": {
+    "parity": 0.9717,
+    "fashion": 0.4855,
+    "kl": 2.405420947265625,
+    "threshold": 1.0782788045975136e-09,
+    "mode": "threshold",
+    "seed": 15
+  },
+  "thresh_2.33e-10_seed17": {
+    "parity": 0.9723,
+    "fashion": 0.4991,
+    "kl": 2.098108935546875,
+    "threshold": 2.3300000000000044e-10,
+    "mode": "threshold",
+    "seed": 17
+  },
+  "thresh_5.01e-10_seed24": {
+    "parity": 0.9739,
+    "fashion": 0.4897,
+    "kl": 2.6353214294433593,
+    "threshold": 5.012374302376282e-10,
+    "mode": "threshold",
+    "seed": 24
+  },
+  "thresh_1.08e-09_seed0": {
+    "parity": 0.9746,
+    "fashion": 0.4506,
+    "kl": 2.537395587158203,
+    "threshold": 1.0782788045975136e-09,
+    "mode": "threshold",
+    "seed": 0
+  },
+  "thresh_5.01e-10_seed6": {
+    "parity": 0.9742,
+    "fashion": 0.4276,
+    "kl": 2.5450066528320314,
+    "threshold": 5.012374302376282e-10,
+    "mode": "threshold",
+    "seed": 6
+  },
+  "thresh_5.01e-10_seed29": {
+    "parity": 0.9759,
+    "fashion": 0.2835,
+    "kl": 4.1321686889648435,
+    "threshold": 5.012374302376282e-10,
+    "mode": "threshold",
+    "seed": 29
+  },
+  "thresh_4.99e-09_seed3": {
+    "parity": 0.9751,
+    "fashion": 0.5094,
+    "kl": 2.510656652832031,
+    "threshold": 4.990065152121205e-09,
+    "mode": "threshold",
+    "seed": 3
+  },
+  "thresh_2.33e-10_seed25": {
+    "parity": 0.9748,
+    "fashion": 0.5218,
+    "kl": 1.7069347930908203,
+    "threshold": 2.3300000000000044e-10,
+    "mode": "threshold",
+    "seed": 25
+  },
+  "thresh_2.33e-10_seed19": {
+    "parity": 0.9716,
+    "fashion": 0.4196,
+    "kl": 2.755694641113281,
+    "threshold": 2.3300000000000044e-10,
+    "mode": "threshold",
+    "seed": 19
+  },
+  "thresh_2.33e-10_seed6": {
+    "parity": 0.9742,
+    "fashion": 0.4276,
+    "kl": 2.5450067993164063,
+    "threshold": 2.3300000000000044e-10,
+    "mode": "threshold",
+    "seed": 6
+  },
+  "thresh_1.08e-09_seed26": {
+    "parity": 0.9739,
+    "fashion": 0.4418,
+    "kl": 2.908809387207031,
+    "threshold": 1.0782788045975136e-09,
+    "mode": "threshold",
+    "seed": 26
+  },
+  "thresh_2.33e-10_seed2": {
+    "parity": 0.9763,
+    "fashion": 0.4765,
+    "kl": 2.3025387451171877,
+    "threshold": 2.3300000000000044e-10,
+    "mode": "threshold",
+    "seed": 2
+  },
+  "thresh_2.32e-09_seed25": {
+    "parity": 0.9734,
+    "fashion": 0.4728,
+    "kl": 2.3577208862304686,
+    "threshold": 2.3196296012710656e-09,
+    "mode": "threshold",
+    "seed": 25
+  },
+  "thresh_5.01e-10_seed5": {
+    "parity": 0.9757,
+    "fashion": 0.4604,
+    "kl": 2.9299234924316404,
+    "threshold": 5.012374302376282e-10,
+    "mode": "threshold",
+    "seed": 5
+  },
+  "thresh_2.32e-09_seed16": {
+    "parity": 0.978,
+    "fashion": 0.4703,
+    "kl": 2.4970458679199217,
+    "threshold": 2.3196296012710656e-09,
+    "mode": "threshold",
+    "seed": 16
+  },
+  "thresh_4.99e-09_seed21": {
+    "parity": 0.9758,
+    "fashion": 0.5757,
+    "kl": 1.989718585205078,
+    "threshold": 4.990065152121205e-09,
+    "mode": "threshold",
+    "seed": 21
+  },
+  "thresh_2.33e-10_seed11": {
+    "parity": 0.9769,
+    "fashion": 0.38,
+    "kl": 2.7401077270507814,
+    "threshold": 2.3300000000000044e-10,
+    "mode": "threshold",
+    "seed": 11
+  },
+  "thresh_2.33e-10_seed27": {
+    "parity": 0.9742,
+    "fashion": 0.5509,
+    "kl": 1.8337760620117187,
+    "threshold": 2.3300000000000044e-10,
+    "mode": "threshold",
+    "seed": 27
+  },
+  "thresh_2.32e-09_seed9": {
+    "parity": 0.9767,
+    "fashion": 0.4199,
+    "kl": 3.002136999511719,
+    "threshold": 2.3196296012710656e-09,
+    "mode": "threshold",
+    "seed": 9
+  },
+  "thresh_2.32e-09_seed6": {
+    "parity": 0.9742,
+    "fashion": 0.4276,
+    "kl": 2.5450063598632813,
+    "threshold": 2.3196296012710656e-09,
+    "mode": "threshold",
+    "seed": 6
+  },
+  "thresh_5.01e-10_seed0": {
+    "parity": 0.9746,
+    "fashion": 0.4506,
+    "kl": 2.5373953186035156,
+    "threshold": 5.012374302376282e-10,
+    "mode": "threshold",
+    "seed": 0
+  },
+  "thresh_4.99e-09_seed16": {
+    "parity": 0.978,
+    "fashion": 0.4703,
+    "kl": 2.4970458740234376,
+    "threshold": 4.990065152121205e-09,
+    "mode": "threshold",
+    "seed": 16
+  },
+  "thresh_2.33e-10_seed10": {
+    "parity": 0.9744,
+    "fashion": 0.4466,
+    "kl": 2.5623136291503905,
+    "threshold": 2.3300000000000044e-10,
+    "mode": "threshold",
+    "seed": 10
+  },
+  "thresh_5.01e-10_seed23": {
+    "parity": 0.9736,
+    "fashion": 0.416,
+    "kl": 3.1990621154785157,
+    "threshold": 5.012374302376282e-10,
+    "mode": "threshold",
+    "seed": 23
+  },
+  "thresh_5.01e-10_seed13": {
+    "parity": 0.9733,
+    "fashion": 0.4447,
+    "kl": 2.7594655029296873,
+    "threshold": 5.012374302376282e-10,
+    "mode": "threshold",
+    "seed": 13
+  },
+  "thresh_1.08e-09_seed19": {
+    "parity": 0.9716,
+    "fashion": 0.4196,
+    "kl": 2.7556945373535155,
+    "threshold": 1.0782788045975136e-09,
+    "mode": "threshold",
+    "seed": 19
+  },
+  "thresh_1.08e-09_seed25": {
+    "parity": 0.9748,
+    "fashion": 0.5218,
+    "kl": 1.7069350311279297,
+    "threshold": 1.0782788045975136e-09,
+    "mode": "threshold",
+    "seed": 25
+  },
+  "thresh_5.01e-10_seed27": {
+    "parity": 0.9742,
+    "fashion": 0.5509,
+    "kl": 1.8337760986328124,
+    "threshold": 5.012374302376282e-10,
+    "mode": "threshold",
+    "seed": 27
+  },
+  "thresh_5.01e-10_seed21": {
+    "parity": 0.9758,
+    "fashion": 0.576,
+    "kl": 1.989798162841797,
+    "threshold": 5.012374302376282e-10,
+    "mode": "threshold",
+    "seed": 21
+  },
+  "thresh_2.32e-09_seed0": {
+    "parity": 0.9757,
+    "fashion": 0.4391,
+    "kl": 2.743532147216797,
+    "threshold": 2.3196296012710656e-09,
+    "mode": "threshold",
+    "seed": 0
+  },
+  "thresh_1.08e-09_seed16": {
+    "parity": 0.978,
+    "fashion": 0.4703,
+    "kl": 2.4970461486816404,
+    "threshold": 1.0782788045975136e-09,
+    "mode": "threshold",
+    "seed": 16
+  },
+  "thresh_5.01e-10_seed20": {
+    "parity": 0.9739,
+    "fashion": 0.5037,
+    "kl": 2.6062050903320313,
+    "threshold": 5.012374302376282e-10,
+    "mode": "threshold",
+    "seed": 20
+  },
+  "thresh_2.33e-10_seed14": {
+    "parity": 0.9772,
+    "fashion": 0.5029,
+    "kl": 2.064396813964844,
+    "threshold": 2.3300000000000044e-10,
+    "mode": "threshold",
+    "seed": 14
+  },
+  "thresh_5.01e-10_seed16": {
+    "parity": 0.9745,
+    "fashion": 0.4821,
+    "kl": 2.598663525390625,
+    "threshold": 5.012374302376282e-10,
+    "mode": "threshold",
+    "seed": 16
+  },
+  "thresh_1.08e-09_seed24": {
+    "parity": 0.9739,
+    "fashion": 0.4897,
+    "kl": 2.635321203613281,
+    "threshold": 1.0782788045975136e-09,
+    "mode": "threshold",
+    "seed": 24
+  },
+  "thresh_2.32e-09_seed2": {
+    "parity": 0.9763,
+    "fashion": 0.4765,
+    "kl": 2.3025386962890626,
+    "threshold": 2.3196296012710656e-09,
+    "mode": "threshold",
+    "seed": 2
+  },
+  "thresh_2.33e-10_seed28": {
+    "parity": 0.9755,
+    "fashion": 0.2838,
+    "kl": 3.4105197875976563,
+    "threshold": 2.3300000000000044e-10,
+    "mode": "threshold",
+    "seed": 28
+  },
+  "thresh_1.08e-09_seed13": {
+    "parity": 0.9733,
+    "fashion": 0.4447,
+    "kl": 2.759465802001953,
+    "threshold": 1.0782788045975136e-09,
+    "mode": "threshold",
+    "seed": 13
+  },
+  "thresh_5.01e-10_seed19": {
+    "parity": 0.9716,
+    "fashion": 0.4196,
+    "kl": 2.7556945739746093,
+    "threshold": 5.012374302376282e-10,
+    "mode": "threshold",
+    "seed": 19
+  },
+  "thresh_2.32e-09_seed1": {
+    "parity": 0.9758,
+    "fashion": 0.4685,
+    "kl": 2.630690118408203,
+    "threshold": 2.3196296012710656e-09,
+    "mode": "threshold",
+    "seed": 1
+  },
+  "thresh_1.08e-09_seed11": {
+    "parity": 0.9769,
+    "fashion": 0.38,
+    "kl": 2.740107489013672,
+    "threshold": 1.0782788045975136e-09,
+    "mode": "threshold",
+    "seed": 11
+  },
+  "thresh_1.08e-09_seed29": {
+    "parity": 0.9766,
+    "fashion": 0.49,
+    "kl": 2.689056884765625,
+    "threshold": 1.0782788045975136e-09,
+    "mode": "threshold",
+    "seed": 29
+  },
+  "thresh_1.08e-09_seed20": {
+    "parity": 0.9739,
+    "fashion": 0.5037,
+    "kl": 2.60620576171875,
+    "threshold": 1.0782788045975136e-09,
+    "mode": "threshold",
+    "seed": 20
+  },
+  "thresh_2.32e-09_seed28": {
+    "parity": 0.9755,
+    "fashion": 0.2838,
+    "kl": 3.4105204223632812,
+    "threshold": 2.3196296012710656e-09,
+    "mode": "threshold",
+    "seed": 28
+  },
+  "thresh_1.07e-08_seed1": {
+    "parity": 0.9758,
+    "fashion": 0.4685,
+    "kl": 2.63068896484375,
+    "threshold": 1.073479585222132e-08,
+    "mode": "threshold",
+    "seed": 1
+  },
+  "thresh_2.32e-09_seed23": {
+    "parity": 0.9746,
+    "fashion": 0.4362,
+    "kl": 3.20746572265625,
+    "threshold": 2.3196296012710656e-09,
+    "mode": "threshold",
+    "seed": 23
+  },
+  "thresh_5.01e-10_seed4": {
+    "parity": 0.9754,
+    "fashion": 0.3973,
+    "kl": 2.832910693359375,
+    "threshold": 5.012374302376282e-10,
+    "mode": "threshold",
+    "seed": 4
+  },
+  "thresh_4.99e-09_seed5": {
+    "parity": 0.9743,
+    "fashion": 0.4779,
+    "kl": 2.8462933044433596,
+    "threshold": 4.990065152121205e-09,
+    "mode": "threshold",
+    "seed": 5
+  },
+  "thresh_5.01e-10_seed8": {
+    "parity": 0.9719,
+    "fashion": 0.4736,
+    "kl": 3.104349169921875,
+    "threshold": 5.012374302376282e-10,
+    "mode": "threshold",
+    "seed": 8
+  },
+  "thresh_5.01e-10_seed14": {
+    "parity": 0.9772,
+    "fashion": 0.5029,
+    "kl": 2.064396728515625,
+    "threshold": 5.012374302376282e-10,
+    "mode": "threshold",
+    "seed": 14
+  },
+  "thresh_5.01e-10_seed3": {
+    "parity": 0.9751,
+    "fashion": 0.5094,
+    "kl": 2.5106615600585935,
+    "threshold": 5.012374302376282e-10,
+    "mode": "threshold",
+    "seed": 3
+  },
+  "thresh_2.32e-09_seed26": {
+    "parity": 0.9739,
+    "fashion": 0.4418,
+    "kl": 2.9088092834472654,
+    "threshold": 2.3196296012710656e-09,
+    "mode": "threshold",
+    "seed": 26
+  },
+  "thresh_2.33e-10_seed8": {
+    "parity": 0.9719,
+    "fashion": 0.4736,
+    "kl": 3.1043492065429685,
+    "threshold": 2.3300000000000044e-10,
+    "mode": "threshold",
+    "seed": 8
+  },
+  "thresh_2.33e-10_seed0": {
+    "parity": 0.9746,
+    "fashion": 0.4506,
+    "kl": 2.53739560546875,
+    "threshold": 2.3300000000000044e-10,
+    "mode": "threshold",
+    "seed": 0
+  },
+  "thresh_4.99e-09_seed28": {
+    "parity": 0.9755,
+    "fashion": 0.2838,
+    "kl": 3.4105208923339845,
+    "threshold": 4.990065152121205e-09,
+    "mode": "threshold",
+    "seed": 28
+  },
+  "thresh_4.99e-09_seed17": {
+    "parity": 0.9723,
+    "fashion": 0.4991,
+    "kl": 2.098108184814453,
+    "threshold": 4.990065152121205e-09,
+    "mode": "threshold",
+    "seed": 17
+  },
+  "thresh_2.32e-09_seed12": {
+    "parity": 0.9751,
+    "fashion": 0.3565,
+    "kl": 3.0456222045898436,
+    "threshold": 2.3196296012710656e-09,
+    "mode": "threshold",
+    "seed": 12
+  },
+  "thresh_4.99e-09_seed0": {
+    "parity": 0.9757,
+    "fashion": 0.4391,
+    "kl": 2.743532568359375,
+    "threshold": 4.990065152121205e-09,
+    "mode": "threshold",
+    "seed": 0
+  },
+  "thresh_5.01e-10_seed11": {
+    "parity": 0.9769,
+    "fashion": 0.38,
+    "kl": 2.7401075622558593,
+    "threshold": 5.012374302376282e-10,
+    "mode": "threshold",
+    "seed": 11
+  },
+  "thresh_2.33e-10_seed3": {
+    "parity": 0.9751,
+    "fashion": 0.5094,
+    "kl": 2.510661773681641,
+    "threshold": 2.3300000000000044e-10,
+    "mode": "threshold",
+    "seed": 3
+  },
+  "thresh_2.33e-10_seed13": {
+    "parity": 0.9733,
+    "fashion": 0.4447,
+    "kl": 2.759465869140625,
+    "threshold": 2.3300000000000044e-10,
+    "mode": "threshold",
+    "seed": 13
+  },
+  "thresh_2.32e-09_seed10": {
+    "parity": 0.9744,
+    "fashion": 0.4466,
+    "kl": 2.562313934326172,
+    "threshold": 2.3196296012710656e-09,
+    "mode": "threshold",
+    "seed": 10
+  },
+  "thresh_1.07e-08_seed7": {
+    "parity": 0.9758,
+    "fashion": 0.4912,
+    "kl": 2.164704754638672,
+    "threshold": 1.073479585222132e-08,
+    "mode": "threshold",
+    "seed": 7
+  },
+  "thresh_1.08e-09_seed9": {
+    "parity": 0.9767,
+    "fashion": 0.4199,
+    "kl": 3.0021365295410156,
+    "threshold": 1.0782788045975136e-09,
+    "mode": "threshold",
+    "seed": 9
+  },
+  "thresh_2.32e-09_seed20": {
+    "parity": 0.9739,
+    "fashion": 0.5037,
+    "kl": 2.606205743408203,
+    "threshold": 2.3196296012710656e-09,
+    "mode": "threshold",
+    "seed": 20
+  },
+  "thresh_5.01e-10_seed25": {
+    "parity": 0.9734,
+    "fashion": 0.4728,
+    "kl": 2.3577205810546875,
+    "threshold": 5.012374302376282e-10,
+    "mode": "threshold",
+    "seed": 25
+  },
+  "thresh_1.08e-09_seed2": {
+    "parity": 0.9763,
+    "fashion": 0.4765,
+    "kl": 2.302538659667969,
+    "threshold": 1.0782788045975136e-09,
+    "mode": "threshold",
+    "seed": 2
+  },
+  "thresh_2.33e-10_seed9": {
+    "parity": 0.9767,
+    "fashion": 0.4199,
+    "kl": 3.0021360778808592,
+    "threshold": 2.3300000000000044e-10,
+    "mode": "threshold",
+    "seed": 9
+  },
+  "thresh_2.33e-10_seed23": {
+    "parity": 0.9736,
+    "fashion": 0.416,
+    "kl": 3.1990621826171877,
+    "threshold": 2.3300000000000044e-10,
+    "mode": "threshold",
+    "seed": 23
+  },
+  "thresh_4.99e-09_seed15": {
+    "parity": 0.9731,
+    "fashion": 0.4518,
+    "kl": 2.5728248046875,
+    "threshold": 4.990065152121205e-09,
+    "mode": "threshold",
+    "seed": 15
+  },
+  "thresh_2.33e-10_seed12": {
+    "parity": 0.9751,
+    "fashion": 0.3565,
+    "kl": 3.0456217834472654,
+    "threshold": 2.3300000000000044e-10,
+    "mode": "threshold",
+    "seed": 12
+  },
+  "thresh_4.97e-08_seed6": {
+    "parity": 0.9748,
+    "fashion": 0.4482,
+    "kl": 2.54386826171875,
+    "threshold": 4.967855295764595e-08,
+    "mode": "threshold",
+    "seed": 6
+  },
+  "thresh_4.99e-09_seed25": {
+    "parity": 0.9748,
+    "fashion": 0.5218,
+    "kl": 1.7069345825195312,
+    "threshold": 4.990065152121205e-09,
+    "mode": "threshold",
+    "seed": 25
+  },
+  "thresh_1.07e-08_seed3": {
+    "parity": 0.9751,
+    "fashion": 0.5094,
+    "kl": 2.510659576416016,
+    "threshold": 1.073479585222132e-08,
+    "mode": "threshold",
+    "seed": 3
+  },
+  "thresh_4.99e-09_seed18": {
+    "parity": 0.9761,
+    "fashion": 0.437,
+    "kl": 2.8802979858398436,
+    "threshold": 4.990065152121205e-09,
+    "mode": "threshold",
+    "seed": 18
+  },
+  "thresh_1.07e-08_seed5": {
+    "parity": 0.9743,
+    "fashion": 0.4779,
+    "kl": 2.846291638183594,
+    "threshold": 1.073479585222132e-08,
+    "mode": "threshold",
+    "seed": 5
+  },
+  "thresh_5.01e-10_seed7": {
+    "parity": 0.9761,
+    "fashion": 0.4948,
+    "kl": 2.1064274169921875,
+    "threshold": 5.012374302376282e-10,
+    "mode": "threshold",
+    "seed": 7
+  },
+  "thresh_4.99e-09_seed26": {
+    "parity": 0.9739,
+    "fashion": 0.4418,
+    "kl": 2.9088096923828126,
+    "threshold": 4.990065152121205e-09,
+    "mode": "threshold",
+    "seed": 26
+  },
+  "thresh_4.99e-09_seed20": {
+    "parity": 0.975,
+    "fashion": 0.3944,
+    "kl": 3.1425361877441405,
+    "threshold": 4.990065152121205e-09,
+    "mode": "threshold",
+    "seed": 20
+  },
+  "thresh_4.99e-09_seed29": {
+    "parity": 0.9759,
+    "fashion": 0.2835,
+    "kl": 4.132166906738282,
+    "threshold": 4.990065152121205e-09,
+    "mode": "threshold",
+    "seed": 29
+  },
+  "thresh_5.01e-10_seed10": {
+    "parity": 0.9744,
+    "fashion": 0.4466,
+    "kl": 2.562313702392578,
+    "threshold": 5.012374302376282e-10,
+    "mode": "threshold",
+    "seed": 10
+  },
+  "thresh_4.99e-09_seed19": {
+    "parity": 0.9716,
+    "fashion": 0.4196,
+    "kl": 2.7556935668945313,
+    "threshold": 4.990065152121205e-09,
+    "mode": "threshold",
+    "seed": 19
+  },
+  "thresh_1.07e-08_seed8": {
+    "parity": 0.9719,
+    "fashion": 0.4736,
+    "kl": 3.1043490844726565,
+    "threshold": 1.073479585222132e-08,
+    "mode": "threshold",
+    "seed": 8
+  },
+  "thresh_5.01e-10_seed2": {
+    "parity": 0.9763,
+    "fashion": 0.4765,
+    "kl": 2.3025387817382814,
+    "threshold": 5.012374302376282e-10,
+    "mode": "threshold",
+    "seed": 2
+  },
+  "thresh_2.32e-09_seed21": {
+    "parity": 0.9758,
+    "fashion": 0.5757,
+    "kl": 1.9897188415527345,
+    "threshold": 2.3196296012710656e-09,
+    "mode": "threshold",
+    "seed": 21
+  },
+  "thresh_2.32e-09_seed15": {
+    "parity": 0.9717,
+    "fashion": 0.4855,
+    "kl": 2.4054206787109376,
+    "threshold": 2.3196296012710656e-09,
+    "mode": "threshold",
+    "seed": 15
+  },
+  "thresh_1.08e-09_seed27": {
+    "parity": 0.9742,
+    "fashion": 0.5509,
+    "kl": 1.8337760314941407,
+    "threshold": 1.0782788045975136e-09,
+    "mode": "threshold",
+    "seed": 27
+  },
+  "thresh_1.08e-09_seed14": {
+    "parity": 0.9772,
+    "fashion": 0.5029,
+    "kl": 2.0643965576171874,
+    "threshold": 1.0782788045975136e-09,
+    "mode": "threshold",
+    "seed": 14
+  },
+  "thresh_4.99e-09_seed14": {
+    "parity": 0.9772,
+    "fashion": 0.5029,
+    "kl": 2.064396423339844,
+    "threshold": 4.990065152121205e-09,
+    "mode": "threshold",
+    "seed": 14
+  },
+  "thresh_4.99e-09_seed4": {
+    "parity": 0.9754,
+    "fashion": 0.3973,
+    "kl": 2.8329113525390626,
+    "threshold": 4.990065152121205e-09,
+    "mode": "threshold",
+    "seed": 4
+  },
+  "thresh_2.33e-10_seed20": {
+    "parity": 0.9739,
+    "fashion": 0.5037,
+    "kl": 2.6062057250976562,
+    "threshold": 2.3300000000000044e-10,
+    "mode": "threshold",
+    "seed": 20
+  },
+  "thresh_1.07e-08_seed2": {
+    "parity": 0.9763,
+    "fashion": 0.4765,
+    "kl": 2.302537139892578,
+    "threshold": 1.073479585222132e-08,
+    "mode": "threshold",
+    "seed": 2
+  },
+  "thresh_2.32e-09_seed19": {
+    "parity": 0.9716,
+    "fashion": 0.4196,
+    "kl": 2.7556946899414063,
+    "threshold": 2.3196296012710656e-09,
+    "mode": "threshold",
+    "seed": 19
+  },
+  "thresh_4.99e-09_seed11": {
+    "parity": 0.9769,
+    "fashion": 0.38,
+    "kl": 2.7401072204589845,
+    "threshold": 4.990065152121205e-09,
+    "mode": "threshold",
+    "seed": 11
+  },
+  "thresh_4.99e-09_seed9": {
+    "parity": 0.9767,
+    "fashion": 0.4199,
+    "kl": 3.002136572265625,
+    "threshold": 4.990065152121205e-09,
+    "mode": "threshold",
+    "seed": 9
+  },
+  "thresh_1.07e-08_seed4": {
+    "parity": 0.9757,
+    "fashion": 0.3964,
+    "kl": 2.8188296447753904,
+    "threshold": 1.073479585222132e-08,
+    "mode": "threshold",
+    "seed": 4
+  },
+  "thresh_4.99e-09_seed22": {
+    "parity": 0.9761,
+    "fashion": 0.5372,
+    "kl": 1.896706591796875,
+    "threshold": 4.990065152121205e-09,
+    "mode": "threshold",
+    "seed": 22
+  },
+  "thresh_1.08e-09_seed17": {
+    "parity": 0.9723,
+    "fashion": 0.4991,
+    "kl": 2.09810869140625,
+    "threshold": 1.0782788045975136e-09,
+    "mode": "threshold",
+    "seed": 17
+  },
+  "thresh_2.32e-09_seed27": {
+    "parity": 0.9742,
+    "fashion": 0.5509,
+    "kl": 1.8337761413574218,
+    "threshold": 2.3196296012710656e-09,
+    "mode": "threshold",
+    "seed": 27
+  },
+  "thresh_2.33e-10_seed29": {
+    "parity": 0.9759,
+    "fashion": 0.2835,
+    "kl": 4.13216845703125,
+    "threshold": 2.3300000000000044e-10,
+    "mode": "threshold",
+    "seed": 29
+  },
+  "thresh_1.08e-09_seed28": {
+    "parity": 0.9755,
+    "fashion": 0.2838,
+    "kl": 3.4105194641113283,
+    "threshold": 1.0782788045975136e-09,
+    "mode": "threshold",
+    "seed": 28
+  },
+  "thresh_4.99e-09_seed13": {
+    "parity": 0.9733,
+    "fashion": 0.4447,
+    "kl": 2.7594660888671876,
+    "threshold": 4.990065152121205e-09,
+    "mode": "threshold",
+    "seed": 13
+  },
+  "thresh_4.99e-09_seed1": {
+    "parity": 0.9756,
+    "fashion": 0.4438,
+    "kl": 2.5493127258300783,
+    "threshold": 4.990065152121205e-09,
+    "mode": "threshold",
+    "seed": 1
+  },
+  "thresh_1.08e-09_seed7": {
+    "parity": 0.9781,
+    "fashion": 0.5337,
+    "kl": 1.9089901428222655,
+    "threshold": 1.0782788045975136e-09,
+    "mode": "threshold",
+    "seed": 7
+  },
+  "thresh_2.32e-09_seed24": {
+    "parity": 0.9751,
+    "fashion": 0.4637,
+    "kl": 2.5554731689453125,
+    "threshold": 2.3196296012710656e-09,
+    "mode": "threshold",
+    "seed": 24
+  },
+  "thresh_4.99e-09_seed27": {
+    "parity": 0.9742,
+    "fashion": 0.5509,
+    "kl": 1.8337762329101563,
+    "threshold": 4.990065152121205e-09,
+    "mode": "threshold",
+    "seed": 27
+  },
+  "thresh_1.08e-09_seed12": {
+    "parity": 0.9751,
+    "fashion": 0.3565,
+    "kl": 3.0456224853515623,
+    "threshold": 1.0782788045975136e-09,
+    "mode": "threshold",
+    "seed": 12
+  },
+  "thresh_1.08e-09_seed18": {
+    "parity": 0.9767,
+    "fashion": 0.4262,
+    "kl": 2.8847375366210937,
+    "threshold": 1.0782788045975136e-09,
+    "mode": "threshold",
+    "seed": 18
+  },
+  "thresh_4.99e-09_seed23": {
+    "parity": 0.9764,
+    "fashion": 0.4488,
+    "kl": 3.1782230895996095,
+    "threshold": 4.990065152121205e-09,
+    "mode": "threshold",
+    "seed": 23
+  },
+  "thresh_2.32e-09_seed5": {
+    "parity": 0.9757,
+    "fashion": 0.4604,
+    "kl": 2.929923504638672,
+    "threshold": 2.3196296012710656e-09,
+    "mode": "threshold",
+    "seed": 5
+  },
+  "thresh_1.07e-08_seed9": {
+    "parity": 0.9749,
+    "fashion": 0.4115,
+    "kl": 3.366286956787109,
+    "threshold": 1.073479585222132e-08,
+    "mode": "threshold",
+    "seed": 9
+  },
+  "thresh_4.99e-09_seed12": {
+    "parity": 0.9775,
+    "fashion": 0.3873,
+    "kl": 2.905088684082031,
+    "threshold": 4.990065152121205e-09,
+    "mode": "threshold",
+    "seed": 12
+  },
+  "thresh_5.01e-10_seed22": {
+    "parity": 0.9761,
+    "fashion": 0.5372,
+    "kl": 1.8967064270019531,
+    "threshold": 5.012374302376282e-10,
+    "mode": "threshold",
+    "seed": 22
+  },
+  "thresh_5.01e-10_seed1": {
+    "parity": 0.9758,
+    "fashion": 0.4685,
+    "kl": 2.630689599609375,
+    "threshold": 5.012374302376282e-10,
+    "mode": "threshold",
+    "seed": 1
+  },
+  "thresh_1.08e-09_seed8": {
+    "parity": 0.9719,
+    "fashion": 0.4736,
+    "kl": 3.104348565673828,
+    "threshold": 1.0782788045975136e-09,
+    "mode": "threshold",
+    "seed": 8
+  },
+  "thresh_4.99e-09_seed7": {
+    "parity": 0.9781,
+    "fashion": 0.5337,
+    "kl": 1.908989813232422,
+    "threshold": 4.990065152121205e-09,
+    "mode": "threshold",
+    "seed": 7
+  },
+  "thresh_2.32e-09_seed18": {
+    "parity": 0.9767,
+    "fashion": 0.4262,
+    "kl": 2.8847374267578125,
+    "threshold": 2.3196296012710656e-09,
+    "mode": "threshold",
+    "seed": 18
+  },
+  "thresh_2.32e-09_seed4": {
+    "parity": 0.9754,
+    "fashion": 0.3973,
+    "kl": 2.8329107421875,
+    "threshold": 2.3196296012710656e-09,
+    "mode": "threshold",
+    "seed": 4
+  },
+  "thresh_1.07e-08_seed6": {
+    "parity": 0.9762,
+    "fashion": 0.4288,
+    "kl": 2.580224334716797,
+    "threshold": 1.073479585222132e-08,
+    "mode": "threshold",
+    "seed": 6
+  },
+  "thresh_4.99e-09_seed2": {
+    "parity": 0.9763,
+    "fashion": 0.4765,
+    "kl": 2.3025396850585937,
+    "threshold": 4.990065152121205e-09,
+    "mode": "threshold",
+    "seed": 2
+  },
+  "thresh_2.32e-09_seed14": {
+    "parity": 0.9772,
+    "fashion": 0.5029,
+    "kl": 2.064396087646484,
+    "threshold": 2.3196296012710656e-09,
+    "mode": "threshold",
+    "seed": 14
+  },
+  "thresh_1.08e-09_seed4": {
+    "parity": 0.9754,
+    "fashion": 0.3973,
+    "kl": 2.8329108154296874,
+    "threshold": 1.0782788045975136e-09,
+    "mode": "threshold",
+    "seed": 4
+  },
+  "thresh_4.99e-09_seed6": {
+    "parity": 0.9762,
+    "fashion": 0.4289,
+    "kl": 2.58015244140625,
+    "threshold": 4.990065152121205e-09,
+    "mode": "threshold",
+    "seed": 6
+  },
+  "thresh_4.99e-09_seed8": {
+    "parity": 0.9719,
+    "fashion": 0.4736,
+    "kl": 3.104348486328125,
+    "threshold": 4.990065152121205e-09,
+    "mode": "threshold",
+    "seed": 8
+  },
+  "thresh_4.99e-09_seed24": {
+    "parity": 0.9784,
+    "fashion": 0.4213,
+    "kl": 2.994174609375,
+    "threshold": 4.990065152121205e-09,
+    "mode": "threshold",
+    "seed": 24
+  },
+  "thresh_2.32e-09_seed29": {
+    "parity": 0.9759,
+    "fashion": 0.2835,
+    "kl": 4.132167736816406,
+    "threshold": 2.3196296012710656e-09,
+    "mode": "threshold",
+    "seed": 29
+  },
+  "thresh_2.32e-09_seed13": {
+    "parity": 0.9733,
+    "fashion": 0.4447,
+    "kl": 2.7594658447265625,
+    "threshold": 2.3196296012710656e-09,
+    "mode": "threshold",
+    "seed": 13
+  },
+  "thresh_1.08e-09_seed6": {
+    "parity": 0.9742,
+    "fashion": 0.4276,
+    "kl": 2.5450066040039063,
+    "threshold": 1.0782788045975136e-09,
+    "mode": "threshold",
+    "seed": 6
+  },
+  "thresh_1.07e-08_seed28": {
+    "parity": 0.9761,
+    "fashion": 0.3273,
+    "kl": 3.027434979248047,
+    "threshold": 1.073479585222132e-08,
+    "mode": "threshold",
+    "seed": 28
+  },
+  "thresh_4.97e-08_seed15": {
+    "parity": 0.9747,
+    "fashion": 0.482,
+    "kl": 2.349892431640625,
+    "threshold": 4.967855295764595e-08,
+    "mode": "threshold",
+    "seed": 15
+  },
+  "thresh_2.31e-08_seed27": {
+    "parity": 0.9742,
+    "fashion": 0.5509,
+    "kl": 1.833776220703125,
+    "threshold": 2.3093053592673573e-08,
+    "mode": "threshold",
+    "seed": 27
+  },
+  "thresh_1.07e-07_seed21": {
+    "parity": 0.9755,
+    "fashion": 0.46,
+    "kl": 2.2711422973632813,
+    "threshold": 1.0687017262838769e-07,
+    "mode": "threshold",
+    "seed": 21
+  },
+  "thresh_4.97e-08_seed20": {
+    "parity": 0.9761,
+    "fashion": 0.4059,
+    "kl": 2.6218959716796877,
+    "threshold": 4.967855295764595e-08,
+    "mode": "threshold",
+    "seed": 20
+  },
+  "thresh_1.07e-07_seed27": {
+    "parity": 0.9764,
+    "fashion": 0.5528,
+    "kl": 1.8967931701660157,
+    "threshold": 1.0687017262838769e-07,
+    "mode": "threshold",
+    "seed": 27
+  },
+  "thresh_1.07e-08_seed26": {
+    "parity": 0.9747,
+    "fashion": 0.4478,
+    "kl": 3.000025701904297,
+    "threshold": 1.073479585222132e-08,
+    "mode": "threshold",
+    "seed": 26
+  },
+  "thresh_1.07e-08_seed15": {
+    "parity": 0.9731,
+    "fashion": 0.4518,
+    "kl": 2.5728234741210936,
+    "threshold": 1.073479585222132e-08,
+    "mode": "threshold",
+    "seed": 15
+  },
+  "thresh_1.07e-07_seed1": {
+    "parity": 0.9748,
+    "fashion": 0.4644,
+    "kl": 2.370020166015625,
+    "threshold": 1.0687017262838769e-07,
+    "mode": "threshold",
+    "seed": 1
+  },
+  "thresh_2.31e-08_seed28": {
+    "parity": 0.9772,
+    "fashion": 0.331,
+    "kl": 2.950525244140625,
+    "threshold": 2.3093053592673573e-08,
+    "mode": "threshold",
+    "seed": 28
+  },
+  "thresh_1.07e-08_seed14": {
+    "parity": 0.9772,
+    "fashion": 0.5029,
+    "kl": 2.064395623779297,
+    "threshold": 1.073479585222132e-08,
+    "mode": "threshold",
+    "seed": 14
+  },
+  "thresh_2.31e-08_seed22": {
+    "parity": 0.9777,
+    "fashion": 0.5136,
+    "kl": 1.9771002319335937,
+    "threshold": 2.3093053592673573e-08,
+    "mode": "threshold",
+    "seed": 22
+  },
+  "thresh_1.07e-08_seed17": {
+    "parity": 0.9723,
+    "fashion": 0.4991,
+    "kl": 2.098107159423828,
+    "threshold": 1.073479585222132e-08,
+    "mode": "threshold",
+    "seed": 17
+  },
+  "thresh_2.31e-08_seed6": {
+    "parity": 0.9769,
+    "fashion": 0.4121,
+    "kl": 2.907620361328125,
+    "threshold": 2.3093053592673573e-08,
+    "mode": "threshold",
+    "seed": 6
+  },
+  "thresh_1.07e-07_seed2": {
+    "parity": 0.9769,
+    "fashion": 0.4854,
+    "kl": 1.9158573486328125,
+    "threshold": 1.0687017262838769e-07,
+    "mode": "threshold",
+    "seed": 2
+  },
+  "thresh_4.97e-08_seed8": {
+    "parity": 0.9739,
+    "fashion": 0.3728,
+    "kl": 3.523334747314453,
+    "threshold": 4.967855295764595e-08,
+    "mode": "threshold",
+    "seed": 8
+  },
+  "thresh_1.07e-08_seed25": {
+    "parity": 0.9729,
+    "fashion": 0.5243,
+    "kl": 2.1875489624023436,
+    "threshold": 1.073479585222132e-08,
+    "mode": "threshold",
+    "seed": 25
+  },
+  "thresh_1.07e-08_seed11": {
+    "parity": 0.9769,
+    "fashion": 0.38,
+    "kl": 2.7401064025878905,
+    "threshold": 1.073479585222132e-08,
+    "mode": "threshold",
+    "seed": 11
+  },
+  "thresh_4.97e-08_seed13": {
+    "parity": 0.9761,
+    "fashion": 0.5175,
+    "kl": 2.490489807128906,
+    "threshold": 4.967855295764595e-08,
+    "mode": "threshold",
+    "seed": 13
+  },
+  "thresh_2.31e-08_seed25": {
+    "parity": 0.9765,
+    "fashion": 0.5817,
+    "kl": 1.714288864135742,
+    "threshold": 2.3093053592673573e-08,
+    "mode": "threshold",
+    "seed": 25
+  },
+  "thresh_2.31e-08_seed2": {
+    "parity": 0.9773,
+    "fashion": 0.4255,
+    "kl": 2.5796343017578125,
+    "threshold": 2.3093053592673573e-08,
+    "mode": "threshold",
+    "seed": 2
+  },
+  "thresh_1.07e-07_seed18": {
+    "parity": 0.9769,
+    "fashion": 0.5215,
+    "kl": 2.369426550292969,
+    "threshold": 1.0687017262838769e-07,
+    "mode": "threshold",
+    "seed": 18
+  },
+  "thresh_1.07e-07_seed13": {
+    "parity": 0.9761,
+    "fashion": 0.5365,
+    "kl": 2.010693811035156,
+    "threshold": 1.0687017262838769e-07,
+    "mode": "threshold",
+    "seed": 13
+  },
+  "thresh_1.07e-07_seed3": {
+    "parity": 0.9758,
+    "fashion": 0.5014,
+    "kl": 2.917827191162109,
+    "threshold": 1.0687017262838769e-07,
+    "mode": "threshold",
+    "seed": 3
+  },
+  "thresh_1.07e-07_seed17": {
+    "parity": 0.9759,
+    "fashion": 0.557,
+    "kl": 1.8010880889892578,
+    "threshold": 1.0687017262838769e-07,
+    "mode": "threshold",
+    "seed": 17
+  },
+  "thresh_4.97e-08_seed10": {
+    "parity": 0.9722,
+    "fashion": 0.505,
+    "kl": 2.0899873107910154,
+    "threshold": 4.967855295764595e-08,
+    "mode": "threshold",
+    "seed": 10
+  },
+  "thresh_4.97e-08_seed25": {
+    "parity": 0.9752,
+    "fashion": 0.5773,
+    "kl": 1.7536874267578124,
+    "threshold": 4.967855295764595e-08,
+    "mode": "threshold",
+    "seed": 25
+  },
+  "thresh_1.07e-08_seed27": {
+    "parity": 0.9742,
+    "fashion": 0.5509,
+    "kl": 1.8337765075683594,
+    "threshold": 1.073479585222132e-08,
+    "mode": "threshold",
+    "seed": 27
+  },
+  "thresh_2.31e-08_seed19": {
+    "parity": 0.9746,
+    "fashion": 0.4287,
+    "kl": 2.6940619384765623,
+    "threshold": 2.3093053592673573e-08,
+    "mode": "threshold",
+    "seed": 19
+  },
+  "thresh_2.31e-08_seed16": {
+    "parity": 0.9752,
+    "fashion": 0.4738,
+    "kl": 2.6157671569824217,
+    "threshold": 2.3093053592673573e-08,
+    "mode": "threshold",
+    "seed": 16
+  },
+  "thresh_1.07e-08_seed29": {
+    "parity": 0.976,
+    "fashion": 0.4342,
+    "kl": 2.815125848388672,
+    "threshold": 1.073479585222132e-08,
+    "mode": "threshold",
+    "seed": 29
+  },
+  "thresh_2.31e-08_seed5": {
+    "parity": 0.9749,
+    "fashion": 0.436,
+    "kl": 3.3478933349609377,
+    "threshold": 2.3093053592673573e-08,
+    "mode": "threshold",
+    "seed": 5
+  },
+  "thresh_4.97e-08_seed4": {
+    "parity": 0.977,
+    "fashion": 0.4645,
+    "kl": 2.5160586486816405,
+    "threshold": 4.967855295764595e-08,
+    "mode": "threshold",
+    "seed": 4
+  },
+  "thresh_4.95e-07_seed10": {
+    "parity": 0.9743,
+    "fashion": 0.5023,
+    "kl": 2.0095127746582033,
+    "threshold": 4.945744291367707e-07,
+    "mode": "threshold",
+    "seed": 10
+  },
+  "thresh_1.07e-07_seed6": {
+    "parity": 0.9762,
+    "fashion": 0.4519,
+    "kl": 2.682809124755859,
+    "threshold": 1.0687017262838769e-07,
+    "mode": "threshold",
+    "seed": 6
+  },
+  "thresh_4.97e-08_seed9": {
+    "parity": 0.976,
+    "fashion": 0.424,
+    "kl": 2.6804279968261717,
+    "threshold": 4.967855295764595e-08,
+    "mode": "threshold",
+    "seed": 9
+  },
+  "thresh_2.31e-08_seed4": {
+    "parity": 0.9754,
+    "fashion": 0.3973,
+    "kl": 2.8329085693359377,
+    "threshold": 2.3093053592673573e-08,
+    "mode": "threshold",
+    "seed": 4
+  },
+  "thresh_4.97e-08_seed11": {
+    "parity": 0.9761,
+    "fashion": 0.4643,
+    "kl": 2.3926981018066407,
+    "threshold": 4.967855295764595e-08,
+    "mode": "threshold",
+    "seed": 11
+  },
+  "thresh_2.31e-08_seed1": {
+    "parity": 0.9725,
+    "fashion": 0.369,
+    "kl": 3.226049151611328,
+    "threshold": 2.3093053592673573e-08,
+    "mode": "threshold",
+    "seed": 1
+  },
+  "thresh_2.30e-07_seed2": {
+    "parity": 0.9777,
+    "fashion": 0.5145,
+    "kl": 1.9865525390625,
+    "threshold": 2.2990270685538478e-07,
+    "mode": "threshold",
+    "seed": 2
+  },
+  "thresh_1.07e-08_seed12": {
+    "parity": 0.977,
+    "fashion": 0.3561,
+    "kl": 3.4525792358398437,
+    "threshold": 1.073479585222132e-08,
+    "mode": "threshold",
+    "seed": 12
+  },
+  "thresh_2.30e-07_seed26": {
+    "parity": 0.9738,
+    "fashion": 0.4682,
+    "kl": 3.000987860107422,
+    "threshold": 2.2990270685538478e-07,
+    "mode": "threshold",
+    "seed": 26
+  },
+  "thresh_4.95e-07_seed1": {
+    "parity": 0.9753,
+    "fashion": 0.4146,
+    "kl": 2.4935632690429688,
+    "threshold": 4.945744291367707e-07,
+    "mode": "threshold",
+    "seed": 1
+  },
+  "thresh_1.07e-07_seed16": {
+    "parity": 0.9757,
+    "fashion": 0.4571,
+    "kl": 2.8465741516113283,
+    "threshold": 1.0687017262838769e-07,
+    "mode": "threshold",
+    "seed": 16
+  },
+  "thresh_1.07e-08_seed20": {
+    "parity": 0.9739,
+    "fashion": 0.412,
+    "kl": 2.8922104125976564,
+    "threshold": 1.073479585222132e-08,
+    "mode": "threshold",
+    "seed": 20
+  },
+  "thresh_4.97e-08_seed29": {
+    "parity": 0.9777,
+    "fashion": 0.4382,
+    "kl": 2.657561267089844,
+    "threshold": 4.967855295764595e-08,
+    "mode": "threshold",
+    "seed": 29
+  },
+  "thresh_1.07e-07_seed26": {
+    "parity": 0.9738,
+    "fashion": 0.3684,
+    "kl": 3.2910555358886717,
+    "threshold": 1.0687017262838769e-07,
+    "mode": "threshold",
+    "seed": 26
+  },
+  "thresh_2.30e-07_seed20": {
+    "parity": 0.9756,
+    "fashion": 0.4164,
+    "kl": 2.9381902282714845,
+    "threshold": 2.2990270685538478e-07,
+    "mode": "threshold",
+    "seed": 20
+  },
+  "thresh_2.31e-08_seed10": {
+    "parity": 0.9737,
+    "fashion": 0.4645,
+    "kl": 2.3778057373046875,
+    "threshold": 2.3093053592673573e-08,
+    "mode": "threshold",
+    "seed": 10
+  },
+  "thresh_4.97e-08_seed3": {
+    "parity": 0.9762,
+    "fashion": 0.471,
+    "kl": 3.0614116455078126,
+    "threshold": 4.967855295764595e-08,
+    "mode": "threshold",
+    "seed": 3
+  },
+  "thresh_1.07e-07_seed10": {
+    "parity": 0.9735,
+    "fashion": 0.461,
+    "kl": 2.274575634765625,
+    "threshold": 1.0687017262838769e-07,
+    "mode": "threshold",
+    "seed": 10
+  },
+  "thresh_4.97e-08_seed26": {
+    "parity": 0.9744,
+    "fashion": 0.416,
+    "kl": 3.2225286499023436,
+    "threshold": 4.967855295764595e-08,
+    "mode": "threshold",
+    "seed": 26
+  },
+  "thresh_1.07e-07_seed19": {
+    "parity": 0.9722,
+    "fashion": 0.4513,
+    "kl": 2.745436663818359,
+    "threshold": 1.0687017262838769e-07,
+    "mode": "threshold",
+    "seed": 19
+  },
+  "thresh_1.07e-07_seed5": {
+    "parity": 0.9745,
+    "fashion": 0.4556,
+    "kl": 3.0615399658203124,
+    "threshold": 1.0687017262838769e-07,
+    "mode": "threshold",
+    "seed": 5
+  },
+  "thresh_4.97e-08_seed0": {
+    "parity": 0.9734,
+    "fashion": 0.4709,
+    "kl": 2.7407565307617188,
+    "threshold": 4.967855295764595e-08,
+    "mode": "threshold",
+    "seed": 0
+  },
+  "thresh_2.31e-08_seed8": {
+    "parity": 0.9751,
+    "fashion": 0.3873,
+    "kl": 3.8057628051757812,
+    "threshold": 2.3093053592673573e-08,
+    "mode": "threshold",
+    "seed": 8
+  },
+  "thresh_1.07e-07_seed12": {
+    "parity": 0.9777,
+    "fashion": 0.394,
+    "kl": 3.1601595764160155,
+    "threshold": 1.0687017262838769e-07,
+    "mode": "threshold",
+    "seed": 12
+  },
+  "thresh_2.31e-08_seed7": {
+    "parity": 0.9766,
+    "fashion": 0.4721,
+    "kl": 2.4373022277832033,
+    "threshold": 2.3093053592673573e-08,
+    "mode": "threshold",
+    "seed": 7
+  },
+  "thresh_1.07e-08_seed24": {
+    "parity": 0.9753,
+    "fashion": 0.4447,
+    "kl": 2.7359518676757815,
+    "threshold": 1.073479585222132e-08,
+    "mode": "threshold",
+    "seed": 24
+  },
+  "thresh_2.31e-08_seed26": {
+    "parity": 0.9744,
+    "fashion": 0.39,
+    "kl": 3.3821275146484373,
+    "threshold": 2.3093053592673573e-08,
+    "mode": "threshold",
+    "seed": 26
+  },
+  "thresh_2.31e-08_seed29": {
+    "parity": 0.9771,
+    "fashion": 0.5017,
+    "kl": 2.4972768005371093,
+    "threshold": 2.3093053592673573e-08,
+    "mode": "threshold",
+    "seed": 29
+  },
+  "thresh_2.30e-07_seed15": {
+    "parity": 0.972,
+    "fashion": 0.4596,
+    "kl": 2.652831481933594,
+    "threshold": 2.2990270685538478e-07,
+    "mode": "threshold",
+    "seed": 15
+  },
+  "thresh_4.97e-08_seed21": {
+    "parity": 0.9754,
+    "fashion": 0.5209,
+    "kl": 1.8938553344726563,
+    "threshold": 4.967855295764595e-08,
+    "mode": "threshold",
+    "seed": 21
+  },
+  "thresh_2.31e-08_seed23": {
+    "parity": 0.9747,
+    "fashion": 0.4869,
+    "kl": 2.7222814086914062,
+    "threshold": 2.3093053592673573e-08,
+    "mode": "threshold",
+    "seed": 23
+  },
+  "thresh_2.30e-07_seed8": {
+    "parity": 0.9738,
+    "fashion": 0.4426,
+    "kl": 2.9078785888671876,
+    "threshold": 2.2990270685538478e-07,
+    "mode": "threshold",
+    "seed": 8
+  },
+  "thresh_4.97e-08_seed7": {
+    "parity": 0.9758,
+    "fashion": 0.5344,
+    "kl": 1.8897741088867188,
+    "threshold": 4.967855295764595e-08,
+    "mode": "threshold",
+    "seed": 7
+  },
+  "thresh_4.95e-07_seed11": {
+    "parity": 0.9765,
+    "fashion": 0.4909,
+    "kl": 2.107948083496094,
+    "threshold": 4.945744291367707e-07,
+    "mode": "threshold",
+    "seed": 11
+  },
+  "thresh_2.31e-08_seed14": {
+    "parity": 0.9767,
+    "fashion": 0.502,
+    "kl": 2.067499725341797,
+    "threshold": 2.3093053592673573e-08,
+    "mode": "threshold",
+    "seed": 14
+  },
+  "thresh_4.97e-08_seed19": {
+    "parity": 0.9753,
+    "fashion": 0.4389,
+    "kl": 2.803166845703125,
+    "threshold": 4.967855295764595e-08,
+    "mode": "threshold",
+    "seed": 19
+  },
+  "thresh_1.07e-08_seed23": {
+    "parity": 0.9747,
+    "fashion": 0.4651,
+    "kl": 3.0764424560546875,
+    "threshold": 1.073479585222132e-08,
+    "mode": "threshold",
+    "seed": 23
+  },
+  "thresh_2.31e-08_seed18": {
+    "parity": 0.9765,
+    "fashion": 0.3855,
+    "kl": 3.358216326904297,
+    "threshold": 2.3093053592673573e-08,
+    "mode": "threshold",
+    "seed": 18
+  },
+  "thresh_2.30e-07_seed0": {
+    "parity": 0.976,
+    "fashion": 0.4551,
+    "kl": 3.0023805114746094,
+    "threshold": 2.2990270685538478e-07,
+    "mode": "threshold",
+    "seed": 0
+  },
+  "thresh_2.30e-07_seed13": {
+    "parity": 0.9757,
+    "fashion": 0.5285,
+    "kl": 2.1545250732421874,
+    "threshold": 2.2990270685538478e-07,
+    "mode": "threshold",
+    "seed": 13
+  },
+  "thresh_1.07e-08_seed16": {
+    "parity": 0.976,
+    "fashion": 0.4554,
+    "kl": 2.746886102294922,
+    "threshold": 1.073479585222132e-08,
+    "mode": "threshold",
+    "seed": 16
+  },
+  "thresh_4.97e-08_seed1": {
+    "parity": 0.9759,
+    "fashion": 0.3776,
+    "kl": 2.626696112060547,
+    "threshold": 4.967855295764595e-08,
+    "mode": "threshold",
+    "seed": 1
+  },
+  "thresh_1.07e-07_seed22": {
+    "parity": 0.9758,
+    "fashion": 0.5358,
+    "kl": 1.9400396301269531,
+    "threshold": 1.0687017262838769e-07,
+    "mode": "threshold",
+    "seed": 22
+  },
+  "thresh_1.07e-07_seed9": {
+    "parity": 0.9752,
+    "fashion": 0.3894,
+    "kl": 3.4217272338867186,
+    "threshold": 1.0687017262838769e-07,
+    "mode": "threshold",
+    "seed": 9
+  },
+  "thresh_1.07e-08_seed13": {
+    "parity": 0.9764,
+    "fashion": 0.4191,
+    "kl": 2.358821728515625,
+    "threshold": 1.073479585222132e-08,
+    "mode": "threshold",
+    "seed": 13
+  },
+  "thresh_1.07e-07_seed11": {
+    "parity": 0.9755,
+    "fashion": 0.3929,
+    "kl": 2.933905828857422,
+    "threshold": 1.0687017262838769e-07,
+    "mode": "threshold",
+    "seed": 11
+  },
+  "thresh_1.07e-08_seed21": {
+    "parity": 0.9758,
+    "fashion": 0.5759,
+    "kl": 1.9901735778808594,
+    "threshold": 1.073479585222132e-08,
+    "mode": "threshold",
+    "seed": 21
+  },
+  "thresh_4.97e-08_seed5": {
+    "parity": 0.9764,
+    "fashion": 0.4371,
+    "kl": 3.163259521484375,
+    "threshold": 4.967855295764595e-08,
+    "mode": "threshold",
+    "seed": 5
+  },
+  "thresh_1.07e-07_seed4": {
+    "parity": 0.9762,
+    "fashion": 0.4638,
+    "kl": 2.205326354980469,
+    "threshold": 1.0687017262838769e-07,
+    "mode": "threshold",
+    "seed": 4
+  },
+  "thresh_2.30e-07_seed5": {
+    "parity": 0.9754,
+    "fashion": 0.4847,
+    "kl": 3.1839382019042968,
+    "threshold": 2.2990270685538478e-07,
+    "mode": "threshold",
+    "seed": 5
+  },
+  "thresh_2.31e-08_seed15": {
+    "parity": 0.9731,
+    "fashion": 0.4519,
+    "kl": 2.5728204895019533,
+    "threshold": 2.3093053592673573e-08,
+    "mode": "threshold",
+    "seed": 15
+  },
+  "thresh_2.30e-07_seed10": {
+    "parity": 0.9746,
+    "fashion": 0.449,
+    "kl": 2.5314375244140623,
+    "threshold": 2.2990270685538478e-07,
+    "mode": "threshold",
+    "seed": 10
+  },
+  "thresh_2.30e-07_seed6": {
+    "parity": 0.9755,
+    "fashion": 0.3615,
+    "kl": 3.072550897216797,
+    "threshold": 2.2990270685538478e-07,
+    "mode": "threshold",
+    "seed": 6
+  },
+  "thresh_2.29e-06_seed16": {
+    "parity": 0.9729,
+    "fashion": 0.51,
+    "kl": 2.4156540832519533,
+    "threshold": 2.2887945246098405e-06,
+    "mode": "threshold",
+    "seed": 16
+  },
+  "thresh_1.07e-08_seed18": {
+    "parity": 0.9767,
+    "fashion": 0.4263,
+    "kl": 2.884844476318359,
+    "threshold": 1.073479585222132e-08,
+    "mode": "threshold",
+    "seed": 18
+  },
+  "thresh_4.97e-08_seed23": {
+    "parity": 0.9756,
+    "fashion": 0.5531,
+    "kl": 2.6330958251953125,
+    "threshold": 4.967855295764595e-08,
+    "mode": "threshold",
+    "seed": 23
+  },
+  "thresh_2.31e-08_seed3": {
+    "parity": 0.9743,
+    "fashion": 0.4765,
+    "kl": 3.1169242797851564,
+    "threshold": 2.3093053592673573e-08,
+    "mode": "threshold",
+    "seed": 3
+  },
+  "thresh_1.07e-07_seed20": {
+    "parity": 0.976,
+    "fashion": 0.4121,
+    "kl": 2.8660184326171874,
+    "threshold": 1.0687017262838769e-07,
+    "mode": "threshold",
+    "seed": 20
+  },
+  "thresh_1.07e-08_seed10": {
+    "parity": 0.9746,
+    "fashion": 0.4598,
+    "kl": 2.4542746643066407,
+    "threshold": 1.073479585222132e-08,
+    "mode": "threshold",
+    "seed": 10
+  },
+  "thresh_2.31e-08_seed21": {
+    "parity": 0.9758,
+    "fashion": 0.5759,
+    "kl": 1.9901748962402344,
+    "threshold": 2.3093053592673573e-08,
+    "mode": "threshold",
+    "seed": 21
+  },
+  "thresh_1.07e-07_seed0": {
+    "parity": 0.9751,
+    "fashion": 0.457,
+    "kl": 2.972454229736328,
+    "threshold": 1.0687017262838769e-07,
+    "mode": "threshold",
+    "seed": 0
+  },
+  "thresh_4.97e-08_seed12": {
+    "parity": 0.9768,
+    "fashion": 0.3873,
+    "kl": 3.0190021118164063,
+    "threshold": 4.967855295764595e-08,
+    "mode": "threshold",
+    "seed": 12
+  },
+  "thresh_1.07e-08_seed22": {
+    "parity": 0.9761,
+    "fashion": 0.5372,
+    "kl": 1.8967054321289063,
+    "threshold": 1.073479585222132e-08,
+    "mode": "threshold",
+    "seed": 22
+  },
+  "thresh_2.31e-08_seed13": {
+    "parity": 0.9745,
+    "fashion": 0.4105,
+    "kl": 2.4166391967773437,
+    "threshold": 2.3093053592673573e-08,
+    "mode": "threshold",
+    "seed": 13
+  },
+  "thresh_1.07e-08_seed19": {
+    "parity": 0.9716,
+    "fashion": 0.4196,
+    "kl": 2.7556716186523436,
+    "threshold": 1.073479585222132e-08,
+    "mode": "threshold",
+    "seed": 19
+  },
+  "thresh_2.31e-08_seed24": {
+    "parity": 0.9751,
+    "fashion": 0.4637,
+    "kl": 2.5554717407226564,
+    "threshold": 2.3093053592673573e-08,
+    "mode": "threshold",
+    "seed": 24
+  },
+  "thresh_4.95e-07_seed8": {
+    "parity": 0.9738,
+    "fashion": 0.4202,
+    "kl": 3.2615554931640625,
+    "threshold": 4.945744291367707e-07,
+    "mode": "threshold",
+    "seed": 8
+  },
+  "thresh_2.30e-07_seed3": {
+    "parity": 0.9746,
+    "fashion": 0.4716,
+    "kl": 3.0716342163085937,
+    "threshold": 2.2990270685538478e-07,
+    "mode": "threshold",
+    "seed": 3
+  },
+  "thresh_4.95e-07_seed17": {
+    "parity": 0.9752,
+    "fashion": 0.6042,
+    "kl": 1.6142890258789062,
+    "threshold": 4.945744291367707e-07,
+    "mode": "threshold",
+    "seed": 17
+  },
+  "thresh_2.30e-07_seed25": {
+    "parity": 0.9768,
+    "fashion": 0.5392,
+    "kl": 1.9587256774902344,
+    "threshold": 2.2990270685538478e-07,
+    "mode": "threshold",
+    "seed": 25
+  },
+  "thresh_2.30e-07_seed27": {
+    "parity": 0.9756,
+    "fashion": 0.5881,
+    "kl": 1.474634848022461,
+    "threshold": 2.2990270685538478e-07,
+    "mode": "threshold",
+    "seed": 27
+  },
+  "thresh_1.06e-06_seed8": {
+    "parity": 0.9747,
+    "fashion": 0.4267,
+    "kl": 3.026895703125,
+    "threshold": 1.063945132711399e-06,
+    "mode": "threshold",
+    "seed": 8
+  },
+  "thresh_4.95e-07_seed13": {
+    "parity": 0.9735,
+    "fashion": 0.5194,
+    "kl": 2.413150665283203,
+    "threshold": 4.945744291367707e-07,
+    "mode": "threshold",
+    "seed": 13
+  },
+  "thresh_4.95e-07_seed15": {
+    "parity": 0.9748,
+    "fashion": 0.511,
+    "kl": 1.6933439575195313,
+    "threshold": 4.945744291367707e-07,
+    "mode": "threshold",
+    "seed": 15
+  },
+  "thresh_2.29e-06_seed25": {
+    "parity": 0.9747,
+    "fashion": 0.5404,
+    "kl": 1.8948713623046876,
+    "threshold": 2.2887945246098405e-06,
+    "mode": "threshold",
+    "seed": 25
+  },
+  "thresh_4.95e-07_seed5": {
+    "parity": 0.9752,
+    "fashion": 0.44,
+    "kl": 3.628423352050781,
+    "threshold": 4.945744291367707e-07,
+    "mode": "threshold",
+    "seed": 5
+  },
+  "thresh_1.06e-05_seed1": {
+    "parity": 0.9764,
+    "fashion": 0.3582,
+    "kl": 2.8979716430664064,
+    "threshold": 1.059209709856493e-05,
+    "mode": "threshold",
+    "seed": 1
+  },
+  "thresh_2.29e-06_seed7": {
+    "parity": 0.9764,
+    "fashion": 0.4793,
+    "kl": 2.1371786071777343,
+    "threshold": 2.2887945246098405e-06,
+    "mode": "threshold",
+    "seed": 7
+  },
+  "thresh_2.30e-07_seed21": {
+    "parity": 0.9751,
+    "fashion": 0.4807,
+    "kl": 2.3827960388183596,
+    "threshold": 2.2990270685538478e-07,
+    "mode": "threshold",
+    "seed": 21
+  },
+  "thresh_2.30e-07_seed28": {
+    "parity": 0.9754,
+    "fashion": 0.2921,
+    "kl": 3.151256427001953,
+    "threshold": 2.2990270685538478e-07,
+    "mode": "threshold",
+    "seed": 28
+  },
+  "thresh_2.30e-07_seed29": {
+    "parity": 0.976,
+    "fashion": 0.4229,
+    "kl": 2.7764210693359375,
+    "threshold": 2.2990270685538478e-07,
+    "mode": "threshold",
+    "seed": 29
+  },
+  "thresh_4.92e-06_seed0": {
+    "parity": 0.975,
+    "fashion": 0.441,
+    "kl": 2.088218426513672,
+    "threshold": 4.923731698958747e-06,
+    "mode": "threshold",
+    "seed": 0
+  },
+  "thresh_4.95e-07_seed25": {
+    "parity": 0.9759,
+    "fashion": 0.5293,
+    "kl": 2.0236870727539062,
+    "threshold": 4.945744291367707e-07,
+    "mode": "threshold",
+    "seed": 25
+  },
+  "thresh_2.30e-07_seed7": {
+    "parity": 0.9762,
+    "fashion": 0.4946,
+    "kl": 2.0534619506835936,
+    "threshold": 2.2990270685538478e-07,
+    "mode": "threshold",
+    "seed": 7
+  },
+  "thresh_2.31e-08_seed17": {
+    "parity": 0.9731,
+    "fashion": 0.4086,
+    "kl": 2.5283135986328125,
+    "threshold": 2.3093053592673573e-08,
+    "mode": "threshold",
+    "seed": 17
+  },
+  "thresh_4.95e-07_seed9": {
+    "parity": 0.9764,
+    "fashion": 0.4189,
+    "kl": 2.5575548461914064,
+    "threshold": 4.945744291367707e-07,
+    "mode": "threshold",
+    "seed": 9
+  },
+  "thresh_1.07e-07_seed25": {
+    "parity": 0.974,
+    "fashion": 0.4295,
+    "kl": 2.2324512451171876,
+    "threshold": 1.0687017262838769e-07,
+    "mode": "threshold",
+    "seed": 25
+  },
+  "thresh_4.95e-07_seed7": {
+    "parity": 0.9779,
+    "fashion": 0.583,
+    "kl": 1.3943610229492187,
+    "threshold": 4.945744291367707e-07,
+    "mode": "threshold",
+    "seed": 7
+  },
+  "thresh_4.97e-08_seed17": {
+    "parity": 0.9716,
+    "fashion": 0.5418,
+    "kl": 1.8417965942382812,
+    "threshold": 4.967855295764595e-08,
+    "mode": "threshold",
+    "seed": 17
+  },
+  "thresh_2.29e-06_seed8": {
+    "parity": 0.9749,
+    "fashion": 0.4504,
+    "kl": 3.1232511108398437,
+    "threshold": 2.2887945246098405e-06,
+    "mode": "threshold",
+    "seed": 8
+  },
+  "thresh_2.30e-07_seed19": {
+    "parity": 0.9752,
+    "fashion": 0.3711,
+    "kl": 3.335361730957031,
+    "threshold": 2.2990270685538478e-07,
+    "mode": "threshold",
+    "seed": 19
+  },
+  "thresh_4.95e-07_seed14": {
+    "parity": 0.9762,
+    "fashion": 0.4638,
+    "kl": 2.118029815673828,
+    "threshold": 4.945744291367707e-07,
+    "mode": "threshold",
+    "seed": 14
+  },
+  "thresh_4.92e-06_seed11": {
+    "parity": 0.9759,
+    "fashion": 0.488,
+    "kl": 1.979413751220703,
+    "threshold": 4.923731698958747e-06,
+    "mode": "threshold",
+    "seed": 11
+  },
+  "thresh_4.95e-07_seed6": {
+    "parity": 0.9754,
+    "fashion": 0.4811,
+    "kl": 2.3034747985839843,
+    "threshold": 4.945744291367707e-07,
+    "mode": "threshold",
+    "seed": 6
+  },
+  "thresh_2.30e-07_seed23": {
+    "parity": 0.9764,
+    "fashion": 0.4558,
+    "kl": 2.7974648498535157,
+    "threshold": 2.2990270685538478e-07,
+    "mode": "threshold",
+    "seed": 23
+  },
+  "thresh_4.97e-08_seed28": {
+    "parity": 0.9768,
+    "fashion": 0.4779,
+    "kl": 2.168350915527344,
+    "threshold": 4.967855295764595e-08,
+    "mode": "threshold",
+    "seed": 28
+  },
+  "thresh_4.95e-07_seed2": {
+    "parity": 0.9756,
+    "fashion": 0.4038,
+    "kl": 2.8132035888671876,
+    "threshold": 4.945744291367707e-07,
+    "mode": "threshold",
+    "seed": 2
+  },
+  "thresh_2.30e-07_seed11": {
+    "parity": 0.9758,
+    "fashion": 0.4356,
+    "kl": 2.448862823486328,
+    "threshold": 2.2990270685538478e-07,
+    "mode": "threshold",
+    "seed": 11
+  },
+  "thresh_4.97e-08_seed24": {
+    "parity": 0.9769,
+    "fashion": 0.4374,
+    "kl": 2.796428723144531,
+    "threshold": 4.967855295764595e-08,
+    "mode": "threshold",
+    "seed": 24
+  },
+  "thresh_2.30e-07_seed17": {
+    "parity": 0.9757,
+    "fashion": 0.4778,
+    "kl": 2.387800567626953,
+    "threshold": 2.2990270685538478e-07,
+    "mode": "threshold",
+    "seed": 17
+  },
+  "thresh_2.30e-07_seed24": {
+    "parity": 0.9765,
+    "fashion": 0.5147,
+    "kl": 2.086360748291016,
+    "threshold": 2.2990270685538478e-07,
+    "mode": "threshold",
+    "seed": 24
+  },
+  "thresh_4.97e-08_seed27": {
+    "parity": 0.9769,
+    "fashion": 0.5425,
+    "kl": 1.75800693359375,
+    "threshold": 4.967855295764595e-08,
+    "mode": "threshold",
+    "seed": 27
+  },
+  "thresh_4.95e-07_seed27": {
+    "parity": 0.9765,
+    "fashion": 0.6077,
+    "kl": 1.4042592803955078,
+    "threshold": 4.945744291367707e-07,
+    "mode": "threshold",
+    "seed": 27
+  },
+  "thresh_1.07e-07_seed8": {
+    "parity": 0.9723,
+    "fashion": 0.4091,
+    "kl": 3.5253425537109373,
+    "threshold": 1.0687017262838769e-07,
+    "mode": "threshold",
+    "seed": 8
+  },
+  "thresh_2.30e-07_seed16": {
+    "parity": 0.9763,
+    "fashion": 0.4527,
+    "kl": 2.446078430175781,
+    "threshold": 2.2990270685538478e-07,
+    "mode": "threshold",
+    "seed": 16
+  },
+  "thresh_4.97e-08_seed2": {
+    "parity": 0.9763,
+    "fashion": 0.5192,
+    "kl": 2.0845578002929686,
+    "threshold": 4.967855295764595e-08,
+    "mode": "threshold",
+    "seed": 2
+  },
+  "thresh_4.95e-07_seed0": {
+    "parity": 0.9746,
+    "fashion": 0.468,
+    "kl": 2.6866767456054688,
+    "threshold": 4.945744291367707e-07,
+    "mode": "threshold",
+    "seed": 0
+  },
+  "thresh_1.07e-07_seed29": {
+    "parity": 0.9761,
+    "fashion": 0.4839,
+    "kl": 2.6701245910644533,
+    "threshold": 1.0687017262838769e-07,
+    "mode": "threshold",
+    "seed": 29
+  },
+  "thresh_2.29e-06_seed2": {
+    "parity": 0.9753,
+    "fashion": 0.5089,
+    "kl": 1.9328446472167968,
+    "threshold": 2.2887945246098405e-06,
+    "mode": "threshold",
+    "seed": 2
+  },
+  "thresh_2.31e-08_seed0": {
+    "parity": 0.974,
+    "fashion": 0.4776,
+    "kl": 2.8179353759765626,
+    "threshold": 2.3093053592673573e-08,
+    "mode": "threshold",
+    "seed": 0
+  },
+  "thresh_1.07e-07_seed14": {
+    "parity": 0.9759,
+    "fashion": 0.4904,
+    "kl": 2.2813987548828125,
+    "threshold": 1.0687017262838769e-07,
+    "mode": "threshold",
+    "seed": 14
+  },
+  "thresh_2.30e-07_seed4": {
+    "parity": 0.9768,
+    "fashion": 0.4816,
+    "kl": 2.453487322998047,
+    "threshold": 2.2990270685538478e-07,
+    "mode": "threshold",
+    "seed": 4
+  },
+  "thresh_4.95e-07_seed3": {
+    "parity": 0.9733,
+    "fashion": 0.4377,
+    "kl": 3.0794519165039063,
+    "threshold": 4.945744291367707e-07,
+    "mode": "threshold",
+    "seed": 3
+  },
+  "thresh_2.31e-08_seed9": {
+    "parity": 0.9746,
+    "fashion": 0.4302,
+    "kl": 3.1877970947265624,
+    "threshold": 2.3093053592673573e-08,
+    "mode": "threshold",
+    "seed": 9
+  },
+  "thresh_1.07e-07_seed7": {
+    "parity": 0.9765,
+    "fashion": 0.4148,
+    "kl": 2.747626354980469,
+    "threshold": 1.0687017262838769e-07,
+    "mode": "threshold",
+    "seed": 7
+  },
+  "thresh_1.07e-07_seed23": {
+    "parity": 0.976,
+    "fashion": 0.3597,
+    "kl": 3.1592894897460937,
+    "threshold": 1.0687017262838769e-07,
+    "mode": "threshold",
+    "seed": 23
+  },
+  "thresh_2.30e-07_seed9": {
+    "parity": 0.9768,
+    "fashion": 0.4085,
+    "kl": 3.0247169372558593,
+    "threshold": 2.2990270685538478e-07,
+    "mode": "threshold",
+    "seed": 9
+  },
+  "thresh_2.30e-07_seed18": {
+    "parity": 0.9767,
+    "fashion": 0.4845,
+    "kl": 2.522307293701172,
+    "threshold": 2.2990270685538478e-07,
+    "mode": "threshold",
+    "seed": 18
+  },
+  "thresh_2.31e-08_seed20": {
+    "parity": 0.9756,
+    "fashion": 0.4137,
+    "kl": 2.948843438720703,
+    "threshold": 2.3093053592673573e-08,
+    "mode": "threshold",
+    "seed": 20
+  },
+  "thresh_4.95e-07_seed4": {
+    "parity": 0.9769,
+    "fashion": 0.3069,
+    "kl": 3.4867950927734377,
+    "threshold": 4.945744291367707e-07,
+    "mode": "threshold",
+    "seed": 4
+  },
+  "thresh_4.97e-08_seed22": {
+    "parity": 0.9772,
+    "fashion": 0.6552,
+    "kl": 1.2799406005859375,
+    "threshold": 4.967855295764595e-08,
+    "mode": "threshold",
+    "seed": 22
+  },
+  "thresh_2.31e-08_seed12": {
+    "parity": 0.9758,
+    "fashion": 0.3802,
+    "kl": 3.0819904296875,
+    "threshold": 2.3093053592673573e-08,
+    "mode": "threshold",
+    "seed": 12
+  },
+  "thresh_2.30e-07_seed14": {
+    "parity": 0.9755,
+    "fashion": 0.4566,
+    "kl": 2.4370341247558596,
+    "threshold": 2.2990270685538478e-07,
+    "mode": "threshold",
+    "seed": 14
+  },
+  "thresh_1.07e-07_seed15": {
+    "parity": 0.9744,
+    "fashion": 0.6017,
+    "kl": 1.6685583251953124,
+    "threshold": 1.0687017262838769e-07,
+    "mode": "threshold",
+    "seed": 15
+  },
+  "thresh_1.07e-07_seed28": {
+    "parity": 0.9745,
+    "fashion": 0.3062,
+    "kl": 3.3714427490234375,
+    "threshold": 1.0687017262838769e-07,
+    "mode": "threshold",
+    "seed": 28
+  },
+  "thresh_1.07e-07_seed24": {
+    "parity": 0.9773,
+    "fashion": 0.5279,
+    "kl": 1.6826513793945312,
+    "threshold": 1.0687017262838769e-07,
+    "mode": "threshold",
+    "seed": 24
+  },
+  "thresh_4.97e-08_seed14": {
+    "parity": 0.9765,
+    "fashion": 0.4573,
+    "kl": 2.3458330810546877,
+    "threshold": 4.967855295764595e-08,
+    "mode": "threshold",
+    "seed": 14
+  },
+  "thresh_4.95e-07_seed18": {
+    "parity": 0.9768,
+    "fashion": 0.4462,
+    "kl": 2.831066394042969,
+    "threshold": 4.945744291367707e-07,
+    "mode": "threshold",
+    "seed": 18
+  },
+  "thresh_2.31e-08_seed11": {
+    "parity": 0.9769,
+    "fashion": 0.38,
+    "kl": 2.740106396484375,
+    "threshold": 2.3093053592673573e-08,
+    "mode": "threshold",
+    "seed": 11
+  },
+  "thresh_4.95e-07_seed12": {
+    "parity": 0.9765,
+    "fashion": 0.4015,
+    "kl": 3.0505759887695314,
+    "threshold": 4.945744291367707e-07,
+    "mode": "threshold",
+    "seed": 12
+  },
+  "thresh_4.95e-07_seed19": {
+    "parity": 0.9762,
+    "fashion": 0.4075,
+    "kl": 3.038098419189453,
+    "threshold": 4.945744291367707e-07,
+    "mode": "threshold",
+    "seed": 19
+  },
+  "thresh_2.30e-07_seed22": {
+    "parity": 0.9757,
+    "fashion": 0.5181,
+    "kl": 2.045535516357422,
+    "threshold": 2.2990270685538478e-07,
+    "mode": "threshold",
+    "seed": 22
+  },
+  "thresh_2.30e-07_seed1": {
+    "parity": 0.9759,
+    "fashion": 0.4777,
+    "kl": 2.327076123046875,
+    "threshold": 2.2990270685538478e-07,
+    "mode": "threshold",
+    "seed": 1
+  },
+  "thresh_4.95e-07_seed16": {
+    "parity": 0.9746,
+    "fashion": 0.5577,
+    "kl": 2.0754431396484376,
+    "threshold": 4.945744291367707e-07,
+    "mode": "threshold",
+    "seed": 16
+  },
+  "thresh_2.30e-07_seed12": {
+    "parity": 0.9741,
+    "fashion": 0.3495,
+    "kl": 3.063804235839844,
+    "threshold": 2.2990270685538478e-07,
+    "mode": "threshold",
+    "seed": 12
+  },
+  "thresh_4.97e-08_seed18": {
+    "parity": 0.9764,
+    "fashion": 0.3717,
+    "kl": 3.214112121582031,
+    "threshold": 4.967855295764595e-08,
+    "mode": "threshold",
+    "seed": 18
+  },
+  "thresh_4.95e-07_seed21": {
+    "parity": 0.9766,
+    "fashion": 0.4945,
+    "kl": 1.936791943359375,
+    "threshold": 4.945744291367707e-07,
+    "mode": "threshold",
+    "seed": 21
+  },
+  "thresh_4.97e-08_seed16": {
+    "parity": 0.9764,
+    "fashion": 0.5129,
+    "kl": 1.9168884704589844,
+    "threshold": 4.967855295764595e-08,
+    "mode": "threshold",
+    "seed": 16
+  },
+  "thresh_1.06e-06_seed16": {
+    "parity": 0.9761,
+    "fashion": 0.4982,
+    "kl": 2.3739224487304686,
+    "threshold": 1.063945132711399e-06,
+    "mode": "threshold",
+    "seed": 16
+  },
+  "thresh_1.06e-06_seed12": {
+    "parity": 0.9769,
+    "fashion": 0.3759,
+    "kl": 3.364156970214844,
+    "threshold": 1.063945132711399e-06,
+    "mode": "threshold",
+    "seed": 12
+  },
+  "thresh_2.29e-06_seed5": {
+    "parity": 0.975,
+    "fashion": 0.4306,
+    "kl": 3.2613760375976564,
+    "threshold": 2.2887945246098405e-06,
+    "mode": "threshold",
+    "seed": 5
+  },
+  "thresh_1.06e-06_seed5": {
+    "parity": 0.9749,
+    "fashion": 0.4115,
+    "kl": 3.5359752197265624,
+    "threshold": 1.063945132711399e-06,
+    "mode": "threshold",
+    "seed": 5
+  },
+  "thresh_2.29e-06_seed18": {
+    "parity": 0.9753,
+    "fashion": 0.4491,
+    "kl": 3.0568136840820315,
+    "threshold": 2.2887945246098405e-06,
+    "mode": "threshold",
+    "seed": 18
+  },
+  "thresh_2.29e-06_seed23": {
+    "parity": 0.9762,
+    "fashion": 0.4765,
+    "kl": 2.915483776855469,
+    "threshold": 2.2887945246098405e-06,
+    "mode": "threshold",
+    "seed": 23
+  },
+  "thresh_4.92e-06_seed28": {
+    "parity": 0.9766,
+    "fashion": 0.4797,
+    "kl": 2.4729294982910157,
+    "threshold": 4.923731698958747e-06,
+    "mode": "threshold",
+    "seed": 28
+  },
+  "thresh_1.06e-05_seed7": {
+    "parity": 0.9771,
+    "fashion": 0.4264,
+    "kl": 2.7423387573242186,
+    "threshold": 1.059209709856493e-05,
+    "mode": "threshold",
+    "seed": 7
+  },
+  "thresh_1.06e-06_seed6": {
+    "parity": 0.9755,
+    "fashion": 0.4954,
+    "kl": 2.0335275451660157,
+    "threshold": 1.063945132711399e-06,
+    "mode": "threshold",
+    "seed": 6
+  },
+  "thresh_2.29e-06_seed20": {
+    "parity": 0.9737,
+    "fashion": 0.5219,
+    "kl": 1.9103389282226562,
+    "threshold": 2.2887945246098405e-06,
+    "mode": "threshold",
+    "seed": 20
+  },
+  "thresh_4.95e-07_seed24": {
+    "parity": 0.9766,
+    "fashion": 0.4958,
+    "kl": 2.049350018310547,
+    "threshold": 4.945744291367707e-07,
+    "mode": "threshold",
+    "seed": 24
+  },
+  "thresh_1.06e-06_seed7": {
+    "parity": 0.974,
+    "fashion": 0.5101,
+    "kl": 1.8352374816894532,
+    "threshold": 1.063945132711399e-06,
+    "mode": "threshold",
+    "seed": 7
+  },
+  "thresh_4.92e-06_seed5": {
+    "parity": 0.9744,
+    "fashion": 0.437,
+    "kl": 3.3108995544433593,
+    "threshold": 4.923731698958747e-06,
+    "mode": "threshold",
+    "seed": 5
+  },
+  "thresh_4.92e-06_seed16": {
+    "parity": 0.9756,
+    "fashion": 0.5636,
+    "kl": 1.6333360229492186,
+    "threshold": 4.923731698958747e-06,
+    "mode": "threshold",
+    "seed": 16
+  },
+  "thresh_1.06e-06_seed26": {
+    "parity": 0.9738,
+    "fashion": 0.4072,
+    "kl": 2.815173126220703,
+    "threshold": 1.063945132711399e-06,
+    "mode": "threshold",
+    "seed": 26
+  },
+  "thresh_2.29e-06_seed14": {
+    "parity": 0.9747,
+    "fashion": 0.4001,
+    "kl": 2.9396102905273436,
+    "threshold": 2.2887945246098405e-06,
+    "mode": "threshold",
+    "seed": 14
+  },
+  "thresh_2.29e-06_seed19": {
+    "parity": 0.972,
+    "fashion": 0.4075,
+    "kl": 2.948223645019531,
+    "threshold": 2.2887945246098405e-06,
+    "mode": "threshold",
+    "seed": 19
+  },
+  "thresh_1.06e-06_seed15": {
+    "parity": 0.9749,
+    "fashion": 0.4801,
+    "kl": 2.1177919067382813,
+    "threshold": 1.063945132711399e-06,
+    "mode": "threshold",
+    "seed": 15
+  },
+  "thresh_1.06e-06_seed9": {
+    "parity": 0.9764,
+    "fashion": 0.4178,
+    "kl": 2.8875763488769532,
+    "threshold": 1.063945132711399e-06,
+    "mode": "threshold",
+    "seed": 9
+  },
+  "thresh_4.92e-06_seed12": {
+    "parity": 0.9763,
+    "fashion": 0.3568,
+    "kl": 3.1628638916015626,
+    "threshold": 4.923731698958747e-06,
+    "mode": "threshold",
+    "seed": 12
+  },
+  "thresh_4.92e-06_seed23": {
+    "parity": 0.9747,
+    "fashion": 0.4873,
+    "kl": 2.9467464233398437,
+    "threshold": 4.923731698958747e-06,
+    "mode": "threshold",
+    "seed": 23
+  },
+  "thresh_4.95e-07_seed22": {
+    "parity": 0.9764,
+    "fashion": 0.4422,
+    "kl": 2.5662201232910156,
+    "threshold": 4.945744291367707e-07,
+    "mode": "threshold",
+    "seed": 22
+  },
+  "thresh_4.92e-06_seed13": {
+    "parity": 0.9748,
+    "fashion": 0.5394,
+    "kl": 2.0446151000976562,
+    "threshold": 4.923731698958747e-06,
+    "mode": "threshold",
+    "seed": 13
+  },
+  "thresh_1.06e-06_seed29": {
+    "parity": 0.9759,
+    "fashion": 0.5243,
+    "kl": 2.3174786682128907,
+    "threshold": 1.063945132711399e-06,
+    "mode": "threshold",
+    "seed": 29
+  },
+  "thresh_4.92e-06_seed27": {
+    "parity": 0.974,
+    "fashion": 0.5295,
+    "kl": 1.8002983703613282,
+    "threshold": 4.923731698958747e-06,
+    "mode": "threshold",
+    "seed": 27
+  },
+  "thresh_1.06e-06_seed0": {
+    "parity": 0.9756,
+    "fashion": 0.4417,
+    "kl": 2.6119668762207033,
+    "threshold": 1.063945132711399e-06,
+    "mode": "threshold",
+    "seed": 0
+  },
+  "thresh_1.06e-05_seed6": {
+    "parity": 0.9781,
+    "fashion": 0.4691,
+    "kl": 2.1815138610839844,
+    "threshold": 1.059209709856493e-05,
+    "mode": "threshold",
+    "seed": 6
+  },
+  "thresh_4.92e-06_seed26": {
+    "parity": 0.974,
+    "fashion": 0.3717,
+    "kl": 3.0712897766113283,
+    "threshold": 4.923731698958747e-06,
+    "mode": "threshold",
+    "seed": 26
+  },
+  "thresh_2.28e-05_seed6": {
+    "parity": 0.9743,
+    "fashion": 0.5127,
+    "kl": 2.1267263122558595,
+    "threshold": 2.2786075238249413e-05,
+    "mode": "threshold",
+    "seed": 6
+  },
+  "thresh_4.92e-06_seed9": {
+    "parity": 0.9764,
+    "fashion": 0.3718,
+    "kl": 3.5807785888671875,
+    "threshold": 4.923731698958747e-06,
+    "mode": "threshold",
+    "seed": 9
+  },
+  "thresh_1.06e-06_seed20": {
+    "parity": 0.9757,
+    "fashion": 0.4999,
+    "kl": 1.9505408813476564,
+    "threshold": 1.063945132711399e-06,
+    "mode": "threshold",
+    "seed": 20
+  },
+  "thresh_2.29e-06_seed13": {
+    "parity": 0.9766,
+    "fashion": 0.4804,
+    "kl": 2.707661279296875,
+    "threshold": 2.2887945246098405e-06,
+    "mode": "threshold",
+    "seed": 13
+  },
+  "thresh_2.28e-05_seed20": {
+    "parity": 0.9737,
+    "fashion": 0.5324,
+    "kl": 2.244951531982422,
+    "threshold": 2.2786075238249413e-05,
+    "mode": "threshold",
+    "seed": 20
+  },
+  "thresh_4.92e-06_seed6": {
+    "parity": 0.9768,
+    "fashion": 0.4388,
+    "kl": 2.8633538757324217,
+    "threshold": 4.923731698958747e-06,
+    "mode": "threshold",
+    "seed": 6
+  },
+  "thresh_1.06e-06_seed14": {
+    "parity": 0.9748,
+    "fashion": 0.4628,
+    "kl": 2.465391748046875,
+    "threshold": 1.063945132711399e-06,
+    "mode": "threshold",
+    "seed": 14
+  },
+  "thresh_4.92e-06_seed22": {
+    "parity": 0.9774,
+    "fashion": 0.5037,
+    "kl": 2.046179638671875,
+    "threshold": 4.923731698958747e-06,
+    "mode": "threshold",
+    "seed": 22
+  },
+  "thresh_2.29e-06_seed21": {
+    "parity": 0.9756,
+    "fashion": 0.5074,
+    "kl": 2.1269445861816405,
+    "threshold": 2.2887945246098405e-06,
+    "mode": "threshold",
+    "seed": 21
+  },
+  "thresh_4.92e-06_seed20": {
+    "parity": 0.9753,
+    "fashion": 0.4585,
+    "kl": 2.455803448486328,
+    "threshold": 4.923731698958747e-06,
+    "mode": "threshold",
+    "seed": 20
+  },
+  "thresh_2.28e-05_seed11": {
+    "parity": 0.9747,
+    "fashion": 0.5141,
+    "kl": 2.060021697998047,
+    "threshold": 2.2786075238249413e-05,
+    "mode": "threshold",
+    "seed": 11
+  },
+  "thresh_2.28e-05_seed21": {
+    "parity": 0.976,
+    "fashion": 0.4021,
+    "kl": 2.9101904235839844,
+    "threshold": 2.2786075238249413e-05,
+    "mode": "threshold",
+    "seed": 21
+  },
+  "thresh_4.92e-06_seed1": {
+    "parity": 0.9745,
+    "fashion": 0.5288,
+    "kl": 1.7296103515625,
+    "threshold": 4.923731698958747e-06,
+    "mode": "threshold",
+    "seed": 1
+  },
+  "thresh_1.06e-05_seed12": {
+    "parity": 0.976,
+    "fashion": 0.3833,
+    "kl": 3.223862933349609,
+    "threshold": 1.059209709856493e-05,
+    "mode": "threshold",
+    "seed": 12
+  },
+  "thresh_1.06e-06_seed11": {
+    "parity": 0.9769,
+    "fashion": 0.4832,
+    "kl": 1.9585761047363281,
+    "threshold": 1.063945132711399e-06,
+    "mode": "threshold",
+    "seed": 11
+  },
+  "thresh_2.29e-06_seed10": {
+    "parity": 0.9731,
+    "fashion": 0.4845,
+    "kl": 2.17956884765625,
+    "threshold": 2.2887945246098405e-06,
+    "mode": "threshold",
+    "seed": 10
+  },
+  "thresh_1.06e-06_seed24": {
+    "parity": 0.978,
+    "fashion": 0.4458,
+    "kl": 2.7042833618164064,
+    "threshold": 1.063945132711399e-06,
+    "mode": "threshold",
+    "seed": 24
+  },
+  "thresh_1.06e-05_seed18": {
+    "parity": 0.9772,
+    "fashion": 0.4159,
+    "kl": 3.2639353149414063,
+    "threshold": 1.059209709856493e-05,
+    "mode": "threshold",
+    "seed": 18
+  },
+  "thresh_1.06e-05_seed25": {
+    "parity": 0.9765,
+    "fashion": 0.469,
+    "kl": 2.2709108764648436,
+    "threshold": 1.059209709856493e-05,
+    "mode": "threshold",
+    "seed": 25
+  },
+  "thresh_1.06e-06_seed3": {
+    "parity": 0.9766,
+    "fashion": 0.5691,
+    "kl": 2.133204510498047,
+    "threshold": 1.063945132711399e-06,
+    "mode": "threshold",
+    "seed": 3
+  },
+  "thresh_4.92e-06_seed14": {
+    "parity": 0.9764,
+    "fashion": 0.4179,
+    "kl": 2.887456005859375,
+    "threshold": 4.923731698958747e-06,
+    "mode": "threshold",
+    "seed": 14
+  },
+  "thresh_1.06e-05_seed20": {
+    "parity": 0.9745,
+    "fashion": 0.4893,
+    "kl": 2.2454813537597658,
+    "threshold": 1.059209709856493e-05,
+    "mode": "threshold",
+    "seed": 20
+  },
+  "thresh_4.92e-06_seed15": {
+    "parity": 0.974,
+    "fashion": 0.5145,
+    "kl": 1.8039317016601562,
+    "threshold": 4.923731698958747e-06,
+    "mode": "threshold",
+    "seed": 15
+  },
+  "thresh_1.05e-04_seed26": {
+    "parity": 0.9327,
+    "fashion": 0.781,
+    "kl": 0.00133930601477623,
+    "threshold": 0.00010544953634922118,
+    "mode": "threshold",
+    "seed": 26
+  },
+  "thresh_4.95e-07_seed28": {
+    "parity": 0.9761,
+    "fashion": 0.3673,
+    "kl": 2.7527604736328124,
+    "threshold": 4.945744291367707e-07,
+    "mode": "threshold",
+    "seed": 28
+  },
+  "thresh_2.29e-06_seed29": {
+    "parity": 0.9761,
+    "fashion": 0.4367,
+    "kl": 3.10655224609375,
+    "threshold": 2.2887945246098405e-06,
+    "mode": "threshold",
+    "seed": 29
+  },
+  "thresh_2.29e-06_seed6": {
+    "parity": 0.9751,
+    "fashion": 0.4491,
+    "kl": 2.4454464660644533,
+    "threshold": 2.2887945246098405e-06,
+    "mode": "threshold",
+    "seed": 6
+  },
+  "thresh_1.06e-05_seed10": {
+    "parity": 0.9747,
+    "fashion": 0.4856,
+    "kl": 2.0969273803710937,
+    "threshold": 1.059209709856493e-05,
+    "mode": "threshold",
+    "seed": 10
+  },
+  "thresh_1.06e-06_seed13": {
+    "parity": 0.9764,
+    "fashion": 0.4652,
+    "kl": 2.5554465087890623,
+    "threshold": 1.063945132711399e-06,
+    "mode": "threshold",
+    "seed": 13
+  },
+  "thresh_1.06e-06_seed4": {
+    "parity": 0.9772,
+    "fashion": 0.3942,
+    "kl": 2.8520402221679686,
+    "threshold": 1.063945132711399e-06,
+    "mode": "threshold",
+    "seed": 4
+  },
+  "thresh_2.28e-05_seed0": {
+    "parity": 0.9735,
+    "fashion": 0.5231,
+    "kl": 2.431229296875,
+    "threshold": 2.2786075238249413e-05,
+    "mode": "threshold",
+    "seed": 0
+  },
+  "thresh_1.06e-06_seed17": {
+    "parity": 0.9772,
+    "fashion": 0.5136,
+    "kl": 2.340068933105469,
+    "threshold": 1.063945132711399e-06,
+    "mode": "threshold",
+    "seed": 17
+  },
+  "thresh_1.06e-05_seed0": {
+    "parity": 0.9744,
+    "fashion": 0.4312,
+    "kl": 2.8778444763183595,
+    "threshold": 1.059209709856493e-05,
+    "mode": "threshold",
+    "seed": 0
+  },
+  "thresh_4.92e-06_seed29": {
+    "parity": 0.9771,
+    "fashion": 0.4267,
+    "kl": 2.7052711730957033,
+    "threshold": 4.923731698958747e-06,
+    "mode": "threshold",
+    "seed": 29
+  },
+  "thresh_2.29e-06_seed4": {
+    "parity": 0.9754,
+    "fashion": 0.4329,
+    "kl": 2.485266516113281,
+    "threshold": 2.2887945246098405e-06,
+    "mode": "threshold",
+    "seed": 4
+  },
+  "thresh_1.06e-06_seed18": {
+    "parity": 0.9763,
+    "fashion": 0.3627,
+    "kl": 3.4301261962890623,
+    "threshold": 1.063945132711399e-06,
+    "mode": "threshold",
+    "seed": 18
+  },
+  "thresh_2.29e-06_seed9": {
+    "parity": 0.9762,
+    "fashion": 0.4285,
+    "kl": 2.7207571655273437,
+    "threshold": 2.2887945246098405e-06,
+    "mode": "threshold",
+    "seed": 9
+  },
+  "thresh_2.29e-06_seed17": {
+    "parity": 0.9771,
+    "fashion": 0.4756,
+    "kl": 2.5134265869140626,
+    "threshold": 2.2887945246098405e-06,
+    "mode": "threshold",
+    "seed": 17
+  },
+  "thresh_1.06e-06_seed28": {
+    "parity": 0.9747,
+    "fashion": 0.4442,
+    "kl": 2.621140588378906,
+    "threshold": 1.063945132711399e-06,
+    "mode": "threshold",
+    "seed": 28
+  },
+  "thresh_4.92e-06_seed10": {
+    "parity": 0.9737,
+    "fashion": 0.4431,
+    "kl": 3.0173722106933596,
+    "threshold": 4.923731698958747e-06,
+    "mode": "threshold",
+    "seed": 10
+  },
+  "thresh_1.06e-05_seed2": {
+    "parity": 0.9759,
+    "fashion": 0.6292,
+    "kl": 1.3313216796875,
+    "threshold": 1.059209709856493e-05,
+    "mode": "threshold",
+    "seed": 2
+  },
+  "thresh_4.95e-07_seed20": {
+    "parity": 0.9766,
+    "fashion": 0.5171,
+    "kl": 2.2545311401367187,
+    "threshold": 4.945744291367707e-07,
+    "mode": "threshold",
+    "seed": 20
+  },
+  "thresh_2.29e-06_seed15": {
+    "parity": 0.9753,
+    "fashion": 0.4342,
+    "kl": 2.5847735778808594,
+    "threshold": 2.2887945246098405e-06,
+    "mode": "threshold",
+    "seed": 15
+  },
+  "thresh_2.29e-06_seed3": {
+    "parity": 0.9743,
+    "fashion": 0.4616,
+    "kl": 3.0445863647460936,
+    "threshold": 2.2887945246098405e-06,
+    "mode": "threshold",
+    "seed": 3
+  },
+  "thresh_1.06e-05_seed16": {
+    "parity": 0.9741,
+    "fashion": 0.5289,
+    "kl": 2.181277374267578,
+    "threshold": 1.059209709856493e-05,
+    "mode": "threshold",
+    "seed": 16
+  },
+  "thresh_2.29e-06_seed1": {
+    "parity": 0.9766,
+    "fashion": 0.5304,
+    "kl": 1.7192318969726563,
+    "threshold": 2.2887945246098405e-06,
+    "mode": "threshold",
+    "seed": 1
+  },
+  "thresh_2.29e-06_seed11": {
+    "parity": 0.9767,
+    "fashion": 0.5146,
+    "kl": 2.1646125427246092,
+    "threshold": 2.2887945246098405e-06,
+    "mode": "threshold",
+    "seed": 11
+  },
+  "thresh_4.95e-07_seed29": {
+    "parity": 0.9762,
+    "fashion": 0.4683,
+    "kl": 2.85494755859375,
+    "threshold": 4.945744291367707e-07,
+    "mode": "threshold",
+    "seed": 29
+  },
+  "thresh_1.06e-06_seed2": {
+    "parity": 0.9758,
+    "fashion": 0.5782,
+    "kl": 1.8713247924804688,
+    "threshold": 1.063945132711399e-06,
+    "mode": "threshold",
+    "seed": 2
+  },
+  "thresh_4.92e-06_seed3": {
+    "parity": 0.9766,
+    "fashion": 0.4547,
+    "kl": 3.1507134033203124,
+    "threshold": 4.923731698958747e-06,
+    "mode": "threshold",
+    "seed": 3
+  },
+  "thresh_4.92e-06_seed19": {
+    "parity": 0.9755,
+    "fashion": 0.4231,
+    "kl": 3.1378258361816407,
+    "threshold": 4.923731698958747e-06,
+    "mode": "threshold",
+    "seed": 19
+  },
+  "thresh_2.28e-05_seed18": {
+    "parity": 0.9756,
+    "fashion": 0.4537,
+    "kl": 2.756654089355469,
+    "threshold": 2.2786075238249413e-05,
+    "mode": "threshold",
+    "seed": 18
+  },
+  "thresh_4.92e-06_seed21": {
+    "parity": 0.975,
+    "fashion": 0.5156,
+    "kl": 1.867222247314453,
+    "threshold": 4.923731698958747e-06,
+    "mode": "threshold",
+    "seed": 21
+  },
+  "thresh_4.95e-07_seed23": {
+    "parity": 0.9716,
+    "fashion": 0.4067,
+    "kl": 3.2638472778320313,
+    "threshold": 4.945744291367707e-07,
+    "mode": "threshold",
+    "seed": 23
+  },
+  "thresh_2.29e-06_seed22": {
+    "parity": 0.9764,
+    "fashion": 0.4591,
+    "kl": 2.3090866088867186,
+    "threshold": 2.2887945246098405e-06,
+    "mode": "threshold",
+    "seed": 22
+  },
+  "thresh_1.06e-06_seed23": {
+    "parity": 0.9774,
+    "fashion": 0.3934,
+    "kl": 3.8833113403320314,
+    "threshold": 1.063945132711399e-06,
+    "mode": "threshold",
+    "seed": 23
+  },
+  "thresh_4.95e-07_seed26": {
+    "parity": 0.9744,
+    "fashion": 0.3837,
+    "kl": 3.1388213989257814,
+    "threshold": 4.945744291367707e-07,
+    "mode": "threshold",
+    "seed": 26
+  },
+  "thresh_1.06e-06_seed1": {
+    "parity": 0.9749,
+    "fashion": 0.49,
+    "kl": 2.0514316650390625,
+    "threshold": 1.063945132711399e-06,
+    "mode": "threshold",
+    "seed": 1
+  },
+  "thresh_1.06e-05_seed23": {
+    "parity": 0.9759,
+    "fashion": 0.3764,
+    "kl": 3.2107166137695313,
+    "threshold": 1.059209709856493e-05,
+    "mode": "threshold",
+    "seed": 23
+  },
+  "thresh_4.90e-05_seed18": {
+    "parity": 0.9675,
+    "fashion": 0.5305,
+    "kl": 2.2192068542480468,
+    "threshold": 4.901817080524191e-05,
+    "mode": "threshold",
+    "seed": 18
+  },
+  "thresh_1.06e-05_seed15": {
+    "parity": 0.9727,
+    "fashion": 0.3802,
+    "kl": 2.882827111816406,
+    "threshold": 1.059209709856493e-05,
+    "mode": "threshold",
+    "seed": 15
+  },
+  "thresh_1.06e-06_seed25": {
+    "parity": 0.9744,
+    "fashion": 0.5016,
+    "kl": 2.2822479736328125,
+    "threshold": 1.063945132711399e-06,
+    "mode": "threshold",
+    "seed": 25
+  },
+  "thresh_2.28e-05_seed27": {
+    "parity": 0.9748,
+    "fashion": 0.5189,
+    "kl": 1.8307788208007814,
+    "threshold": 2.2786075238249413e-05,
+    "mode": "threshold",
+    "seed": 27
+  },
+  "thresh_1.06e-05_seed13": {
+    "parity": 0.974,
+    "fashion": 0.5523,
+    "kl": 2.005449621582031,
+    "threshold": 1.059209709856493e-05,
+    "mode": "threshold",
+    "seed": 13
+  },
+  "thresh_1.05e-04_seed17": {
+    "parity": 0.9331,
+    "fashion": 0.7809,
+    "kl": 0.002337825095653534,
+    "threshold": 0.00010544953634922118,
+    "mode": "threshold",
+    "seed": 17
+  },
+  "thresh_2.28e-05_seed5": {
+    "parity": 0.9736,
+    "fashion": 0.4895,
+    "kl": 2.8628872375488283,
+    "threshold": 2.2786075238249413e-05,
+    "mode": "threshold",
+    "seed": 5
+  },
+  "thresh_2.28e-05_seed7": {
+    "parity": 0.9754,
+    "fashion": 0.5714,
+    "kl": 1.7542601928710937,
+    "threshold": 2.2786075238249413e-05,
+    "mode": "threshold",
+    "seed": 7
+  },
+  "thresh_4.90e-05_seed5": {
+    "parity": 0.9677,
+    "fashion": 0.4944,
+    "kl": 2.4586173645019533,
+    "threshold": 4.901817080524191e-05,
+    "mode": "threshold",
+    "seed": 5
+  },
+  "thresh_2.27e-04_seed5": {
+    "parity": 0.9305,
+    "fashion": 0.7829,
+    "kl": 5.1829784013079915e-09,
+    "threshold": 0.0002268465863494974,
+    "mode": "threshold",
+    "seed": 5
+  },
+  "thresh_2.27e-04_seed10": {
+    "parity": 0.9305,
+    "fashion": 0.7829,
+    "kl": 5.316706580060781e-09,
+    "threshold": 0.0002268465863494974,
+    "mode": "threshold",
+    "seed": 10
+  },
+  "thresh_4.88e-04_seed11": {
+    "parity": 0.9305,
+    "fashion": 0.7829,
+    "kl": 0.0,
+    "threshold": 0.00048799999999999983,
+    "mode": "threshold",
+    "seed": 11
+  },
+  "thresh_2.28e-05_seed25": {
+    "parity": 0.9736,
+    "fashion": 0.4714,
+    "kl": 2.2914316528320313,
+    "threshold": 2.2786075238249413e-05,
+    "mode": "threshold",
+    "seed": 25
+  },
+  "thresh_1.05e-04_seed12": {
+    "parity": 0.9324,
+    "fashion": 0.7802,
+    "kl": 0.0018052933394908906,
+    "threshold": 0.00010544953634922118,
+    "mode": "threshold",
+    "seed": 12
+  },
+  "thresh_2.28e-05_seed15": {
+    "parity": 0.974,
+    "fashion": 0.4895,
+    "kl": 2.5346679565429686,
+    "threshold": 2.2786075238249413e-05,
+    "mode": "threshold",
+    "seed": 15
+  },
+  "thresh_2.28e-05_seed23": {
+    "parity": 0.9748,
+    "fashion": 0.4989,
+    "kl": 3.02865791015625,
+    "threshold": 2.2786075238249413e-05,
+    "mode": "threshold",
+    "seed": 23
+  },
+  "thresh_1.06e-06_seed27": {
+    "parity": 0.9763,
+    "fashion": 0.5355,
+    "kl": 1.9656707458496094,
+    "threshold": 1.063945132711399e-06,
+    "mode": "threshold",
+    "seed": 27
+  },
+  "thresh_2.28e-05_seed19": {
+    "parity": 0.9721,
+    "fashion": 0.4592,
+    "kl": 2.7640315307617187,
+    "threshold": 2.2786075238249413e-05,
+    "mode": "threshold",
+    "seed": 19
+  },
+  "thresh_2.28e-05_seed8": {
+    "parity": 0.9722,
+    "fashion": 0.3811,
+    "kl": 3.487835467529297,
+    "threshold": 2.2786075238249413e-05,
+    "mode": "threshold",
+    "seed": 8
+  },
+  "thresh_2.28e-05_seed9": {
+    "parity": 0.9745,
+    "fashion": 0.4704,
+    "kl": 2.0336299072265627,
+    "threshold": 2.2786075238249413e-05,
+    "mode": "threshold",
+    "seed": 9
+  },
+  "thresh_2.27e-04_seed21": {
+    "parity": 0.9305,
+    "fashion": 0.783,
+    "kl": 4.170496805500079e-09,
+    "threshold": 0.0002268465863494974,
+    "mode": "threshold",
+    "seed": 21
+  },
+  "thresh_1.05e-04_seed18": {
+    "parity": 0.9334,
+    "fashion": 0.7816,
+    "kl": 0.0021228145480155945,
+    "threshold": 0.00010544953634922118,
+    "mode": "threshold",
+    "seed": 18
+  },
+  "thresh_1.05e-04_seed15": {
+    "parity": 0.9346,
+    "fashion": 0.7806,
+    "kl": 0.004555296504497528,
+    "threshold": 0.00010544953634922118,
+    "mode": "threshold",
+    "seed": 15
+  },
+  "thresh_4.90e-05_seed1": {
+    "parity": 0.9644,
+    "fashion": 0.4941,
+    "kl": 2.1373122131347655,
+    "threshold": 4.901817080524191e-05,
+    "mode": "threshold",
+    "seed": 1
+  },
+  "thresh_2.28e-05_seed1": {
+    "parity": 0.9699,
+    "fashion": 0.4318,
+    "kl": 2.587299914550781,
+    "threshold": 2.2786075238249413e-05,
+    "mode": "threshold",
+    "seed": 1
+  },
+  "thresh_4.90e-05_seed22": {
+    "parity": 0.9669,
+    "fashion": 0.5834,
+    "kl": 1.3533979614257812,
+    "threshold": 4.901817080524191e-05,
+    "mode": "threshold",
+    "seed": 22
+  },
+  "thresh_4.90e-05_seed7": {
+    "parity": 0.9658,
+    "fashion": 0.6564,
+    "kl": 0.741636360168457,
+    "threshold": 4.901817080524191e-05,
+    "mode": "threshold",
+    "seed": 7
+  },
+  "thresh_1.06e-05_seed17": {
+    "parity": 0.9746,
+    "fashion": 0.5067,
+    "kl": 2.4461015380859377,
+    "threshold": 1.059209709856493e-05,
+    "mode": "threshold",
+    "seed": 17
+  },
+  "fp32_seed10": {
+    "parity": 0.9744,
+    "fashion": 0.4466,
+    "kl": 2.5623139709472658,
+    "threshold": 0.0,
+    "mode": "fp32",
+    "seed": 10
+  },
+  "thresh_4.90e-05_seed15": {
+    "parity": 0.967,
+    "fashion": 0.621,
+    "kl": 1.1988051696777344,
+    "threshold": 4.901817080524191e-05,
+    "mode": "threshold",
+    "seed": 15
+  },
+  "thresh_2.29e-06_seed27": {
+    "parity": 0.976,
+    "fashion": 0.55,
+    "kl": 1.9415609008789063,
+    "threshold": 2.2887945246098405e-06,
+    "mode": "threshold",
+    "seed": 27
+  },
+  "thresh_4.90e-05_seed26": {
+    "parity": 0.968,
+    "fashion": 0.4437,
+    "kl": 2.555661071777344,
+    "threshold": 4.901817080524191e-05,
+    "mode": "threshold",
+    "seed": 26
+  },
+  "thresh_1.06e-05_seed5": {
+    "parity": 0.9759,
+    "fashion": 0.5645,
+    "kl": 2.225353527832031,
+    "threshold": 1.059209709856493e-05,
+    "mode": "threshold",
+    "seed": 5
+  },
+  "thresh_4.90e-05_seed17": {
+    "parity": 0.9678,
+    "fashion": 0.5055,
+    "kl": 2.121325872802734,
+    "threshold": 4.901817080524191e-05,
+    "mode": "threshold",
+    "seed": 17
+  },
+  "thresh_2.28e-05_seed17": {
+    "parity": 0.9739,
+    "fashion": 0.4853,
+    "kl": 2.5146132507324217,
+    "threshold": 2.2786075238249413e-05,
+    "mode": "threshold",
+    "seed": 17
+  },
+  "thresh_1.05e-04_seed29": {
+    "parity": 0.9343,
+    "fashion": 0.78,
+    "kl": 0.0029781206250190733,
+    "threshold": 0.00010544953634922118,
+    "mode": "threshold",
+    "seed": 29
+  },
+  "thresh_4.88e-04_seed8": {
+    "parity": 0.9305,
+    "fashion": 0.7829,
+    "kl": 0.0,
+    "threshold": 0.00048799999999999983,
+    "mode": "threshold",
+    "seed": 8
+  },
+  "bf16_seed8": {
+    "parity": 0.9679,
+    "fashion": 0.5337,
+    "kl": 1.4771843597412109,
+    "threshold": 0.0,
+    "mode": "bf16",
+    "seed": 8
+  },
+  "thresh_1.05e-04_seed28": {
+    "parity": 0.9345,
+    "fashion": 0.7796,
+    "kl": 0.00692794086933136,
+    "threshold": 0.00010544953634922118,
+    "mode": "threshold",
+    "seed": 28
+  },
+  "thresh_2.27e-04_seed15": {
+    "parity": 0.9305,
+    "fashion": 0.783,
+    "kl": 2.7059741199764176e-09,
+    "threshold": 0.0002268465863494974,
+    "mode": "threshold",
+    "seed": 15
+  },
+  "thresh_1.06e-05_seed21": {
+    "parity": 0.9756,
+    "fashion": 0.4827,
+    "kl": 2.340846307373047,
+    "threshold": 1.059209709856493e-05,
+    "mode": "threshold",
+    "seed": 21
+  },
+  "thresh_2.27e-04_seed3": {
+    "parity": 0.9305,
+    "fashion": 0.7828,
+    "kl": 3.80653958984567e-09,
+    "threshold": 0.0002268465863494974,
+    "mode": "threshold",
+    "seed": 3
+  },
+  "thresh_4.90e-05_seed25": {
+    "parity": 0.9672,
+    "fashion": 0.5574,
+    "kl": 1.6911397094726563,
+    "threshold": 4.901817080524191e-05,
+    "mode": "threshold",
+    "seed": 25
+  },
+  "fp32_seed15": {
+    "parity": 0.9717,
+    "fashion": 0.4855,
+    "kl": 2.405420849609375,
+    "threshold": 0.0,
+    "mode": "fp32",
+    "seed": 15
+  },
+  "thresh_1.06e-05_seed26": {
+    "parity": 0.9751,
+    "fashion": 0.4469,
+    "kl": 2.4721958862304687,
+    "threshold": 1.059209709856493e-05,
+    "mode": "threshold",
+    "seed": 26
+  },
+  "thresh_4.90e-05_seed19": {
+    "parity": 0.9654,
+    "fashion": 0.4657,
+    "kl": 2.4697082458496094,
+    "threshold": 4.901817080524191e-05,
+    "mode": "threshold",
+    "seed": 19
+  },
+  "fp32_seed2": {
+    "parity": 0.9763,
+    "fashion": 0.4765,
+    "kl": 2.3025388671875,
+    "threshold": 0.0,
+    "mode": "fp32",
+    "seed": 2
+  },
+  "thresh_2.28e-05_seed12": {
+    "parity": 0.9732,
+    "fashion": 0.3631,
+    "kl": 3.6681766845703123,
+    "threshold": 2.2786075238249413e-05,
+    "mode": "threshold",
+    "seed": 12
+  },
+  "thresh_2.28e-05_seed4": {
+    "parity": 0.9735,
+    "fashion": 0.4977,
+    "kl": 2.3387485961914063,
+    "threshold": 2.2786075238249413e-05,
+    "mode": "threshold",
+    "seed": 4
+  },
+  "thresh_1.06e-06_seed19": {
+    "parity": 0.9742,
+    "fashion": 0.3963,
+    "kl": 2.9230157958984373,
+    "threshold": 1.063945132711399e-06,
+    "mode": "threshold",
+    "seed": 19
+  },
+  "thresh_1.05e-04_seed6": {
+    "parity": 0.9355,
+    "fashion": 0.7782,
+    "kl": 0.006792882871627807,
+    "threshold": 0.00010544953634922118,
+    "mode": "threshold",
+    "seed": 6
+  },
+  "thresh_1.06e-05_seed29": {
+    "parity": 0.9765,
+    "fashion": 0.4039,
+    "kl": 3.1643853759765626,
+    "threshold": 1.059209709856493e-05,
+    "mode": "threshold",
+    "seed": 29
+  },
+  "thresh_4.88e-04_seed17": {
+    "parity": 0.9305,
+    "fashion": 0.7829,
+    "kl": 0.0,
+    "threshold": 0.00048799999999999983,
+    "mode": "threshold",
+    "seed": 17
+  },
+  "thresh_2.28e-05_seed14": {
+    "parity": 0.9747,
+    "fashion": 0.395,
+    "kl": 3.014952099609375,
+    "threshold": 2.2786075238249413e-05,
+    "mode": "threshold",
+    "seed": 14
+  },
+  "thresh_4.90e-05_seed2": {
+    "parity": 0.9684,
+    "fashion": 0.4973,
+    "kl": 2.326830212402344,
+    "threshold": 4.901817080524191e-05,
+    "mode": "threshold",
+    "seed": 2
+  },
+  "thresh_2.27e-04_seed0": {
+    "parity": 0.9305,
+    "fashion": 0.7829,
+    "kl": 3.449594890980734e-09,
+    "threshold": 0.0002268465863494974,
+    "mode": "threshold",
+    "seed": 0
+  },
+  "thresh_2.27e-04_seed26": {
+    "parity": 0.9305,
+    "fashion": 0.783,
+    "kl": 2.8570734968980105e-09,
+    "threshold": 0.0002268465863494974,
+    "mode": "threshold",
+    "seed": 26
+  },
+  "thresh_4.88e-04_seed6": {
+    "parity": 0.9305,
+    "fashion": 0.7829,
+    "kl": 0.0,
+    "threshold": 0.00048799999999999983,
+    "mode": "threshold",
+    "seed": 6
+  },
+  "thresh_4.92e-06_seed7": {
+    "parity": 0.9769,
+    "fashion": 0.4531,
+    "kl": 2.3641366333007814,
+    "threshold": 4.923731698958747e-06,
+    "mode": "threshold",
+    "seed": 7
+  },
+  "thresh_1.05e-04_seed24": {
+    "parity": 0.9337,
+    "fashion": 0.7819,
+    "kl": 0.0032527949452400206,
+    "threshold": 0.00010544953634922118,
+    "mode": "threshold",
+    "seed": 24
+  },
+  "thresh_2.28e-05_seed3": {
+    "parity": 0.9747,
+    "fashion": 0.4306,
+    "kl": 3.609205432128906,
+    "threshold": 2.2786075238249413e-05,
+    "mode": "threshold",
+    "seed": 3
+  },
+  "thresh_2.28e-05_seed24": {
+    "parity": 0.9763,
+    "fashion": 0.3116,
+    "kl": 3.6512361328125,
+    "threshold": 2.2786075238249413e-05,
+    "mode": "threshold",
+    "seed": 24
+  },
+  "thresh_4.92e-06_seed8": {
+    "parity": 0.9737,
+    "fashion": 0.4119,
+    "kl": 3.106150244140625,
+    "threshold": 4.923731698958747e-06,
+    "mode": "threshold",
+    "seed": 8
+  },
+  "thresh_1.06e-06_seed10": {
+    "parity": 0.9738,
+    "fashion": 0.4438,
+    "kl": 2.6851451904296875,
+    "threshold": 1.063945132711399e-06,
+    "mode": "threshold",
+    "seed": 10
+  },
+  "thresh_4.88e-04_seed2": {
+    "parity": 0.9305,
+    "fashion": 0.7829,
+    "kl": 0.0,
+    "threshold": 0.00048799999999999983,
+    "mode": "threshold",
+    "seed": 2
+  },
+  "thresh_1.06e-05_seed9": {
+    "parity": 0.9737,
+    "fashion": 0.4094,
+    "kl": 3.299825915527344,
+    "threshold": 1.059209709856493e-05,
+    "mode": "threshold",
+    "seed": 9
+  },
+  "thresh_4.88e-04_seed16": {
+    "parity": 0.9305,
+    "fashion": 0.7829,
+    "kl": 0.0,
+    "threshold": 0.00048799999999999983,
+    "mode": "threshold",
+    "seed": 16
+  },
+  "thresh_4.92e-06_seed17": {
+    "parity": 0.9778,
+    "fashion": 0.6302,
+    "kl": 1.6667596801757814,
+    "threshold": 4.923731698958747e-06,
+    "mode": "threshold",
+    "seed": 17
+  },
+  "thresh_2.27e-04_seed19": {
+    "parity": 0.9305,
+    "fashion": 0.783,
+    "kl": 2.4422195664897116e-09,
+    "threshold": 0.0002268465863494974,
+    "mode": "threshold",
+    "seed": 19
+  },
+  "thresh_4.90e-05_seed10": {
+    "parity": 0.9646,
+    "fashion": 0.52,
+    "kl": 2.1318408447265624,
+    "threshold": 4.901817080524191e-05,
+    "mode": "threshold",
+    "seed": 10
+  },
+  "thresh_4.92e-06_seed18": {
+    "parity": 0.9759,
+    "fashion": 0.4996,
+    "kl": 2.7735453002929686,
+    "threshold": 4.923731698958747e-06,
+    "mode": "threshold",
+    "seed": 18
+  },
+  "thresh_1.05e-04_seed23": {
+    "parity": 0.9315,
+    "fashion": 0.7817,
+    "kl": 0.0006066477924585342,
+    "threshold": 0.00010544953634922118,
+    "mode": "threshold",
+    "seed": 23
+  },
+  "thresh_4.92e-06_seed2": {
+    "parity": 0.9759,
+    "fashion": 0.4593,
+    "kl": 2.668913610839844,
+    "threshold": 4.923731698958747e-06,
+    "mode": "threshold",
+    "seed": 2
+  },
+  "thresh_4.92e-06_seed4": {
+    "parity": 0.9752,
+    "fashion": 0.2974,
+    "kl": 3.865170947265625,
+    "threshold": 4.923731698958747e-06,
+    "mode": "threshold",
+    "seed": 4
+  },
+  "thresh_2.28e-05_seed2": {
+    "parity": 0.9749,
+    "fashion": 0.4731,
+    "kl": 2.4920513671875,
+    "threshold": 2.2786075238249413e-05,
+    "mode": "threshold",
+    "seed": 2
+  },
+  "thresh_2.27e-04_seed16": {
+    "parity": 0.9305,
+    "fashion": 0.7829,
+    "kl": 7.276721674998044e-10,
+    "threshold": 0.0002268465863494974,
+    "mode": "threshold",
+    "seed": 16
+  },
+  "thresh_2.28e-05_seed16": {
+    "parity": 0.9748,
+    "fashion": 0.523,
+    "kl": 2.012917858886719,
+    "threshold": 2.2786075238249413e-05,
+    "mode": "threshold",
+    "seed": 16
+  },
+  "thresh_1.06e-05_seed28": {
+    "parity": 0.9761,
+    "fashion": 0.3346,
+    "kl": 3.1000992919921875,
+    "threshold": 1.059209709856493e-05,
+    "mode": "threshold",
+    "seed": 28
+  },
+  "thresh_4.88e-04_seed0": {
+    "parity": 0.9305,
+    "fashion": 0.7829,
+    "kl": 0.0,
+    "threshold": 0.00048799999999999983,
+    "mode": "threshold",
+    "seed": 0
+  },
+  "thresh_1.05e-04_seed0": {
+    "parity": 0.9327,
+    "fashion": 0.7815,
+    "kl": 0.0020869509100914,
+    "threshold": 0.00010544953634922118,
+    "mode": "threshold",
+    "seed": 0
+  },
+  "thresh_1.06e-05_seed22": {
+    "parity": 0.9756,
+    "fashion": 0.4093,
+    "kl": 2.5697655212402344,
+    "threshold": 1.059209709856493e-05,
+    "mode": "threshold",
+    "seed": 22
+  },
+  "thresh_2.28e-05_seed28": {
+    "parity": 0.9737,
+    "fashion": 0.4699,
+    "kl": 2.3243451232910157,
+    "threshold": 2.2786075238249413e-05,
+    "mode": "threshold",
+    "seed": 28
+  },
+  "thresh_2.29e-06_seed26": {
+    "parity": 0.9717,
+    "fashion": 0.4312,
+    "kl": 3.1667320678710937,
+    "threshold": 2.2887945246098405e-06,
+    "mode": "threshold",
+    "seed": 26
+  },
+  "thresh_2.29e-06_seed12": {
+    "parity": 0.9759,
+    "fashion": 0.4811,
+    "kl": 1.9657766845703124,
+    "threshold": 2.2887945246098405e-06,
+    "mode": "threshold",
+    "seed": 12
+  },
+  "thresh_1.06e-05_seed14": {
+    "parity": 0.9756,
+    "fashion": 0.3516,
+    "kl": 3.1305625854492187,
+    "threshold": 1.059209709856493e-05,
+    "mode": "threshold",
+    "seed": 14
+  },
+  "thresh_1.06e-05_seed11": {
+    "parity": 0.9761,
+    "fashion": 0.5109,
+    "kl": 1.8977723266601563,
+    "threshold": 1.059209709856493e-05,
+    "mode": "threshold",
+    "seed": 11
+  },
+  "thresh_2.29e-06_seed28": {
+    "parity": 0.9757,
+    "fashion": 0.4014,
+    "kl": 2.6608241088867186,
+    "threshold": 2.2887945246098405e-06,
+    "mode": "threshold",
+    "seed": 28
+  },
+  "thresh_4.92e-06_seed25": {
+    "parity": 0.976,
+    "fashion": 0.5065,
+    "kl": 1.9607274780273438,
+    "threshold": 4.923731698958747e-06,
+    "mode": "threshold",
+    "seed": 25
+  },
+  "thresh_1.06e-05_seed4": {
+    "parity": 0.9771,
+    "fashion": 0.3594,
+    "kl": 2.5991158752441406,
+    "threshold": 1.059209709856493e-05,
+    "mode": "threshold",
+    "seed": 4
+  },
+  "thresh_2.28e-05_seed22": {
+    "parity": 0.9754,
+    "fashion": 0.5013,
+    "kl": 2.3048408142089842,
+    "threshold": 2.2786075238249413e-05,
+    "mode": "threshold",
+    "seed": 22
+  },
+  "thresh_4.88e-04_seed3": {
+    "parity": 0.9305,
+    "fashion": 0.7829,
+    "kl": 0.0,
+    "threshold": 0.00048799999999999983,
+    "mode": "threshold",
+    "seed": 3
+  },
+  "thresh_2.29e-06_seed0": {
+    "parity": 0.9742,
+    "fashion": 0.4822,
+    "kl": 2.8474312377929687,
+    "threshold": 2.2887945246098405e-06,
+    "mode": "threshold",
+    "seed": 0
+  },
+  "bf16_seed0": {
+    "parity": 0.9673,
+    "fashion": 0.5869,
+    "kl": 0.8622393463134765,
+    "threshold": 0.0,
+    "mode": "bf16",
+    "seed": 0
+  },
+  "thresh_4.92e-06_seed24": {
+    "parity": 0.9762,
+    "fashion": 0.4171,
+    "kl": 2.396716497802734,
+    "threshold": 4.923731698958747e-06,
+    "mode": "threshold",
+    "seed": 24
+  },
+  "thresh_2.29e-06_seed24": {
+    "parity": 0.977,
+    "fashion": 0.4136,
+    "kl": 2.5953775268554686,
+    "threshold": 2.2887945246098405e-06,
+    "mode": "threshold",
+    "seed": 24
+  },
+  "thresh_1.06e-05_seed8": {
+    "parity": 0.9717,
+    "fashion": 0.3957,
+    "kl": 3.1496500244140626,
+    "threshold": 1.059209709856493e-05,
+    "mode": "threshold",
+    "seed": 8
+  },
+  "thresh_2.28e-05_seed29": {
+    "parity": 0.9758,
+    "fashion": 0.4492,
+    "kl": 2.7498373291015623,
+    "threshold": 2.2786075238249413e-05,
+    "mode": "threshold",
+    "seed": 29
+  },
+  "thresh_1.06e-05_seed27": {
+    "parity": 0.9762,
+    "fashion": 0.5634,
+    "kl": 1.561797216796875,
+    "threshold": 1.059209709856493e-05,
+    "mode": "threshold",
+    "seed": 27
+  },
+  "thresh_1.06e-06_seed21": {
+    "parity": 0.9771,
+    "fashion": 0.5349,
+    "kl": 1.9463347534179687,
+    "threshold": 1.063945132711399e-06,
+    "mode": "threshold",
+    "seed": 21
+  },
+  "thresh_4.90e-05_seed4": {
+    "parity": 0.9683,
+    "fashion": 0.3799,
+    "kl": 3.255300964355469,
+    "threshold": 4.901817080524191e-05,
+    "mode": "threshold",
+    "seed": 4
+  },
+  "thresh_1.06e-06_seed22": {
+    "parity": 0.9764,
+    "fashion": 0.4428,
+    "kl": 2.4980545288085936,
+    "threshold": 1.063945132711399e-06,
+    "mode": "threshold",
+    "seed": 22
+  },
+  "thresh_1.06e-05_seed19": {
+    "parity": 0.9725,
+    "fashion": 0.4463,
+    "kl": 2.5476455078125,
+    "threshold": 1.059209709856493e-05,
+    "mode": "threshold",
+    "seed": 19
+  },
+  "thresh_1.06e-05_seed3": {
+    "parity": 0.9751,
+    "fashion": 0.4899,
+    "kl": 2.7950263671875,
+    "threshold": 1.059209709856493e-05,
+    "mode": "threshold",
+    "seed": 3
+  },
+  "thresh_1.06e-05_seed24": {
+    "parity": 0.9769,
+    "fashion": 0.3636,
+    "kl": 3.196599298095703,
+    "threshold": 1.059209709856493e-05,
+    "mode": "threshold",
+    "seed": 24
+  },
+  "bf16_seed15": {
+    "parity": 0.9675,
+    "fashion": 0.6461,
+    "kl": 0.7892952346801758,
+    "threshold": 0.0,
+    "mode": "bf16",
+    "seed": 15
+  },
+  "thresh_2.28e-05_seed10": {
+    "parity": 0.9727,
+    "fashion": 0.4529,
+    "kl": 2.815551873779297,
+    "threshold": 2.2786075238249413e-05,
+    "mode": "threshold",
+    "seed": 10
+  },
+  "thresh_2.27e-04_seed11": {
+    "parity": 0.9305,
+    "fashion": 0.7829,
+    "kl": 2.7903640898330196e-09,
+    "threshold": 0.0002268465863494974,
+    "mode": "threshold",
+    "seed": 11
+  },
+  "thresh_2.28e-05_seed13": {
+    "parity": 0.9736,
+    "fashion": 0.4167,
+    "kl": 2.807030419921875,
+    "threshold": 2.2786075238249413e-05,
+    "mode": "threshold",
+    "seed": 13
+  },
+  "thresh_2.28e-05_seed26": {
+    "parity": 0.9734,
+    "fashion": 0.445,
+    "kl": 3.3978984985351564,
+    "threshold": 2.2786075238249413e-05,
+    "mode": "threshold",
+    "seed": 26
+  },
+  "thresh_2.27e-04_seed9": {
+    "parity": 0.9305,
+    "fashion": 0.783,
+    "kl": 4.415818209224653e-09,
+    "threshold": 0.0002268465863494974,
+    "mode": "threshold",
+    "seed": 9
+  },
+  "thresh_1.05e-04_seed4": {
+    "parity": 0.9349,
+    "fashion": 0.7805,
+    "kl": 0.006398731160163879,
+    "threshold": 0.00010544953634922118,
+    "mode": "threshold",
+    "seed": 4
+  },
+  "thresh_4.90e-05_seed16": {
+    "parity": 0.965,
+    "fashion": 0.6305,
+    "kl": 0.937182470703125,
+    "threshold": 4.901817080524191e-05,
+    "mode": "threshold",
+    "seed": 16
+  },
+  "thresh_1.05e-04_seed9": {
+    "parity": 0.933,
+    "fashion": 0.7812,
+    "kl": 0.0033490810930728913,
+    "threshold": 0.00010544953634922118,
+    "mode": "threshold",
+    "seed": 9
+  },
+  "bf16_seed14": {
+    "parity": 0.9658,
+    "fashion": 0.5656,
+    "kl": 1.1849027038574218,
+    "threshold": 0.0,
+    "mode": "bf16",
+    "seed": 14
+  },
+  "thresh_1.05e-04_seed20": {
+    "parity": 0.9347,
+    "fashion": 0.7794,
+    "kl": 0.00632751030921936,
+    "threshold": 0.00010544953634922118,
+    "mode": "threshold",
+    "seed": 20
+  },
+  "thresh_4.88e-04_seed7": {
+    "parity": 0.9305,
+    "fashion": 0.7829,
+    "kl": 0.0,
+    "threshold": 0.00048799999999999983,
+    "mode": "threshold",
+    "seed": 7
+  },
+  "thresh_4.90e-05_seed13": {
+    "parity": 0.9682,
+    "fashion": 0.4739,
+    "kl": 2.4850837280273437,
+    "threshold": 4.901817080524191e-05,
+    "mode": "threshold",
+    "seed": 13
+  },
+  "thresh_4.90e-05_seed27": {
+    "parity": 0.9686,
+    "fashion": 0.5547,
+    "kl": 1.6854199890136718,
+    "threshold": 4.901817080524191e-05,
+    "mode": "threshold",
+    "seed": 27
+  },
+  "thresh_2.27e-04_seed22": {
+    "parity": 0.9305,
+    "fashion": 0.783,
+    "kl": 1.4728349327697287e-09,
+    "threshold": 0.0002268465863494974,
+    "mode": "threshold",
+    "seed": 22
+  },
+  "thresh_4.90e-05_seed8": {
+    "parity": 0.9683,
+    "fashion": 0.4568,
+    "kl": 2.8641853149414063,
+    "threshold": 4.901817080524191e-05,
+    "mode": "threshold",
+    "seed": 8
+  },
+  "thresh_4.88e-04_seed28": {
+    "parity": 0.9305,
+    "fashion": 0.7829,
+    "kl": 0.0,
+    "threshold": 0.00048799999999999983,
+    "mode": "threshold",
+    "seed": 28
+  },
+  "thresh_4.88e-04_seed9": {
+    "parity": 0.9305,
+    "fashion": 0.7829,
+    "kl": 0.0,
+    "threshold": 0.00048799999999999983,
+    "mode": "threshold",
+    "seed": 9
+  },
+  "bf16_seed29": {
+    "parity": 0.9704,
+    "fashion": 0.5324,
+    "kl": 1.4664761047363282,
+    "threshold": 0.0,
+    "mode": "bf16",
+    "seed": 29
+  },
+  "fp32_seed22": {
+    "parity": 0.9761,
+    "fashion": 0.5372,
+    "kl": 1.8967064270019531,
+    "threshold": 0.0,
+    "mode": "fp32",
+    "seed": 22
+  },
+  "thresh_4.90e-05_seed14": {
+    "parity": 0.9669,
+    "fashion": 0.4716,
+    "kl": 2.7754334228515627,
+    "threshold": 4.901817080524191e-05,
+    "mode": "threshold",
+    "seed": 14
+  },
+  "thresh_4.88e-04_seed20": {
+    "parity": 0.9305,
+    "fashion": 0.7829,
+    "kl": 0.0,
+    "threshold": 0.00048799999999999983,
+    "mode": "threshold",
+    "seed": 20
+  },
+  "thresh_1.05e-04_seed19": {
+    "parity": 0.9328,
+    "fashion": 0.7813,
+    "kl": 0.0012534756660461425,
+    "threshold": 0.00010544953634922118,
+    "mode": "threshold",
+    "seed": 19
+  },
+  "thresh_4.90e-05_seed23": {
+    "parity": 0.9688,
+    "fashion": 0.5273,
+    "kl": 2.488177276611328,
+    "threshold": 4.901817080524191e-05,
+    "mode": "threshold",
+    "seed": 23
+  },
+  "thresh_2.27e-04_seed20": {
+    "parity": 0.9305,
+    "fashion": 0.783,
+    "kl": 2.106283844227619e-09,
+    "threshold": 0.0002268465863494974,
+    "mode": "threshold",
+    "seed": 20
+  },
+  "thresh_4.88e-04_seed12": {
+    "parity": 0.9305,
+    "fashion": 0.7829,
+    "kl": 0.0,
+    "threshold": 0.00048799999999999983,
+    "mode": "threshold",
+    "seed": 12
+  },
+  "thresh_1.05e-04_seed16": {
+    "parity": 0.9328,
+    "fashion": 0.7821,
+    "kl": 0.0016860729694366456,
+    "threshold": 0.00010544953634922118,
+    "mode": "threshold",
+    "seed": 16
+  },
+  "thresh_2.27e-04_seed23": {
+    "parity": 0.9305,
+    "fashion": 0.783,
+    "kl": 3.339622219300509e-09,
+    "threshold": 0.0002268465863494974,
+    "mode": "threshold",
+    "seed": 23
+  },
+  "thresh_2.27e-04_seed25": {
+    "parity": 0.9305,
+    "fashion": 0.783,
+    "kl": 7.959774475807535e-09,
+    "threshold": 0.0002268465863494974,
+    "mode": "threshold",
+    "seed": 25
+  },
+  "thresh_4.90e-05_seed0": {
+    "parity": 0.9673,
+    "fashion": 0.4283,
+    "kl": 2.9159817504882812,
+    "threshold": 4.901817080524191e-05,
+    "mode": "threshold",
+    "seed": 0
+  },
+  "bf16_seed5": {
+    "parity": 0.9685,
+    "fashion": 0.5839,
+    "kl": 1.1614926147460938,
+    "threshold": 0.0,
+    "mode": "bf16",
+    "seed": 5
+  },
+  "thresh_4.90e-05_seed21": {
+    "parity": 0.9692,
+    "fashion": 0.4806,
+    "kl": 2.310583410644531,
+    "threshold": 4.901817080524191e-05,
+    "mode": "threshold",
+    "seed": 21
+  },
+  "thresh_2.27e-04_seed24": {
+    "parity": 0.9305,
+    "fashion": 0.7829,
+    "kl": 1.6571846529700452e-09,
+    "threshold": 0.0002268465863494974,
+    "mode": "threshold",
+    "seed": 24
+  },
+  "thresh_4.90e-05_seed24": {
+    "parity": 0.9669,
+    "fashion": 0.658,
+    "kl": 0.7705299621582031,
+    "threshold": 4.901817080524191e-05,
+    "mode": "threshold",
+    "seed": 24
+  },
+  "thresh_4.88e-04_seed1": {
+    "parity": 0.9305,
+    "fashion": 0.7829,
+    "kl": 0.0,
+    "threshold": 0.00048799999999999983,
+    "mode": "threshold",
+    "seed": 1
+  },
+  "thresh_2.27e-04_seed13": {
+    "parity": 0.9305,
+    "fashion": 0.783,
+    "kl": 2.310708750030699e-09,
+    "threshold": 0.0002268465863494974,
+    "mode": "threshold",
+    "seed": 13
+  },
+  "thresh_1.05e-04_seed13": {
+    "parity": 0.9336,
+    "fashion": 0.7808,
+    "kl": 0.0018179682195186616,
+    "threshold": 0.00010544953634922118,
+    "mode": "threshold",
+    "seed": 13
+  },
+  "thresh_1.05e-04_seed27": {
+    "parity": 0.9334,
+    "fashion": 0.7823,
+    "kl": 0.004302925568819046,
+    "threshold": 0.00010544953634922118,
+    "mode": "threshold",
+    "seed": 27
+  },
+  "thresh_4.90e-05_seed12": {
+    "parity": 0.9664,
+    "fashion": 0.5047,
+    "kl": 1.6329064819335937,
+    "threshold": 4.901817080524191e-05,
+    "mode": "threshold",
+    "seed": 12
+  },
+  "thresh_4.90e-05_seed28": {
+    "parity": 0.9677,
+    "fashion": 0.4577,
+    "kl": 2.2501272644042967,
+    "threshold": 4.901817080524191e-05,
+    "mode": "threshold",
+    "seed": 28
+  },
+  "thresh_1.05e-04_seed21": {
+    "parity": 0.9348,
+    "fashion": 0.7817,
+    "kl": 0.005339211916923523,
+    "threshold": 0.00010544953634922118,
+    "mode": "threshold",
+    "seed": 21
+  },
+  "thresh_4.88e-04_seed10": {
+    "parity": 0.9305,
+    "fashion": 0.7829,
+    "kl": 0.0,
+    "threshold": 0.00048799999999999983,
+    "mode": "threshold",
+    "seed": 10
+  },
+  "thresh_4.88e-04_seed26": {
+    "parity": 0.9305,
+    "fashion": 0.7829,
+    "kl": 0.0,
+    "threshold": 0.00048799999999999983,
+    "mode": "threshold",
+    "seed": 26
+  },
+  "thresh_1.05e-04_seed14": {
+    "parity": 0.9341,
+    "fashion": 0.7795,
+    "kl": 0.0057935350894927976,
+    "threshold": 0.00010544953634922118,
+    "mode": "threshold",
+    "seed": 14
+  },
+  "thresh_4.90e-05_seed3": {
+    "parity": 0.9694,
+    "fashion": 0.4616,
+    "kl": 3.021447198486328,
+    "threshold": 4.901817080524191e-05,
+    "mode": "threshold",
+    "seed": 3
+  },
+  "thresh_1.05e-04_seed11": {
+    "parity": 0.9333,
+    "fashion": 0.7809,
+    "kl": 0.0018032193064689637,
+    "threshold": 0.00010544953634922118,
+    "mode": "threshold",
+    "seed": 11
+  },
+  "thresh_2.27e-04_seed2": {
+    "parity": 0.9305,
+    "fashion": 0.783,
+    "kl": 1.101702652874792e-08,
+    "threshold": 0.0002268465863494974,
+    "mode": "threshold",
+    "seed": 2
+  },
+  "thresh_2.27e-04_seed29": {
+    "parity": 0.9305,
+    "fashion": 0.7829,
+    "kl": 5.881837040533355e-09,
+    "threshold": 0.0002268465863494974,
+    "mode": "threshold",
+    "seed": 29
+  },
+  "thresh_1.05e-04_seed8": {
+    "parity": 0.9343,
+    "fashion": 0.7809,
+    "kl": 0.004385676026344299,
+    "threshold": 0.00010544953634922118,
+    "mode": "threshold",
+    "seed": 8
+  },
+  "thresh_4.90e-05_seed9": {
+    "parity": 0.9683,
+    "fashion": 0.4413,
+    "kl": 2.412266223144531,
+    "threshold": 4.901817080524191e-05,
+    "mode": "threshold",
+    "seed": 9
+  },
+  "thresh_1.05e-04_seed25": {
+    "parity": 0.9324,
+    "fashion": 0.7817,
+    "kl": 0.0007862425997853279,
+    "threshold": 0.00010544953634922118,
+    "mode": "threshold",
+    "seed": 25
+  },
+  "thresh_1.05e-04_seed3": {
+    "parity": 0.932,
+    "fashion": 0.7817,
+    "kl": 0.000558311028778553,
+    "threshold": 0.00010544953634922118,
+    "mode": "threshold",
+    "seed": 3
+  },
+  "fp32_seed18": {
+    "parity": 0.9767,
+    "fashion": 0.4262,
+    "kl": 2.8847374694824217,
+    "threshold": 0.0,
+    "mode": "fp32",
+    "seed": 18
+  },
+  "thresh_2.27e-04_seed1": {
+    "parity": 0.9305,
+    "fashion": 0.783,
+    "kl": 1.2617779191259615e-09,
+    "threshold": 0.0002268465863494974,
+    "mode": "threshold",
+    "seed": 1
+  },
+  "fp32_seed1": {
+    "parity": 0.9758,
+    "fashion": 0.4685,
+    "kl": 2.630689825439453,
+    "threshold": 0.0,
+    "mode": "fp32",
+    "seed": 1
+  },
+  "thresh_4.88e-04_seed22": {
+    "parity": 0.9305,
+    "fashion": 0.7829,
+    "kl": 0.0,
+    "threshold": 0.00048799999999999983,
+    "mode": "threshold",
+    "seed": 22
+  },
+  "fp32_seed8": {
+    "parity": 0.9719,
+    "fashion": 0.4736,
+    "kl": 3.104349346923828,
+    "threshold": 0.0,
+    "mode": "fp32",
+    "seed": 8
+  },
+  "fp32_seed23": {
+    "parity": 0.9736,
+    "fashion": 0.416,
+    "kl": 3.199061877441406,
+    "threshold": 0.0,
+    "mode": "fp32",
+    "seed": 23
+  },
+  "fp32_seed27": {
+    "parity": 0.9742,
+    "fashion": 0.5509,
+    "kl": 1.8337761962890624,
+    "threshold": 0.0,
+    "mode": "fp32",
+    "seed": 27
+  },
+  "fp32_seed20": {
+    "parity": 0.9739,
+    "fashion": 0.5037,
+    "kl": 2.606205889892578,
+    "threshold": 0.0,
+    "mode": "fp32",
+    "seed": 20
+  },
+  "fp32_seed7": {
+    "parity": 0.9781,
+    "fashion": 0.5337,
+    "kl": 1.9089897705078125,
+    "threshold": 0.0,
+    "mode": "fp32",
+    "seed": 7
+  },
+  "fp32_seed28": {
+    "parity": 0.9755,
+    "fashion": 0.2838,
+    "kl": 3.410519689941406,
+    "threshold": 0.0,
+    "mode": "fp32",
+    "seed": 28
+  },
+  "thresh_4.88e-04_seed25": {
+    "parity": 0.9305,
+    "fashion": 0.7829,
+    "kl": 0.0,
+    "threshold": 0.00048799999999999983,
+    "mode": "threshold",
+    "seed": 25
+  },
+  "thresh_4.90e-05_seed11": {
+    "parity": 0.9658,
+    "fashion": 0.5537,
+    "kl": 1.2130240905761718,
+    "threshold": 4.901817080524191e-05,
+    "mode": "threshold",
+    "seed": 11
+  },
+  "fp32_seed17": {
+    "parity": 0.9723,
+    "fashion": 0.4991,
+    "kl": 2.0981089233398436,
+    "threshold": 0.0,
+    "mode": "fp32",
+    "seed": 17
+  },
+  "thresh_4.90e-05_seed6": {
+    "parity": 0.9678,
+    "fashion": 0.551,
+    "kl": 1.3383166107177735,
+    "threshold": 4.901817080524191e-05,
+    "mode": "threshold",
+    "seed": 6
+  },
+  "thresh_4.88e-04_seed23": {
+    "parity": 0.9305,
+    "fashion": 0.7829,
+    "kl": 0.0,
+    "threshold": 0.00048799999999999983,
+    "mode": "threshold",
+    "seed": 23
+  },
+  "fp32_seed29": {
+    "parity": 0.9759,
+    "fashion": 0.2835,
+    "kl": 4.132168811035156,
+    "threshold": 0.0,
+    "mode": "fp32",
+    "seed": 29
+  },
+  "bf16_seed21": {
+    "parity": 0.9704,
+    "fashion": 0.5351,
+    "kl": 1.4411036010742186,
+    "threshold": 0.0,
+    "mode": "bf16",
+    "seed": 21
+  },
+  "thresh_1.05e-04_seed5": {
+    "parity": 0.9339,
+    "fashion": 0.7795,
+    "kl": 0.00561743848323822,
+    "threshold": 0.00010544953634922118,
+    "mode": "threshold",
+    "seed": 5
+  },
+  "fp32_seed12": {
+    "parity": 0.9751,
+    "fashion": 0.3565,
+    "kl": 3.0456216796875,
+    "threshold": 0.0,
+    "mode": "fp32",
+    "seed": 12
+  },
+  "fp32_seed16": {
+    "parity": 0.978,
+    "fashion": 0.4703,
+    "kl": 2.4970468505859373,
+    "threshold": 0.0,
+    "mode": "fp32",
+    "seed": 16
+  },
+  "fp32_seed5": {
+    "parity": 0.9743,
+    "fashion": 0.4779,
+    "kl": 2.8462934326171876,
+    "threshold": 0.0,
+    "mode": "fp32",
+    "seed": 5
+  },
+  "fp32_seed14": {
+    "parity": 0.9772,
+    "fashion": 0.5029,
+    "kl": 2.064396862792969,
+    "threshold": 0.0,
+    "mode": "fp32",
+    "seed": 14
+  },
+  "fp32_seed9": {
+    "parity": 0.9767,
+    "fashion": 0.4199,
+    "kl": 3.0021364868164064,
+    "threshold": 0.0,
+    "mode": "fp32",
+    "seed": 9
+  },
+  "bf16_seed25": {
+    "parity": 0.9688,
+    "fashion": 0.6148,
+    "kl": 0.8227259460449219,
+    "threshold": 0.0,
+    "mode": "bf16",
+    "seed": 25
+  },
+  "bf16_seed9": {
+    "parity": 0.9694,
+    "fashion": 0.6331,
+    "kl": 0.5079653991699219,
+    "threshold": 0.0,
+    "mode": "bf16",
+    "seed": 9
+  },
+  "fp32_seed0": {
+    "parity": 0.9746,
+    "fashion": 0.4506,
+    "kl": 2.5373956604003904,
+    "threshold": 0.0,
+    "mode": "fp32",
+    "seed": 0
+  },
+  "fp32_seed26": {
+    "parity": 0.9739,
+    "fashion": 0.4418,
+    "kl": 2.90880927734375,
+    "threshold": 0.0,
+    "mode": "fp32",
+    "seed": 26
+  },
+  "thresh_1.05e-04_seed7": {
+    "parity": 0.933,
+    "fashion": 0.7799,
+    "kl": 0.002686089503765106,
+    "threshold": 0.00010544953634922118,
+    "mode": "threshold",
+    "seed": 7
+  },
+  "fp32_seed13": {
+    "parity": 0.9733,
+    "fashion": 0.4447,
+    "kl": 2.7594658752441408,
+    "threshold": 0.0,
+    "mode": "fp32",
+    "seed": 13
+  },
+  "fp32_seed4": {
+    "parity": 0.9754,
+    "fashion": 0.3973,
+    "kl": 2.8329106689453125,
+    "threshold": 0.0,
+    "mode": "fp32",
+    "seed": 4
+  },
+  "bf16_seed7": {
+    "parity": 0.9677,
+    "fashion": 0.6448,
+    "kl": 0.590233299255371,
+    "threshold": 0.0,
+    "mode": "bf16",
+    "seed": 7
+  },
+  "thresh_2.27e-04_seed7": {
+    "parity": 0.9305,
+    "fashion": 0.7829,
+    "kl": 1.9740491012498752e-09,
+    "threshold": 0.0002268465863494974,
+    "mode": "threshold",
+    "seed": 7
+  },
+  "thresh_4.88e-04_seed27": {
+    "parity": 0.9305,
+    "fashion": 0.7829,
+    "kl": 0.0,
+    "threshold": 0.00048799999999999983,
+    "mode": "threshold",
+    "seed": 27
+  },
+  "bf16_seed24": {
+    "parity": 0.9706,
+    "fashion": 0.7032,
+    "kl": 0.3692026916503906,
+    "threshold": 0.0,
+    "mode": "bf16",
+    "seed": 24
+  },
+  "bf16_seed1": {
+    "parity": 0.9645,
+    "fashion": 0.5858,
+    "kl": 0.8444702194213867,
+    "threshold": 0.0,
+    "mode": "bf16",
+    "seed": 1
+  },
+  "fp32_seed19": {
+    "parity": 0.9716,
+    "fashion": 0.4196,
+    "kl": 2.7556947021484377,
+    "threshold": 0.0,
+    "mode": "fp32",
+    "seed": 19
+  },
+  "bf16_seed18": {
+    "parity": 0.9705,
+    "fashion": 0.6347,
+    "kl": 0.975879183959961,
+    "threshold": 0.0,
+    "mode": "bf16",
+    "seed": 18
+  },
+  "fp32_seed21": {
+    "parity": 0.9758,
+    "fashion": 0.576,
+    "kl": 1.9897980102539063,
+    "threshold": 0.0,
+    "mode": "fp32",
+    "seed": 21
+  },
+  "bf16_seed3": {
+    "parity": 0.9688,
+    "fashion": 0.5354,
+    "kl": 1.5427399658203125,
+    "threshold": 0.0,
+    "mode": "bf16",
+    "seed": 3
+  },
+  "thresh_4.88e-04_seed15": {
+    "parity": 0.9305,
+    "fashion": 0.7829,
+    "kl": 0.0,
+    "threshold": 0.00048799999999999983,
+    "mode": "threshold",
+    "seed": 15
+  },
+  "bf16_seed27": {
+    "parity": 0.9692,
+    "fashion": 0.6714,
+    "kl": 0.5092807754516602,
+    "threshold": 0.0,
+    "mode": "bf16",
+    "seed": 27
+  },
+  "bf16_seed17": {
+    "parity": 0.9681,
+    "fashion": 0.6153,
+    "kl": 0.8427494110107422,
+    "threshold": 0.0,
+    "mode": "bf16",
+    "seed": 17
+  },
+  "bf16_seed20": {
+    "parity": 0.9669,
+    "fashion": 0.5821,
+    "kl": 0.8570210968017579,
+    "threshold": 0.0,
+    "mode": "bf16",
+    "seed": 20
+  },
+  "thresh_4.90e-05_seed29": {
+    "parity": 0.9687,
+    "fashion": 0.3945,
+    "kl": 3.1539065307617187,
+    "threshold": 4.901817080524191e-05,
+    "mode": "threshold",
+    "seed": 29
+  },
+  "fp32_seed24": {
+    "parity": 0.9751,
+    "fashion": 0.4637,
+    "kl": 2.5554732055664062,
+    "threshold": 0.0,
+    "mode": "fp32",
+    "seed": 24
+  },
+  "bf16_seed12": {
+    "parity": 0.9689,
+    "fashion": 0.5659,
+    "kl": 1.078824594116211,
+    "threshold": 0.0,
+    "mode": "bf16",
+    "seed": 12
+  },
+  "bf16_seed26": {
+    "parity": 0.9692,
+    "fashion": 0.5794,
+    "kl": 1.1889321502685546,
+    "threshold": 0.0,
+    "mode": "bf16",
+    "seed": 26
+  },
+  "bf16_seed11": {
+    "parity": 0.967,
+    "fashion": 0.617,
+    "kl": 0.685457046508789,
+    "threshold": 0.0,
+    "mode": "bf16",
+    "seed": 11
+  },
+  "fp32_seed6": {
+    "parity": 0.9742,
+    "fashion": 0.4276,
+    "kl": 2.545006774902344,
+    "threshold": 0.0,
+    "mode": "fp32",
+    "seed": 6
+  },
+  "fp32_seed3": {
+    "parity": 0.9751,
+    "fashion": 0.5094,
+    "kl": 2.510656298828125,
+    "threshold": 0.0,
+    "mode": "fp32",
+    "seed": 3
+  },
+  "thresh_2.27e-04_seed27": {
+    "parity": 0.9305,
+    "fashion": 0.783,
+    "kl": 4.853354019473954e-09,
+    "threshold": 0.0002268465863494974,
+    "mode": "threshold",
+    "seed": 27
+  },
+  "thresh_4.88e-04_seed19": {
+    "parity": 0.9305,
+    "fashion": 0.7829,
+    "kl": 0.0,
+    "threshold": 0.00048799999999999983,
+    "mode": "threshold",
+    "seed": 19
+  },
+  "bf16_seed22": {
+    "parity": 0.967,
+    "fashion": 0.6068,
+    "kl": 0.9059820526123047,
+    "threshold": 0.0,
+    "mode": "bf16",
+    "seed": 22
+  },
+  "bf16_seed28": {
+    "parity": 0.9704,
+    "fashion": 0.5712,
+    "kl": 0.9523217651367187,
+    "threshold": 0.0,
+    "mode": "bf16",
+    "seed": 28
+  },
+  "thresh_2.27e-04_seed17": {
+    "parity": 0.9305,
+    "fashion": 0.783,
+    "kl": 1.8241177286881794e-09,
+    "threshold": 0.0002268465863494974,
+    "mode": "threshold",
+    "seed": 17
+  },
+  "thresh_2.27e-04_seed14": {
+    "parity": 0.9305,
+    "fashion": 0.7829,
+    "kl": 3.4706334560041797e-09,
+    "threshold": 0.0002268465863494974,
+    "mode": "threshold",
+    "seed": 14
+  },
+  "bf16_seed2": {
+    "parity": 0.966,
+    "fashion": 0.5687,
+    "kl": 1.0410904754638672,
+    "threshold": 0.0,
+    "mode": "bf16",
+    "seed": 2
+  },
+  "bf16_seed13": {
+    "parity": 0.97,
+    "fashion": 0.6632,
+    "kl": 0.6504700790405273,
+    "threshold": 0.0,
+    "mode": "bf16",
+    "seed": 13
+  },
+  "bf16_seed10": {
+    "parity": 0.9679,
+    "fashion": 0.5873,
+    "kl": 1.1592010864257813,
+    "threshold": 0.0,
+    "mode": "bf16",
+    "seed": 10
+  },
+  "bf16_seed6": {
+    "parity": 0.9691,
+    "fashion": 0.5992,
+    "kl": 0.8914172760009765,
+    "threshold": 0.0,
+    "mode": "bf16",
+    "seed": 6
+  },
+  "fp32_seed11": {
+    "parity": 0.9769,
+    "fashion": 0.38,
+    "kl": 2.7401076354980467,
+    "threshold": 0.0,
+    "mode": "fp32",
+    "seed": 11
+  },
+  "bf16_seed4": {
+    "parity": 0.9666,
+    "fashion": 0.5874,
+    "kl": 1.238207000732422,
+    "threshold": 0.0,
+    "mode": "bf16",
+    "seed": 4
+  },
+  "bf16_seed16": {
+    "parity": 0.9687,
+    "fashion": 0.6608,
+    "kl": 0.5694577606201172,
+    "threshold": 0.0,
+    "mode": "bf16",
+    "seed": 16
+  },
+  "thresh_1.05e-04_seed22": {
+    "parity": 0.9317,
+    "fashion": 0.7819,
+    "kl": 0.0008050463676452636,
+    "threshold": 0.00010544953634922118,
+    "mode": "threshold",
+    "seed": 22
+  },
+  "thresh_4.88e-04_seed29": {
+    "parity": 0.9305,
+    "fashion": 0.7829,
+    "kl": 0.0,
+    "threshold": 0.00048799999999999983,
+    "mode": "threshold",
+    "seed": 29
+  },
+  "thresh_4.88e-04_seed13": {
+    "parity": 0.9305,
+    "fashion": 0.7829,
+    "kl": 0.0,
+    "threshold": 0.00048799999999999983,
+    "mode": "threshold",
+    "seed": 13
+  },
+  "thresh_4.88e-04_seed14": {
+    "parity": 0.9305,
+    "fashion": 0.7829,
+    "kl": 0.0,
+    "threshold": 0.00048799999999999983,
+    "mode": "threshold",
+    "seed": 14
+  },
+  "thresh_2.27e-04_seed18": {
+    "parity": 0.9305,
+    "fashion": 0.783,
+    "kl": 9.055790891920879e-09,
+    "threshold": 0.0002268465863494974,
+    "mode": "threshold",
+    "seed": 18
+  },
+  "bf16_seed19": {
+    "parity": 0.9673,
+    "fashion": 0.5722,
+    "kl": 0.9209480712890625,
+    "threshold": 0.0,
+    "mode": "bf16",
+    "seed": 19
+  },
+  "thresh_4.88e-04_seed4": {
+    "parity": 0.9305,
+    "fashion": 0.7829,
+    "kl": 0.0,
+    "threshold": 0.00048799999999999983,
+    "mode": "threshold",
+    "seed": 4
+  },
+  "thresh_4.88e-04_seed18": {
+    "parity": 0.9305,
+    "fashion": 0.7829,
+    "kl": 0.0,
+    "threshold": 0.00048799999999999983,
+    "mode": "threshold",
+    "seed": 18
+  },
+  "thresh_2.27e-04_seed6": {
+    "parity": 0.9305,
+    "fashion": 0.783,
+    "kl": 2.7517551693279073e-09,
+    "threshold": 0.0002268465863494974,
+    "mode": "threshold",
+    "seed": 6
+  },
+  "thresh_2.27e-04_seed12": {
+    "parity": 0.9305,
+    "fashion": 0.783,
+    "kl": 6.7359200897954e-09,
+    "threshold": 0.0002268465863494974,
+    "mode": "threshold",
+    "seed": 12
+  },
+  "thresh_2.27e-04_seed8": {
+    "parity": 0.9305,
+    "fashion": 0.7829,
+    "kl": 1.8639798895492277e-09,
+    "threshold": 0.0002268465863494974,
+    "mode": "threshold",
+    "seed": 8
+  },
+  "thresh_4.88e-04_seed24": {
+    "parity": 0.9305,
+    "fashion": 0.7829,
+    "kl": 0.0,
+    "threshold": 0.00048799999999999983,
+    "mode": "threshold",
+    "seed": 24
+  },
+  "thresh_4.90e-05_seed20": {
+    "parity": 0.9656,
+    "fashion": 0.4505,
+    "kl": 2.9392697875976563,
+    "threshold": 4.901817080524191e-05,
+    "mode": "threshold",
+    "seed": 20
+  },
+  "thresh_4.88e-04_seed21": {
+    "parity": 0.9305,
+    "fashion": 0.7829,
+    "kl": 0.0,
+    "threshold": 0.00048799999999999983,
+    "mode": "threshold",
+    "seed": 21
+  },
+  "thresh_4.88e-04_seed5": {
+    "parity": 0.9305,
+    "fashion": 0.7829,
+    "kl": 0.0,
+    "threshold": 0.00048799999999999983,
+    "mode": "threshold",
+    "seed": 5
+  },
+  "bf16_seed23": {
+    "parity": 0.9702,
+    "fashion": 0.5655,
+    "kl": 1.6779093963623046,
+    "threshold": 0.0,
+    "mode": "bf16",
+    "seed": 23
+  },
+  "thresh_1.05e-04_seed10": {
+    "parity": 0.9332,
+    "fashion": 0.7812,
+    "kl": 0.0041213961899280544,
+    "threshold": 0.00010544953634922118,
+    "mode": "threshold",
+    "seed": 10
+  },
+  "thresh_2.27e-04_seed28": {
+    "parity": 0.9305,
+    "fashion": 0.783,
+    "kl": 2.5364161274410433e-09,
+    "threshold": 0.0002268465863494974,
+    "mode": "threshold",
+    "seed": 28
+  },
+  "thresh_1.05e-04_seed1": {
+    "parity": 0.9351,
+    "fashion": 0.7815,
+    "kl": 0.004539638721942902,
+    "threshold": 0.00010544953634922118,
+    "mode": "threshold",
+    "seed": 1
+  },
+  "fp32_seed25": {
+    "parity": 0.9734,
+    "fashion": 0.4728,
+    "kl": 2.3577209106445314,
+    "threshold": 0.0,
+    "mode": "fp32",
+    "seed": 25
+  },
+  "thresh_2.27e-04_seed4": {
+    "parity": 0.9305,
+    "fashion": 0.783,
+    "kl": 1.6106924704217819e-09,
+    "threshold": 0.0002268465863494974,
+    "mode": "threshold",
+    "seed": 4
+  },
+  "thresh_1.05e-04_seed2": {
+    "parity": 0.9344,
+    "fashion": 0.7812,
+    "kl": 0.0037031621813774108,
+    "threshold": 0.00010544953634922118,
+    "mode": "threshold",
+    "seed": 2
+  }
+}

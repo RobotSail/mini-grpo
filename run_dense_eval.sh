@@ -2,7 +2,7 @@
 
 set -eo pipefail
 
-export WANDB_API_KEY=dcc7e9d67dd4454320776959ba154a9d285cb7db
+export WANDB_API_KEY="${WANDB_API_KEY:?Set WANDB_API_KEY}"
 
 CHECKPOINT_PREFIX="/mnt/nvme2n1/checkpoints/dense-eval"
 DATA_PATH="adamw-vs-muon-grpo-v1-artifacts/generated-data-v2/gsm8k_grpo_train.jsonl"

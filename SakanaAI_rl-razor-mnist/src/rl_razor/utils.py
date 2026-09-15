@@ -335,6 +335,16 @@ def quantize_update_from_saved(model, saved_weights, mantissa_bits):
             p.data.copy_(_quantize_update_tensor(w_old, p.data, mantissa_bits))
 
 
+def apply_magnitude_threshold(model, saved_weights, threshold):
+    """Drop updates smaller than threshold (set param back to pre-step value)."""
+    with torch.no_grad():
+        for p in model.parameters():
+            w_old = saved_weights[id(p)]
+            delta = p.data - w_old
+            mask = delta.abs() < threshold
+            p.data[mask] = w_old[mask]
+
+
 def count_parameters(model: torch.nn.Module) -> int:
     """Count the number of trainable parameters in a model.
 

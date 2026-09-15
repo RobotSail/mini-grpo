@@ -6,13 +6,36 @@ dist/
 wheels/
 *.egg-info
 
+# Downloadable datasets
+data/MNIST/
+data/FashionMNIST/
+data/gsm8k_sft/
+data/gsm_combined/
+data/gsm_plus_sft/
+data/tulu3_ifeval/
+data/gsm8k_official_test.jsonl
+SakanaAI_rl-razor-mnist/data/
+
+# Older results and eval outputs
+parity_mnist_results/
+rebuttal_evals/
+tmp-scripts/eval-data/
+
+# Model checkpoints and large artifacts
+*.safetensors
+core.*
 experiments
-
 results
-
 countdown_svd_cache
 countdown_weight_updates
 eval_results
+checkpoints/
+
+# Misc
+.DS_Store
+__marimo__/
+tasks/
+layouts/
 
 # Virtual environments
 .venv

@@ -1,0 +1,436 @@
+{
+  "checkpoint-10176196": {
+    "full_vocab_kl": 0.003108137547174531,
+    "full_vocab_kl_std": 0.002231741091236472,
+    "full_vocab_kl_median": 0.002667959313839674,
+    "total_tokens": 132282,
+    "num_sequences": 1319
+  },
+  "checkpoint-1022000": {
+    "full_vocab_kl": 0.0006095985072510435,
+    "full_vocab_kl_std": 0.0007202572887763381,
+    "full_vocab_kl_median": 0.00048997369594872,
+    "total_tokens": 132282,
+    "num_sequences": 1319
+  },
+  "checkpoint-1029670": {
+    "full_vocab_kl": 0.0005919785459153909,
+    "full_vocab_kl_std": 0.0006440593278966844,
+    "full_vocab_kl_median": 0.00048408389557152987,
+    "total_tokens": 132282,
+    "num_sequences": 1319
+  },
+  "checkpoint-10692662": {
+    "full_vocab_kl": 0.0033417776090779077,
+    "full_vocab_kl_std": 0.0024161271285265684,
+    "full_vocab_kl_median": 0.002806622302159667,
+    "total_tokens": 132282,
+    "num_sequences": 1319
+  },
+  "checkpoint-11192684": {
+    "full_vocab_kl": 0.003368711843793765,
+    "full_vocab_kl_std": 0.0023892230819910765,
+    "full_vocab_kl_median": 0.0028766090981662273,
+    "total_tokens": 132282,
+    "num_sequences": 1319
+  },
+  "checkpoint-11694996": {
+    "full_vocab_kl": 0.003397758748983358,
+    "full_vocab_kl_std": 0.0024497921112924814,
+    "full_vocab_kl_median": 0.0028682714328169823,
+    "total_tokens": 132282,
+    "num_sequences": 1319
+  },
+  "checkpoint-12202350": {
+    "full_vocab_kl": 0.0035639987482259192,
+    "full_vocab_kl_std": 0.002501067938283086,
+    "full_vocab_kl_median": 0.003016876056790352,
+    "total_tokens": 132282,
+    "num_sequences": 1319
+  },
+  "checkpoint-12709752": {
+    "full_vocab_kl": 0.0036344961401724705,
+    "full_vocab_kl_std": 0.0026606263127177954,
+    "full_vocab_kl_median": 0.0030298600904643536,
+    "total_tokens": 132282,
+    "num_sequences": 1319
+  },
+  "checkpoint-13223900": {
+    "full_vocab_kl": 0.0037510572361104137,
+    "full_vocab_kl_std": 0.002700225217267871,
+    "full_vocab_kl_median": 0.0031428858637809753,
+    "total_tokens": 132282,
+    "num_sequences": 1319
+  },
+  "checkpoint-13724228": {
+    "full_vocab_kl": 0.00370931850612196,
+    "full_vocab_kl_std": 0.002662064041942358,
+    "full_vocab_kl_median": 0.003120733192190528,
+    "total_tokens": 132282,
+    "num_sequences": 1319
+  },
+  "checkpoint-14240144": {
+    "full_vocab_kl": 0.003956484214045687,
+    "full_vocab_kl_std": 0.002790067344903946,
+    "full_vocab_kl_median": 0.0033391229808330536,
+    "total_tokens": 132282,
+    "num_sequences": 1319
+  },
+  "checkpoint-14747408": {
+    "full_vocab_kl": 0.003989541772890148,
+    "full_vocab_kl_std": 0.002886909758672118,
+    "full_vocab_kl_median": 0.0033680025953799486,
+    "total_tokens": 132282,
+    "num_sequences": 1319
+  },
+  "checkpoint-15265904": {
+    "full_vocab_kl": 0.004032875230315556,
+    "full_vocab_kl_std": 0.0028475162107497454,
+    "full_vocab_kl_median": 0.0033886933233588934,
+    "total_tokens": 132282,
+    "num_sequences": 1319
+  },
+  "checkpoint-1534886": {
+    "full_vocab_kl": 0.0007642844373828071,
+    "full_vocab_kl_std": 0.0008879773668013513,
+    "full_vocab_kl_median": 0.0006402662838809192,
+    "total_tokens": 132282,
+    "num_sequences": 1319
+  },
+  "checkpoint-1541102": {
+    "full_vocab_kl": 0.0008381117969845193,
+    "full_vocab_kl_std": 0.0009762112167663872,
+    "full_vocab_kl_median": 0.0006940034800209105,
+    "total_tokens": 132282,
+    "num_sequences": 1319
+  },
+  "checkpoint-15781262": {
+    "full_vocab_kl": 0.004197862599512467,
+    "full_vocab_kl_std": 0.002946039428934455,
+    "full_vocab_kl_median": 0.0035720604937523603,
+    "total_tokens": 132282,
+    "num_sequences": 1319
+  },
+  "checkpoint-16286750": {
+    "full_vocab_kl": 0.004210906490871451,
+    "full_vocab_kl_std": 0.0029769870452582836,
+    "full_vocab_kl_median": 0.0035239451099187136,
+    "total_tokens": 132282,
+    "num_sequences": 1319
+  },
+  "checkpoint-16802680": {
+    "full_vocab_kl": 0.004207174582565852,
+    "full_vocab_kl_std": 0.0029091271571815014,
+    "full_vocab_kl_median": 0.003560313954949379,
+    "total_tokens": 132282,
+    "num_sequences": 1319
+  },
+  "checkpoint-17306308": {
+    "full_vocab_kl": 0.004255950338024993,
+    "full_vocab_kl_std": 0.0029896495398133993,
+    "full_vocab_kl_median": 0.0036266648676246405,
+    "total_tokens": 132282,
+    "num_sequences": 1319
+  },
+  "checkpoint-17816638": {
+    "full_vocab_kl": 0.004429144426844377,
+    "full_vocab_kl_std": 0.0030732047744095325,
+    "full_vocab_kl_median": 0.003752274438738823,
+    "total_tokens": 132282,
+    "num_sequences": 1319
+  },
+  "checkpoint-18333988": {
+    "full_vocab_kl": 0.004415862476925879,
+    "full_vocab_kl_std": 0.0032478191424161196,
+    "full_vocab_kl_median": 0.0037512187846004963,
+    "total_tokens": 132282,
+    "num_sequences": 1319
+  },
+  "checkpoint-18838782": {
+    "full_vocab_kl": 0.004558024346039707,
+    "full_vocab_kl_std": 0.0031293483916670084,
+    "full_vocab_kl_median": 0.003854756010696292,
+    "total_tokens": 132282,
+    "num_sequences": 1319
+  },
+  "checkpoint-19345540": {
+    "full_vocab_kl": 0.004629829266583647,
+    "full_vocab_kl_std": 0.0031190018635243177,
+    "full_vocab_kl_median": 0.0039102984592318535,
+    "total_tokens": 132282,
+    "num_sequences": 1319
+  },
+  "checkpoint-19854606": {
+    "full_vocab_kl": 0.004748511263965692,
+    "full_vocab_kl_std": 0.0032504391856491566,
+    "full_vocab_kl_median": 0.004023972433060408,
+    "total_tokens": 132282,
+    "num_sequences": 1319
+  },
+  "checkpoint-20357110": {
+    "full_vocab_kl": 0.00476183324843414,
+    "full_vocab_kl_std": 0.003327685873955488,
+    "full_vocab_kl_median": 0.0040099844336509705,
+    "total_tokens": 132282,
+    "num_sequences": 1319
+  },
+  "checkpoint-2049780": {
+    "full_vocab_kl": 0.0011191399608824768,
+    "full_vocab_kl_std": 0.001196824829094112,
+    "full_vocab_kl_median": 0.0009462927700951695,
+    "total_tokens": 132282,
+    "num_sequences": 1319
+  },
+  "checkpoint-20869998": {
+    "full_vocab_kl": 0.004728202323897236,
+    "full_vocab_kl_std": 0.0032347338274121284,
+    "full_vocab_kl_median": 0.003938871435821056,
+    "total_tokens": 132282,
+    "num_sequences": 1319
+  },
+  "checkpoint-21375536": {
+    "full_vocab_kl": 0.004852717735227119,
+    "full_vocab_kl_std": 0.0033145982306450605,
+    "full_vocab_kl_median": 0.004067661240696907,
+    "total_tokens": 132282,
+    "num_sequences": 1319
+  },
+  "checkpoint-21891124": {
+    "full_vocab_kl": 0.004874910552842214,
+    "full_vocab_kl_std": 0.003362678224220872,
+    "full_vocab_kl_median": 0.004099584184587002,
+    "total_tokens": 132282,
+    "num_sequences": 1319
+  },
+  "checkpoint-22395210": {
+    "full_vocab_kl": 0.004865728512979046,
+    "full_vocab_kl_std": 0.003511199029162526,
+    "full_vocab_kl_median": 0.004069362301379442,
+    "total_tokens": 132282,
+    "num_sequences": 1319
+  },
+  "checkpoint-22899614": {
+    "full_vocab_kl": 0.005031777330090875,
+    "full_vocab_kl_std": 0.0034145391546189785,
+    "full_vocab_kl_median": 0.0042250617407262325,
+    "total_tokens": 132282,
+    "num_sequences": 1319
+  },
+  "checkpoint-23404350": {
+    "full_vocab_kl": 0.005153466402010697,
+    "full_vocab_kl_std": 0.003563799662515521,
+    "full_vocab_kl_median": 0.0043525840155780315,
+    "total_tokens": 132282,
+    "num_sequences": 1319
+  },
+  "checkpoint-23920684": {
+    "full_vocab_kl": 0.0052538017706753445,
+    "full_vocab_kl_std": 0.003769268747419119,
+    "full_vocab_kl_median": 0.004382129292935133,
+    "total_tokens": 132282,
+    "num_sequences": 1319
+  },
+  "checkpoint-24436540": {
+    "full_vocab_kl": 0.005340395765084922,
+    "full_vocab_kl_std": 0.0036266364622861147,
+    "full_vocab_kl_median": 0.004474273882806301,
+    "total_tokens": 132282,
+    "num_sequences": 1319
+  },
+  "checkpoint-24957016": {
+    "full_vocab_kl": 0.005444153199690102,
+    "full_vocab_kl_std": 0.0037680550012737513,
+    "full_vocab_kl_median": 0.004547716584056616,
+    "total_tokens": 132282,
+    "num_sequences": 1319
+  },
+  "checkpoint-25461004": {
+    "full_vocab_kl": 0.005461228049327168,
+    "full_vocab_kl_std": 0.0037534565199166536,
+    "full_vocab_kl_median": 0.0045854211784899235,
+    "total_tokens": 132282,
+    "num_sequences": 1319
+  },
+  "checkpoint-2555186": {
+    "full_vocab_kl": 0.0012925369905809477,
+    "full_vocab_kl_std": 0.0013397140428423882,
+    "full_vocab_kl_median": 0.0011099028633907437,
+    "total_tokens": 132282,
+    "num_sequences": 1319
+  },
+  "checkpoint-25972026": {
+    "full_vocab_kl": 0.00564549517213881,
+    "full_vocab_kl_std": 0.0038640249986201525,
+    "full_vocab_kl_median": 0.004735373891890049,
+    "total_tokens": 132282,
+    "num_sequences": 1319
+  },
+  "checkpoint-26490106": {
+    "full_vocab_kl": 0.005757903093793589,
+    "full_vocab_kl_std": 0.003916499670594931,
+    "full_vocab_kl_median": 0.00480272201821208,
+    "total_tokens": 132282,
+    "num_sequences": 1319
+  },
+  "checkpoint-26993846": {
+    "full_vocab_kl": 0.006011853285612701,
+    "full_vocab_kl_std": 0.004243058618158102,
+    "full_vocab_kl_median": 0.005012871697545052,
+    "total_tokens": 132282,
+    "num_sequences": 1319
+  },
+  "checkpoint-27497198": {
+    "full_vocab_kl": 0.005901558805668863,
+    "full_vocab_kl_std": 0.004127934575080872,
+    "full_vocab_kl_median": 0.004966404754668474,
+    "total_tokens": 132282,
+    "num_sequences": 1319
+  },
+  "checkpoint-28003646": {
+    "full_vocab_kl": 0.006092670894737382,
+    "full_vocab_kl_std": 0.00459184730425477,
+    "full_vocab_kl_median": 0.005070030689239502,
+    "total_tokens": 132282,
+    "num_sequences": 1319
+  },
+  "checkpoint-28507470": {
+    "full_vocab_kl": 0.006131964858176234,
+    "full_vocab_kl_std": 0.004403761122375727,
+    "full_vocab_kl_median": 0.005170206539332867,
+    "total_tokens": 132282,
+    "num_sequences": 1319
+  },
+  "checkpoint-29018002": {
+    "full_vocab_kl": 0.006040530227601976,
+    "full_vocab_kl_std": 0.004367537796497345,
+    "full_vocab_kl_median": 0.005065909121185541,
+    "total_tokens": 132282,
+    "num_sequences": 1319
+  },
+  "checkpoint-29525680": {
+    "full_vocab_kl": 0.006165738600039367,
+    "full_vocab_kl_std": 0.00433548865839839,
+    "full_vocab_kl_median": 0.00523263867944479,
+    "total_tokens": 132282,
+    "num_sequences": 1319
+  },
+  "checkpoint-30007994": {
+    "full_vocab_kl": 0.006259456337159723,
+    "full_vocab_kl_std": 0.004917267709970474,
+    "full_vocab_kl_median": 0.005334030836820602,
+    "total_tokens": 132282,
+    "num_sequences": 1319
+  },
+  "checkpoint-3065372": {
+    "full_vocab_kl": 0.0014901584689910575,
+    "full_vocab_kl_std": 0.0014289258979260921,
+    "full_vocab_kl_median": 0.001301528187468648,
+    "total_tokens": 132282,
+    "num_sequences": 1319
+  },
+  "checkpoint-3566020": {
+    "full_vocab_kl": 0.0016971094574156841,
+    "full_vocab_kl_std": 0.0015580776380375028,
+    "full_vocab_kl_median": 0.001477078185416758,
+    "total_tokens": 132282,
+    "num_sequences": 1319
+  },
+  "checkpoint-4081472": {
+    "full_vocab_kl": 0.0019317140215822383,
+    "full_vocab_kl_std": 0.0016118062194436789,
+    "full_vocab_kl_median": 0.0016780716832727194,
+    "total_tokens": 132282,
+    "num_sequences": 1319
+  },
+  "checkpoint-4584794": {
+    "full_vocab_kl": 0.002246052161432143,
+    "full_vocab_kl_std": 0.001745676971040666,
+    "full_vocab_kl_median": 0.001948796445503831,
+    "total_tokens": 132282,
+    "num_sequences": 1319
+  },
+  "checkpoint-5085800": {
+    "full_vocab_kl": 0.002333047666040077,
+    "full_vocab_kl_std": 0.0017217297572642565,
+    "full_vocab_kl_median": 0.0020369733683764935,
+    "total_tokens": 132282,
+    "num_sequences": 1319
+  },
+  "checkpoint-510958": {
+    "full_vocab_kl": 0.0005122962726889485,
+    "full_vocab_kl_std": 0.00030703458469361067,
+    "full_vocab_kl_median": 0.00045956936082802713,
+    "total_tokens": 132282,
+    "num_sequences": 1319
+  },
+  "checkpoint-513642": {
+    "full_vocab_kl": 0.0004993475795743648,
+    "full_vocab_kl_std": 0.00030901801073923707,
+    "full_vocab_kl_median": 0.0004514202009886503,
+    "total_tokens": 132282,
+    "num_sequences": 1319
+  },
+  "checkpoint-5596920": {
+    "full_vocab_kl": 0.0024289744930557754,
+    "full_vocab_kl_std": 0.0018946729833260179,
+    "full_vocab_kl_median": 0.0021787858568131924,
+    "total_tokens": 132282,
+    "num_sequences": 1319
+  },
+  "checkpoint-6106682": {
+    "full_vocab_kl": 0.0024756605538047223,
+    "full_vocab_kl_std": 0.0018883446464315057,
+    "full_vocab_kl_median": 0.0021374360658228397,
+    "total_tokens": 132282,
+    "num_sequences": 1319
+  },
+  "checkpoint-6609628": {
+    "full_vocab_kl": 0.002640895709862668,
+    "full_vocab_kl_std": 0.001964457333087921,
+    "full_vocab_kl_median": 0.0022758671548217535,
+    "total_tokens": 132282,
+    "num_sequences": 1319
+  },
+  "checkpoint-7111286": {
+    "full_vocab_kl": 0.002596367808403191,
+    "full_vocab_kl_std": 0.0019282177090644836,
+    "full_vocab_kl_median": 0.00225325720384717,
+    "total_tokens": 132282,
+    "num_sequences": 1319
+  },
+  "checkpoint-7628974": {
+    "full_vocab_kl": 0.0027462504285395255,
+    "full_vocab_kl_std": 0.002002344001084566,
+    "full_vocab_kl_median": 0.0024181113112717867,
+    "total_tokens": 132282,
+    "num_sequences": 1319
+  },
+  "checkpoint-8136534": {
+    "full_vocab_kl": 0.0028594916073644535,
+    "full_vocab_kl_std": 0.0020835890900343657,
+    "full_vocab_kl_median": 0.00250632525421679,
+    "total_tokens": 132282,
+    "num_sequences": 1319
+  },
+  "checkpoint-8641724": {
+    "full_vocab_kl": 0.0029845357263843953,
+    "full_vocab_kl_std": 0.0021495837718248367,
+    "full_vocab_kl_median": 0.0025507169775664806,
+    "total_tokens": 132282,
+    "num_sequences": 1319
+  },
+  "checkpoint-9157416": {
+    "full_vocab_kl": 0.003062627167564567,
+    "full_vocab_kl_std": 0.0022701031994074583,
+    "full_vocab_kl_median": 0.002597674960270524,
+    "total_tokens": 132282,
+    "num_sequences": 1319
+  },
+  "checkpoint-9675174": {
+    "full_vocab_kl": 0.003080759330453227,
+    "full_vocab_kl_std": 0.002225331263616681,
+    "full_vocab_kl_median": 0.0026570684276521206,
+    "total_tokens": 132282,
+    "num_sequences": 1319
+  }
+}

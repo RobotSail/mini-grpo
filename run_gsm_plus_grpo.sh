@@ -4,7 +4,7 @@
 # Each run is independent — if killed or crashed, the script continues to the next.
 #
 
-export WANDB_API_KEY=dcc7e9d67dd4454320776959ba154a9d285cb7db
+export WANDB_API_KEY="${WANDB_API_KEY:?Set WANDB_API_KEY}"
 
 CHECKPOINT_PREFIX="/mnt/nvme2n1/os-gsm-plus-experiment_grpo_2"
 DATA_PATH="data/gsm_combined/gsm_plus/train.jsonl"

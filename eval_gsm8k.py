@@ -79,24 +79,34 @@ def get_checkpoint_dirs(base_path: str) -> list[Path | str]:
     if (base / "config.json").exists():
         return [base]
 
-    # Find step_* directories (also handles samples_X_step_Y format from SFT)
+    # Find checkpoint directories (handles multiple naming conventions)
     checkpoint_dirs = []
     for d in base.iterdir():
         if not d.is_dir():
             continue
+        if d.name == "checkpoint-initial":
+            continue
         if d.name.startswith("step_"):
             checkpoint_dirs.append(d)
         elif "_step_" in d.name:
-            # Handle samples_X_step_Y format
+            checkpoint_dirs.append(d)
+        elif d.name.startswith("checkpoint-"):
+            # Handle checkpoint-step16-191826tok and checkpoint-123456 formats
             checkpoint_dirs.append(d)
 
     def get_step_number(path: Path) -> int:
+        import re as _re
         name = path.name
         if name.startswith("step_"):
             return int(name.split("_")[1])
         elif "_step_" in name:
-            # Extract step number from samples_X_step_Y format
             return int(name.split("_step_")[1])
+        elif name.startswith("checkpoint-step"):
+            m = _re.search(r"checkpoint-step(\d+)", name)
+            return int(m.group(1)) if m else 0
+        elif name.startswith("checkpoint-"):
+            m = _re.search(r"checkpoint-(\d+)", name)
+            return int(m.group(1)) if m else 0
         return 0
 
     checkpoint_dirs = sorted(checkpoint_dirs, key=get_step_number)

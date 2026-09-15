@@ -1,5 +1,6 @@
 # seed here for reproducibility
 import os
+from pathlib import Path
 
 os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
 
@@ -2300,6 +2301,7 @@ def sft_train(
         save_final_checkpoint=save_final_checkpoint,
         checkpoint_at_epoch=checkpoint_at_epoch,
         save_every_steps=save_every_steps if save_every_steps > 0 else None,
+        min_samples_per_checkpoint=save_every_steps * effective_batch_size if save_every_steps > 0 else None,
         save_every_n_tokens=save_every_n_tokens if save_every_n_tokens > 0 else None,
         # Data processing
         use_processed_dataset=use_processed_dataset,
@@ -2693,6 +2695,10 @@ def distributed_grpo_train(
         False, "--bf16-master-weights",
         help="Store master weights as bf16; optimizer internals (moments, computation) stay fp32",
     ),
+    gradient_mask_path: str = typer.Option(
+        None, "--gradient-mask",
+        help="Path to .pt gradient mask file (lottery ticket experiment)",
+    ),
 
     # GPU allocation
     train_gpus: str = typer.Option("0,1", "--train-gpus", help="Comma-separated GPU indices for training"),
@@ -2713,6 +2719,9 @@ def distributed_grpo_train(
 
     # Task
     task: str = typer.Option("gsm8k", "--task", help="Task name: 'gsm8k' or 'countdown'"),
+    # Resume
+    resume_from: str = typer.Option(None, "--resume-from",
+        help="Path to checkpoint directory to resume training from (must contain _resumable/ state)"),
 ):
     """
     Multi-GPU GRPO training with FSDP2.
@@ -2751,8 +2760,18 @@ def distributed_grpo_train(
     vllm_url = f"http://localhost:{vllm_port}"
     checkpoint_dir = f"/dev/shm/active-policy-{vllm_port}"
 
+    if resume_from:
+        # Find latest HF checkpoint in the resume dir for vLLM
+        ckpt_dirs = sorted(
+            [d for d in Path(resume_from).iterdir()
+             if d.is_dir() and d.name.startswith("checkpoint-") and d.name != "checkpoint-initial"],
+            key=lambda p: p.stat().st_mtime,
+        )
+        vllm_model_source = str(ckpt_dirs[-1]) if ckpt_dirs else resume_from
+    else:
+        vllm_model_source = model_name
     typer.secho(f"\nSaving initial weights for vLLM...", fg=typer.colors.CYAN)
-    _setup_vllm_checkpoint(model_name, checkpoint_dir)
+    _setup_vllm_checkpoint(vllm_model_source, checkpoint_dir)
 
     # 2. Start vLLM
     vllm_cmd = [
@@ -2872,6 +2891,10 @@ def distributed_grpo_train(
             train_cmd += ["--lattice-mantissa-bits", str(lattice_mantissa_bits)]
         if bf16_master_weights:
             train_cmd.append("--bf16-master-weights")
+        if gradient_mask_path:
+            train_cmd += ["--gradient-mask", gradient_mask_path]
+        if resume_from:
+            train_cmd += ["--resume-from", resume_from]
 
         train_env = os.environ.copy()
         train_env["CUDA_VISIBLE_DEVICES"] = train_gpus
@@ -2965,9 +2988,11 @@ def distributed_grpo_worker(
     lattice_mantissa_bits: int = typer.Option(0, "--lattice-mantissa-bits",
         help="Snap weights to N-bit mantissa lattice after each step (0 = disabled)"),
     bf16_master_weights: bool = typer.Option(False, "--bf16-master-weights"),
+    gradient_mask_path: str = typer.Option(None, "--gradient-mask"),
     eval_every_n_steps: int = typer.Option(0, "--eval-every-n-steps"),
     num_icl: int = typer.Option(0, "--num-icl"),
     task: str = typer.Option("gsm8k", "--task"),
+    resume_from: str = typer.Option(None, "--resume-from"),
 ):
     """
     Internal: GRPO training worker launched by distributed-grpo-train via torchrun.
@@ -3021,9 +3046,11 @@ def distributed_grpo_worker(
         bf16_regularization=bf16_regularization,
         lattice_mantissa_bits=lattice_mantissa_bits,
         bf16_master_weights=bf16_master_weights,
+        gradient_mask_path=gradient_mask_path,
         eval_every_n_steps=eval_every_n_steps,
         num_icl=num_icl,
         task=task,
+        resume_from=resume_from,
     )
     trainer.train()
 
@@ -3227,6 +3254,7 @@ def countdown_sft_train(
         save_final_checkpoint=save_final_checkpoint,
         checkpoint_at_epoch=checkpoint_at_epoch,
         save_every_steps=save_every_steps if save_every_steps > 0 else None,
+        min_samples_per_checkpoint=save_every_steps * effective_batch_size if save_every_steps > 0 else None,
         save_every_n_tokens=save_every_n_tokens if save_every_n_tokens > 0 else None,
         use_processed_dataset=use_processed_dataset,
         unmask_messages=unmask_messages,

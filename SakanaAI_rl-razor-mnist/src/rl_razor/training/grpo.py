@@ -14,7 +14,7 @@ from rl_razor.model import MLP
 from rl_razor.data import get_finetuning_data, create_dataloader
 from rl_razor.training.pretrain import get_scheduler
 from rl_razor.metrics import forward_kl
-from rl_razor.utils import set_seed, get_device, checkpoint_step_set, snap_to_lattice, save_weights, quantize_update_from_saved
+from rl_razor.utils import set_seed, get_device, checkpoint_step_set, snap_to_lattice, save_weights, quantize_update_from_saved, apply_magnitude_threshold
 
 
 def compute_parity_reward(
@@ -55,6 +55,7 @@ def grpo_finetune(
     fashion_loader: Optional[DataLoader] = None,
     verbose: bool = True,
     mantissa_bits: int = 0,
+    magnitude_threshold: float = 0.0,
 ) -> Dict[str, Any]:
     """Fine-tune model on ParityMNIST using GRPO (Group Relative Policy Optimization).
 
@@ -211,7 +212,8 @@ def grpo_finetune(
             total_loss = pg_loss + kl_coef * kl_loss - entropy_coef * entropy
 
             total_loss.backward()
-            if mantissa_bits > 0 and mantissa_bits < 7:
+            need_saved = (mantissa_bits > 0 and mantissa_bits < 7) or magnitude_threshold > 0
+            if need_saved:
                 w_old = save_weights(model)
             optimizer.step()
             if mantissa_bits > 0:
@@ -219,6 +221,8 @@ def grpo_finetune(
                     quantize_update_from_saved(model, w_old, mantissa_bits)
                 else:
                     snap_to_lattice(model, mantissa_bits)
+            if magnitude_threshold > 0:
+                apply_magnitude_threshold(model, w_old, magnitude_threshold)
 
             if scheduler is not None:
                 scheduler.step()
