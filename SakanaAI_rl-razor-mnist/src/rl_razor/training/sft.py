@@ -16,6 +16,7 @@ from rl_razor.training.pretrain import get_scheduler
 from rl_razor.training.oracle import compute_oracle_loss
 from rl_razor.metrics import parity_accuracy, forward_kl
 from rl_razor.utils import set_seed, get_device, checkpoint_step_set, snap_to_lattice, save_weights, quantize_update_from_saved, apply_magnitude_threshold
+from rl_razor.utils import snap_to_lattice_sr, quantize_update_from_saved_sr, quantize_optimizer_states_bf16, _snap_rne, apply_l1sp_prox
 
 
 def sft_finetune(
@@ -38,6 +39,13 @@ def sft_finetune(
     verbose: bool = True,
     mantissa_bits: int = 0,
     magnitude_threshold: float = 0.0,
+    rounding: str = "rtn",
+    state_dtype: str = "fp32",
+    kl_coef: float = 0.0,
+    l2sp_lambda: float = 0.0,
+    grad_noise_sigma: float = 0.0,
+    l1sp_tau: float = 0.0,
+    l1sp_per_param_tau: dict = None,
 ) -> Dict[str, Any]:
     """Fine-tune model on ParityMNIST using supervised learning.
 
@@ -105,6 +113,21 @@ def sft_finetune(
         steps_per_epoch,
     )
 
+    # L2-SP reference: post-snap init weights
+    l2sp_ref = {}
+    if l2sp_lambda > 0:
+        for n, p in model.named_parameters():
+            w = p.data.clone()
+            if mantissa_bits > 0 and mantissa_bits < 23:
+                _snap_rne(w, mantissa_bits)
+            l2sp_ref[n] = w.detach()
+
+    # L1-SP reference weights (post-snap init for proximal operator)
+    l1sp_ref = {}
+    if l1sp_tau > 0 or l1sp_per_param_tau is not None:
+        for n, p in model.named_parameters():
+            l1sp_ref[n] = p.data.clone()
+
     # Training loop
     history = {
         "train_loss": [],
@@ -138,18 +161,49 @@ def sft_finetune(
                 logits = model(x)
                 loss = F.cross_entropy(logits, y)
 
+            # KL regularization: KL(pi || pi_0)
+            if kl_coef > 0:
+                with torch.no_grad():
+                    base_logits_kl = base_model(x)
+                ft_lp = F.log_softmax(model(x) if label_mode == "oracle" else logits, dim=-1)
+                ft_p = F.softmax(ft_lp, dim=-1)
+                base_lp = F.log_softmax(base_logits_kl, dim=-1)
+                loss = loss + kl_coef * (ft_p * (ft_lp - base_lp)).sum(dim=-1).mean()
+
+            # L2-SP: penalty toward post-snap init
+            if l2sp_lambda > 0:
+                l2sp = sum(((p - l2sp_ref[n]) ** 2).sum() for n, p in model.named_parameters())
+                loss = loss + (l2sp_lambda / 2) * l2sp
+
             loss.backward()
+
+            # Gradient noise injection
+            if grad_noise_sigma > 0:
+                with torch.no_grad():
+                    for p in model.parameters():
+                        if p.grad is not None:
+                            p.grad.add_(torch.randn_like(p.grad) * grad_noise_sigma)
             need_saved = (mantissa_bits > 0 and mantissa_bits < 7) or magnitude_threshold > 0
             if need_saved:
                 w_old = save_weights(model)
             optimizer.step()
             if mantissa_bits > 0:
-                if mantissa_bits < 7:
-                    quantize_update_from_saved(model, w_old, mantissa_bits)
+                if rounding == "sr":
+                    if mantissa_bits < 7:
+                        quantize_update_from_saved_sr(model, w_old, mantissa_bits)
+                    else:
+                        snap_to_lattice_sr(model, mantissa_bits)
                 else:
-                    snap_to_lattice(model, mantissa_bits)
+                    if mantissa_bits < 7:
+                        quantize_update_from_saved(model, w_old, mantissa_bits)
+                    else:
+                        snap_to_lattice(model, mantissa_bits)
             if magnitude_threshold > 0:
                 apply_magnitude_threshold(model, w_old, magnitude_threshold)
+            if l1sp_tau > 0 or l1sp_per_param_tau is not None:
+                apply_l1sp_prox(model, l1sp_ref, l1sp_per_param_tau if l1sp_per_param_tau is not None else l1sp_tau)
+            if state_dtype == "bf16":
+                quantize_optimizer_states_bf16(optimizer)
 
             if scheduler is not None:
                 scheduler.step()

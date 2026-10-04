@@ -117,6 +117,19 @@ def parse_args():
     parser.add_argument("--magnitude-threshold", type=float, default=0.0,
         help="Drop updates with |delta| < threshold after each step (0=disabled)")
 
+    parser.add_argument("--rounding", type=str, default="rtn", choices=["rtn", "sr"],
+        help="Rounding mode: rtn (round-to-nearest, default) or sr (stochastic rounding)")
+
+    parser.add_argument("--state-dtype", type=str, default="fp32", choices=["fp32", "bf16"],
+        help="Optimizer state dtype: fp32 (default) or bf16 (quantize Adam moments to bf16 each step)")
+
+    parser.add_argument("--l2sp-lambda", type=float, default=0.0,
+        help="L2-SP regularization: (lambda/2)||W-W0||^2 toward post-snap init (0=disabled)")
+    parser.add_argument("--grad-noise-sigma", type=float, default=0.0,
+        help="Gradient noise injection std (added pre-optimizer, 0=disabled)")
+    parser.add_argument("--l1sp-tau", type=float, default=0.0,
+        help="L1-SP proximal threshold (0=disabled). Applied after optimizer step.")
+
     parser.add_argument("--skip-alt-metrics", action="store_true",
         help="Skip Section 6 alternative metrics (Fisher, CKNNA, etc.) for faster runs")
 
@@ -202,6 +215,12 @@ def main():
             verbose=args.verbose,
             mantissa_bits=args.mantissa_bits,
             magnitude_threshold=args.magnitude_threshold,
+            rounding=args.rounding,
+            state_dtype=args.state_dtype,
+            kl_coef=args.kl_coef,
+            l2sp_lambda=args.l2sp_lambda,
+            grad_noise_sigma=args.grad_noise_sigma,
+            l1sp_tau=args.l1sp_tau,
         )
     elif args.method in ["grpo", "grpo_kl"]:
         kl_coef = args.kl_coef if args.method == "grpo_kl" else 0.0
@@ -228,6 +247,11 @@ def main():
             verbose=args.verbose,
             mantissa_bits=args.mantissa_bits,
             magnitude_threshold=args.magnitude_threshold,
+            rounding=args.rounding,
+            state_dtype=args.state_dtype,
+            l2sp_lambda=args.l2sp_lambda,
+            grad_noise_sigma=args.grad_noise_sigma,
+            l1sp_tau=args.l1sp_tau,
         )
     else:
         raise ValueError(f"Unknown method: {args.method}")

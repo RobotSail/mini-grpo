@@ -403,3 +403,145 @@ def get_lr_schedule_values(
         lr_values.append(lr)
 
     return lr_values
+
+
+def _snap_sr(t, mantissa_bits):
+    """Snap fp32 tensor to mantissa_bits precision using stochastic rounding (in-place).
+
+    Unbiased: E[rounded] = x. For each value, finds the two adjacent lattice
+    points and rounds up with probability proportional to distance from the
+    lower point. Uses the same IEEE 754 bit-level lattice as _snap_rne.
+    """
+    shift = 23 - mantissa_bits
+    ulp_int = 1 << shift
+    mask = ~((1 << shift) - 1)
+
+    raw = t.view(torch.int32)
+    truncated = raw & mask
+    remainder = (raw & ((1 << shift) - 1)).to(torch.int64)
+
+    prob_up = remainder.float() / float(ulp_int)
+    round_up = torch.rand_like(prob_up) < prob_up
+
+    t.copy_((truncated + round_up.to(torch.int32) * ulp_int).view(torch.float32))
+
+
+def snap_to_lattice_sr(model, mantissa_bits):
+    """Snap all model weights using stochastic rounding (in-place).
+
+    Drop-in replacement for snap_to_lattice with unbiased rounding.
+    """
+    if mantissa_bits <= 0 or mantissa_bits >= 23:
+        return
+    with torch.no_grad():
+        for p in model.parameters():
+            if p.data.dtype != torch.float32:
+                p.data.copy_(p.data.float())
+            _snap_sr(p.data, mantissa_bits)
+
+
+def _quantize_update_tensor_sr(w_old, w_new, mantissa_bits):
+    """Quantize update delta using stochastic rounding at the ULP of w_old."""
+    delta = w_new - w_old
+
+    w_bits = w_old.view(torch.int32)
+    e_biased = (w_bits >> 23) & 0xFF
+
+    ulp_e = (e_biased.int() - mantissa_bits).clamp(min=1)
+    ulp = (ulp_e << 23).view(torch.float32)
+
+    zero_mask = (w_old == 0)
+    if zero_mask.any():
+        tiny_ulp = torch.tensor(2.0 ** (1 - 127 - mantissa_bits),
+                                dtype=torch.float32, device=w_old.device)
+        ulp = torch.where(zero_mask, tiny_ulp, ulp)
+
+    ratio = delta / ulp
+    # Stochastic rounding of ratio
+    floor_ratio = torch.floor(ratio)
+    frac = ratio - floor_ratio
+    round_up = torch.rand_like(frac) < frac
+    ratio_rounded = floor_ratio + round_up.float()
+    return w_old + ratio_rounded * ulp
+
+
+def quantize_update_from_saved_sr(model, saved_weights, mantissa_bits):
+    """Apply stochastic-rounded quantized updates using pre-step clones."""
+    if mantissa_bits <= 0 or mantissa_bits >= 23:
+        return
+    if mantissa_bits >= 7:
+        snap_to_lattice_sr(model, mantissa_bits)
+        return
+    with torch.no_grad():
+        for p in model.parameters():
+            w_old = saved_weights[id(p)]
+            if p.data.dtype != torch.float32:
+                p.data.copy_(p.data.float())
+            p.data.copy_(_quantize_update_tensor_sr(w_old, p.data, mantissa_bits))
+
+
+def quantize_optimizer_states_bf16(optimizer):
+    """Cast Adam moment buffers (exp_avg, exp_avg_sq) to bf16 precision in-place.
+
+    Store-back approach: tensors remain float32 but values are rounded to bf16.
+    This simulates running Adam with bf16 moment storage.
+    """
+    with torch.no_grad():
+        for group in optimizer.param_groups:
+            for p in group["params"]:
+                state = optimizer.state.get(p)
+                if state is None:
+                    continue
+                if "exp_avg" in state:
+                    state["exp_avg"].copy_(state["exp_avg"].to(torch.bfloat16).to(torch.float32))
+                if "exp_avg_sq" in state:
+                    state["exp_avg_sq"].copy_(state["exp_avg_sq"].to(torch.bfloat16).to(torch.float32))
+
+
+
+def apply_l1sp_prox(model, ref_weights, tau):
+    """Proximal L1-SP: soft-threshold the update delta toward ref weights.
+
+    After optimizer step producing w', applies:
+        delta = w' - W_0
+        w = W_0 + sign(delta) * max(|delta| - tau, 0)
+
+    This zeros out updates smaller than tau and shrinks the rest by tau.
+    tau can be a scalar (uniform) or a dict {param_name: per-element tensor} (weighted).
+    """
+    with torch.no_grad():
+        for name, p in model.named_parameters():
+            w0 = ref_weights[name]
+            delta = p.data - w0
+            if isinstance(tau, dict):
+                t = tau[name]
+            else:
+                t = tau
+            p.data.copy_(w0 + torch.sign(delta) * torch.clamp(delta.abs() - t, min=0.0))
+
+
+def compute_ulp_thresholds(ref_weights, mantissa_bits, c=0.5, device=None):
+    """Compute per-parameter ULP-weighted thresholds: tau_i = c * ULP(w_0_i, b).
+
+    Args:
+        ref_weights: dict {param_name: tensor} of reference (init) weights
+        mantissa_bits: mantissa width to compute ULP for
+        c: multiplier (0.5 = half-ULP, 1.0 = full ULP)
+        device: target device
+
+    Returns:
+        dict {param_name: per-element threshold tensor}
+    """
+    thresholds = {}
+    for name, w in ref_weights.items():
+        w = w.to(device) if device else w
+        w_abs = w.abs().clamp(min=1e-45)
+        exponent = torch.floor(torch.log2(w_abs))
+        ulp = 2.0 ** (exponent - mantissa_bits)
+        # For w=0, use smallest subnormal ULP
+        zero_mask = (w == 0)
+        if zero_mask.any():
+            tiny_ulp = 2.0 ** (1 - 127 - mantissa_bits)
+            ulp = torch.where(zero_mask, torch.tensor(tiny_ulp, device=w.device), ulp)
+        thresholds[name] = c * ulp
+    return thresholds
